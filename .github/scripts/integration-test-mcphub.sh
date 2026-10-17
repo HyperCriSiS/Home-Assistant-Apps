@@ -165,7 +165,7 @@ dashboard_html="$(ingress_curl --fail --silent --show-error \
   "http://${CONTAINER}:8099/_mcphub_tunnels/")"
 grep -q 'id="t-openai"' <<<"${dashboard_html}"
 grep -q 'id="t-cloudflare"' <<<"${dashboard_html}"
-grep -q 'Protokoll anzeigen' <<<"${dashboard_html}"
+grep -q 'Show logs' <<<"${dashboard_html}"
 grep -q 'id="t-tailscale"' <<<"${dashboard_html}"
 
 for mode in openai cloudflare tailscale; do

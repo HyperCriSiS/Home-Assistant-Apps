@@ -297,20 +297,19 @@ MCPHub creates a random 384-bit client key on first launch and keeps it in
 `/data/secrets/mcphub_cloudflare_client_key` (mode `0600`) across updates/backups.
 Key generation and rotation are managed by MCPHub.
 
-### Eigenständiges Tunnel-Dashboard
+### Standalone tunnel dashboard
 
-Die Tunnelverwaltung liegt unter `/_mcphub_tunnels/` **innerhalb der authentifizierten
-Home-Assistant-Ingress-Adresse**. Sie ist eine separate App-interne Seite und
-wird nicht mehr in MCPHubs Navigation oder Frontend eingeblendet. Beide Tunnel
-werden unabhängig verwaltet; Diagnose und Protokoll öffnen sich bei Bedarf.
+Tunnel management is available at `/_mcphub_tunnels/` within an authenticated
+Home Assistant Ingress session. This standalone page does not modify or inject
+controls into the upstream MCPHub frontend. OpenAI, Cloudflare, and Tailscale
+Funnel each have a single card with their own status and controls. Diagnostics
+and logs expand on demand.
 
-Im nativen Tab **Konfiguration** bietet Home Assistant laut App-Optionsschema
-leider keine Erweiterungsmöglichkeit für einen eigenen Dashboard-Button oder
-frei definierbaren Link. Der Ingress-Token ist pro Installation unterschiedlich,
-sodass der Pfad nicht als vollständige statische URL in die Konfiguration
-eingetragen werden kann. Die App-Web-UI bleibt weiterhin das originale MCPHub.
-Eine separate Ingress-Seite kann aus einer bestehenden Ingress-Sitzung unter
-`_mcphub_tunnels/` geöffnet werden.
+Home Assistant app configuration does not support custom buttons or arbitrary
+links. Ingress tokens are installation-specific, so a complete static Ingress
+URL cannot be specified in the app options. The original MCPHub app UI remains
+unchanged. From an authenticated Ingress session, the relative route
+`_mcphub_tunnels/` opens the tunnel dashboard.
 
 Visit the authenticated Home Assistant Ingress route `/_mcphub_tunnels/` to
 **copy** the key, or **rotate** it (immediately replacing the key used by Nginx).
@@ -359,7 +358,7 @@ MCPHub application code is unchanged.
    changes are necessary.
 6. Paste the public URL including the exact MCP route into
    `tailscale_funnel_url`, e.g. `https://node.tailnet.ts.net/mcp`.
-   The tunnel dashboard's **HTTPS prüfen** button makes an *unauthenticated*
+   The tunnel dashboard's **Check HTTPS** button makes an *unauthenticated*
    HTTPS request and looks for a 401 reply with our gateway marker. It never
    transmits the client key to the configured URL. **A check from the HA host
    cannot prove public Internet reachability:** it may use tailnet routing.

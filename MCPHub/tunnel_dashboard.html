@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>MCPHub · Tunnelverwaltung</title>
+  <title>MCPHub · Tunnel Management</title>
   <style>
     :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark light}
     *{box-sizing:border-box}
@@ -63,138 +63,137 @@
   <div class="shell">
     <div class="masthead">
       <div class="eyebrow">Home Assistant · MCPHub</div>
-      <a class="back" href="../">MCPHub öffnen ↗</a>
+      <a class="back" href="../">Open MCPHub ↗</a>
     </div>
-    <h1>Tunnelverwaltung</h1>
-    <p class="intro">OpenAI, Cloudflare und Tailscale verwalten. Aktivierung, Routen und Zugangsdaten
-      bleiben in <strong>Home Assistant → Apps → MCPHub → Konfiguration</strong>.</p>
+    <h1>Tunnel Management</h1>
+    <p class="intro">Manage OpenAI, Cloudflare, and Tailscale. Enablement, routes, and credentials
+      remain under <strong>Home Assistant → Apps → MCPHub → Configuration</strong>.</p>
     <main class="grid">
       <article class="card" id="t-openai" aria-labelledby="openai-title">
         <div class="card-head">
           <h2 id="openai-title">OpenAI Secure Tunnel</h2>
-          <span class="badge" data-tone="neutral" role="status" aria-live="polite">Lädt …</span>
+          <span class="badge" data-tone="neutral" role="status" aria-live="polite">Loading…</span>
         </div>
-        <p class="summary">Tunnelstatus wird abgerufen …</p>
+        <p class="summary">Checking tunnel status…</p>
         <dl class="metadata">
-          <div><dt>Aktiviert</dt><dd data-field="configured">–</dd></div>
-          <div><dt>Verbindung</dt><dd data-field="connection">–</dd></div>
-          <div><dt>MCP-Route</dt><dd data-field="route">–</dd></div>
-          <div><dt>Letzte Prüfung</dt><dd data-field="age">–</dd></div>
+          <div><dt>Enabled</dt><dd data-field="configured">–</dd></div>
+          <div><dt>Connection</dt><dd data-field="connection">–</dd></div>
+          <div><dt>MCP route</dt><dd data-field="route">–</dd></div>
+          <div><dt>Last check</dt><dd data-field="age">–</dd></div>
         </dl>
-        <div class="actions" aria-label="OpenAI steuern">
-          <button type="button" class="primary" data-mode="openai" data-action="start">Starten</button>
-          <button type="button" data-mode="openai" data-action="stop">Stoppen</button>
-          <button type="button" data-mode="openai" data-action="reload">Neu laden</button>
+        <div class="actions" aria-label="Manage OpenAI">
+          <button type="button" class="primary" data-mode="openai" data-action="start">Start</button>
+          <button type="button" data-mode="openai" data-action="stop">Stop</button>
+          <button type="button" data-mode="openai" data-action="reload">Reload</button>
         </div>
         <p class="feedback" role="status" aria-live="polite"></p>
         <details data-panel="diagnostics" data-mode="openai">
-          <summary>Diagnose anzeigen</summary>
-          <div class="detail-content" data-diagnostics>Diagnose wird geladen …</div>
+          <summary>Show diagnostics</summary>
+          <div class="detail-content" data-diagnostics>Loading diagnostics…</div>
         </details>
         <details data-panel="logs" data-mode="openai">
-          <summary>Protokoll anzeigen</summary>
-          <pre class="detail-content" data-logs>Protokoll wird geladen …</pre>
+          <summary>Show logs</summary>
+          <pre class="detail-content" data-logs>Loading logs…</pre>
         </details>
       </article>
 
       <article class="card" id="t-cloudflare" aria-labelledby="cloudflare-title">
         <div class="card-head">
           <h2 id="cloudflare-title">Cloudflare Tunnel</h2>
-          <span class="badge" data-tone="neutral" role="status" aria-live="polite">Lädt …</span>
+          <span class="badge" data-tone="neutral" role="status" aria-live="polite">Loading…</span>
         </div>
-        <p class="summary">Tunnelstatus wird abgerufen …</p>
+        <p class="summary">Checking tunnel status…</p>
         <dl class="metadata">
-          <div><dt>Aktiviert</dt><dd data-field="configured">–</dd></div>
-          <div><dt>Verbindung</dt><dd data-field="connection">–</dd></div>
-          <div><dt>MCP-Route</dt><dd data-field="route">–</dd></div>
-          <div><dt>Letzte Prüfung</dt><dd data-field="age">–</dd></div>
+          <div><dt>Enabled</dt><dd data-field="configured">–</dd></div>
+          <div><dt>Connection</dt><dd data-field="connection">–</dd></div>
+          <div><dt>MCP route</dt><dd data-field="route">–</dd></div>
+          <div><dt>Last check</dt><dd data-field="age">–</dd></div>
         </dl>
-        <div class="actions" aria-label="Cloudflare steuern">
-          <button type="button" class="primary" data-mode="cloudflare" data-action="start">Starten</button>
-          <button type="button" data-mode="cloudflare" data-action="stop">Stoppen</button>
-          <button type="button" data-mode="cloudflare" data-action="reload">Neu laden</button>
+        <div class="actions" aria-label="Manage Cloudflare">
+          <button type="button" class="primary" data-mode="cloudflare" data-action="start">Start</button>
+          <button type="button" data-mode="cloudflare" data-action="stop">Stop</button>
+          <button type="button" data-mode="cloudflare" data-action="reload">Reload</button>
         </div>
         <p class="feedback" role="status" aria-live="polite"></p>
         <details data-panel="key" data-mode="cloudflare">
-          <summary>Cloudflare Client-Key verwalten</summary>
+          <summary>Manage Cloudflare client key</summary>
           <div class="detail-content">
-            <p class="help">Für externe MCP-Clients: <code>Authorization: Bearer DEIN_KEY</code>.
-              Eine Erneuerung macht den bisherigen Schlüssel sofort ungültig.</p>
+            <p class="help">For external MCP clients: <code>Authorization: Bearer YOUR_KEY</code>.
+              Rotating the key immediately invalidates the previous key.</p>
             <div class="actions">
-              <button type="button" id="copy-key">Key kopieren</button>
-              <button type="button" id="rotate-key">Key erneuern</button>
+              <button type="button" id="copy-key">Copy key</button>
+              <button type="button" id="rotate-key">Rotate key</button>
             </div>
             <p id="key-message" role="status" aria-live="polite"></p>
           </div>
         </details>
         <details data-panel="diagnostics" data-mode="cloudflare">
-          <summary>Diagnose anzeigen</summary>
-          <div class="detail-content" data-diagnostics>Diagnose wird geladen …</div>
+          <summary>Show diagnostics</summary>
+          <div class="detail-content" data-diagnostics>Loading diagnostics…</div>
         </details>
         <details data-panel="logs" data-mode="cloudflare">
-          <summary>Protokoll anzeigen</summary>
-          <pre class="detail-content" data-logs>Protokoll wird geladen …</pre>
+          <summary>Show logs</summary>
+          <pre class="detail-content" data-logs>Loading logs…</pre>
         </details>
       </article>
 
       <article class="card" id="t-tailscale" aria-labelledby="tailscale-title">
         <div class="card-head">
           <h2 id="tailscale-title">Tailscale Funnel</h2>
-          <span class="badge" data-tone="neutral" role="status" aria-live="polite">Lädt …</span>
+          <span class="badge" data-tone="neutral" role="status" aria-live="polite">Loading…</span>
         </div>
-        <p class="summary">Lokaler MCP-Zugang wird geprüft …</p>
+        <p class="summary">Checking local MCP access…</p>
         <dl class="metadata">
           <div><dt>MCP-Gateway</dt><dd data-field="gateway">–</dd></div>
-          <div><dt>Funnel</dt><dd data-field="funnel">Nicht auslesbar</dd></div>
-          <div><dt>MCP-Route</dt><dd data-field="route">–</dd></div>
-          <div><dt>HTTPS-Prüfung</dt><dd data-field="https">Nicht geprüft</dd></div>
+          <div><dt>Funnel</dt><dd data-field="funnel">Not available</dd></div>
+          <div><dt>MCP route</dt><dd data-field="route">–</dd></div>
+          <div><dt>HTTPS check</dt><dd data-field="https">Not checked</dd></div>
         </dl>
-        <p class="help"><strong>Öffentliche Adresse:</strong>
-          <span data-field="public-url">Noch nicht eingetragen</span></p>
-        <div class="actions" aria-label="Lokalen Tailscale MCP-Zugang steuern">
-          <button type="button" class="primary" data-mode="tailscale" data-action="start">MCP-Zugang starten</button>
-          <button type="button" data-mode="tailscale" data-action="stop">MCP-Zugang stoppen</button>
-          <button type="button" id="tailscale-check">HTTPS prüfen</button>
+        <p class="help"><strong>Public URL:</strong>
+          <span data-field="public-url">Not configured</span></p>
+        <div class="actions" aria-label="Manage local Tailscale MCP gateway">
+          <button type="button" class="primary" data-mode="tailscale" data-action="start">Start MCP gateway</button>
+          <button type="button" data-mode="tailscale" data-action="stop">Stop MCP gateway</button>
+          <button type="button" id="tailscale-check">Check HTTPS</button>
         </div>
         <p class="feedback" role="status" aria-live="polite"></p>
         <details data-panel="setup" data-mode="tailscale">
-          <summary>Tailscale Funnel einrichten</summary>
+          <summary>Set up Tailscale Funnel</summary>
           <div class="detail-content">
-            <p class="help">1. In der MCPHub-App <strong>Konfiguration → Tailscale</strong> aktivieren und die Route wählen.
-              Unter <strong>Netzwerk</strong> den zusätzlichen Host-Port <code>3002/tcp</code> auf <code>3002</code> setzen
-              und die MCPHub-App neu starten.</p>
-            <p class="help">2. Im bestehenden <strong>Tailscale-Add-on</strong> <code>share_homeassistant: disabled</code> lassen.
-              MagicDNS, HTTPS und Funnel-Berechtigung im Tailnet aktivieren. In der CLI dieses Add-ons einmalig ausführen:</p>
+            <p class="help">1. In the MCPHub app <strong>Configuration → Tailscale</strong> enable the gateway and select the route.
+              Under <strong>Network</strong> map the additional host port <code>3002/tcp</code> to <code>3002</code> and restart the MCPHub app.</p>
+            <p class="help">2. In the existing <strong>Tailscale add-on</strong> keep <code>share_homeassistant: disabled</code>.
+              Enable MagicDNS, HTTPS, and Funnel permission in your tailnet. Run this once in the add-on CLI:</p>
             <code class="setup-command" id="tailscale-command">/opt/tailscale funnel --bg --https=443 http://127.0.0.1:3002</code>
-            <button type="button" id="copy-tailscale-command">Befehl kopieren</button>
-            <p class="help">3. Über <code>/opt/tailscale funnel status</code> dort die tatsächliche Funnel-Adresse ermitteln;
-              diese in der MCPHub-App-Konfiguration als HTTPS-Adresse inklusive MCP-Route eintragen.
-              In Claude denselben Pfad und den unten angezeigten Client-Key als Bearer-Header verwenden.</p>
+            <button type="button" id="copy-tailscale-command">Copy command</button>
+            <p class="help">3. Use <code>/opt/tailscale funnel status</code> to inspect the actual Funnel configuration;
+              enter the HTTPS URL including the MCP route in the MCPHub app configuration.
+              In Claude, use the same route and the client key below as a Bearer header.</p>
           </div>
         </details>
         <details data-panel="key" data-mode="tailscale">
-          <summary>Client-Key verwalten</summary>
+          <summary>Manage client key</summary>
           <div class="detail-content">
-            <p class="help">Für Claude: <code>Authorization: Bearer DEIN_KEY</code>.
-              Ein neuer Key macht den bisherigen Key sofort ungültig.</p>
+            <p class="help">For Claude: <code>Authorization: Bearer YOUR_KEY</code>.
+              Rotating the key immediately invalidates the previous key.</p>
             <div class="actions">
-              <button type="button" id="tailscale-copy-key">Client-Key kopieren</button>
-              <button type="button" id="tailscale-rotate-key">Client-Key erneuern</button>
+              <button type="button" id="tailscale-copy-key">Copy client key</button>
+              <button type="button" id="tailscale-rotate-key">Rotate client key</button>
             </div>
             <p id="tailscale-key-message" role="status" aria-live="polite"></p>
           </div>
         </details>
         <details data-panel="diagnostics" data-mode="tailscale">
-          <summary>Diagnose anzeigen</summary>
-          <div class="detail-content" data-diagnostics>Wird geladen …</div>
+          <summary>Show diagnostics</summary>
+          <div class="detail-content" data-diagnostics>Loading…</div>
           <p class="help">MCPHub steuert nur seinen MCP-Zugang. Der tatsächliche Funnel-Status und die Funnel-Protokolle
-            werden ausschließlich vom bestehenden Tailscale-Add-on verwaltet.
-            Die HTTPS-Prüfung von Home Assistant aus ist kein Beweis für öffentliche Erreichbarkeit.</p>
+            werden ausschließlich vom bestehenden Tailscale add-on verwaltet.
+            An HTTPS check from Home Assistant does not prove public Internet reachability.</p>
         </details>
       </article>
     </main>
-    <p class="footer">Statusanzeigen bestätigen nur überprüfbare Teilfunktionen. Sie beweisen nicht automatisch die öffentliche Erreichbarkeit.
-      Diagnosen und Protokolle werden erst beim Aufklappen geladen und enthalten keine absichtlich ausgegebenen Zugangsdaten.</p>
+    <p class="footer">Status indicators only reflect verifiable components. They do not confirm public Internet reachability.
+      Diagnostics and logs load when expanded and do not intentionally expose credentials.</p>
   </div>
   <script src="app.js" defer></script>
 </body>

@@ -29,10 +29,10 @@ ports:
   3002/tcp: null
 ports_description:
   3002/tcp: >-
-    Optionaler Tailscale Funnel MCP-Zugang. Auf 3002 setzen, erst nachdem der
-    geschützte Funnel-Zugang in der Konfiguration aktiviert wurde.
+    Optional Tailscale Funnel MCP gateway. Map host port 3002 only after enabling
+    the protected Funnel gateway in the app configuration.
   3001/tcp: >-
-    LAN-Zugriff: Standardport 3001. Bei Portkonflikt einen anderen freien Port wählen.
+    LAN access: default port 3001. Choose another free port if needed.
     Feld leeren zum Deaktivieren.
 map:
   - type: ssl
