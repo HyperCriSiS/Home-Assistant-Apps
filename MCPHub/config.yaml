@@ -89,4 +89,3 @@ schema:
     github_token: password
   logging:
     tunnel_log_level: "list(debug|info|warn)"
-
