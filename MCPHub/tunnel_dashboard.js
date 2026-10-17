@@ -58,7 +58,7 @@ function render(mode, state) {
     s.transport_ready ? "Locally ready" : "Not ready");
   text(card.querySelector('[data-field="route"]'), s.route || "–");
   text(card.querySelector('[data-field="age"]'),
-    typeof s.health_age_seconds === "number" ? "vor " + s.health_age_seconds + " s" : "–");
+    typeof s.health_age_seconds === "number" ? "" + s.health_age_seconds + " s" : "–");
   }
   for (const button of card.querySelectorAll("button[data-action]")) {
     const action = button.dataset.action;
