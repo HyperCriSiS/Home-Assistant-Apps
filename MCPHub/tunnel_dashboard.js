@@ -97,7 +97,7 @@ async function loadDetails(mode, kind) {
     const list = document.createElement("ul");
     list.className = "diag-lines";
     if (mode === "tailscale") {
-      message(target, report.note || "Tailscale-Diagnose nur im Tailscale add-on verfügbar.");
+      message(target, report.note || "Tailscale diagnostics are available only in the Tailscale add-on.");
       return;
     }
     if (mode === "openai") {
@@ -243,7 +243,7 @@ document.getElementById("tailscale-check").addEventListener("click", async () =>
       "No confirmed HTTPS response from the MCP gateway.", report.result !== "gateway_answered");
     await refresh();
   } catch {
-    feedback("tailscale", "Bitte zuerst eine gültige Funnel-URL in der App-Configuration eintragen.", true);
+    feedback("tailscale", "Configure a valid Funnel URL in the app settings first.", true);
   } finally { button.disabled = false; }
 });
 document.getElementById("tailscale-copy-key").addEventListener("click", async () => {
