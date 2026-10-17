@@ -33,7 +33,7 @@ ports_description:
     the protected Funnel gateway in the app configuration.
   3001/tcp: >-
     LAN access: default port 3001. Choose another free port if needed.
-    Feld leeren zum Deaktivieren.
+    Leave blank to disable.
 map:
   - type: ssl
     read_only: true

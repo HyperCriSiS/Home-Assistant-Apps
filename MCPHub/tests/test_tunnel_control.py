@@ -101,7 +101,7 @@ class TunnelControllerTests(unittest.TestCase):
     def test_dashboard_contains_one_tailscale_card(self):
         self.assertIn('id="t-openai"', self.mod.PAGE)
         self.assertIn('id="t-cloudflare"', self.mod.PAGE)
-        self.assertIn("Konfiguration", self.mod.PAGE)
+        self.assertIn("Configuration", self.mod.PAGE)
         self.assertEqual(self.mod.PAGE.count('id="t-tailscale"'), 1)
         self.assertIn("Tailscale Funnel", self.mod.PAGE)
         self.assertNotIn("Tailscale Serve</h2>", self.mod.PAGE)
@@ -112,9 +112,9 @@ class TunnelControllerTests(unittest.TestCase):
         page, script = self.mod.PAGE, self.mod.SCRIPT
         dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
         self.assertIn('href="../"', page)
-        self.assertIn("Tunnelverwaltung", page)
-        self.assertIn("Diagnose anzeigen", page)
-        self.assertIn("Protokoll anzeigen", page)
+        self.assertIn("Tunnel Management", page)
+        self.assertIn("Show diagnostics", page)
+        self.assertIn("Show logs", page)
         self.assertIn('data-panel="diagnostics"', page)
         self.assertIn('data-panel="logs"', page)
         self.assertIn("setInterval(refresh, 10000)", script)

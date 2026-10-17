@@ -78,7 +78,7 @@ class DashboardTests(unittest.TestCase):
         self.assertEqual(page.count('data-panel="diagnostics"'), 3)
         self.assertEqual(page.count('data-panel="logs"'), 2)
         self.assertEqual(page.count('data-action="start"'), 3)
-        self.assertIn("Protokoll anzeigen", page)
+        self.assertIn("Show logs", page)
         self.assertIn('href="../"', page)
         self.assertIn("if (!section.open) return;", script)
         self.assertNotIn("JSON.stringify", script)
