@@ -181,7 +181,7 @@ legacy_body="$(ingress_curl --silent --max-time 5 \
 if grep -q '"process_alive"' <<<"${legacy_body}"; then
   echo 'Legacy /_mcphub_tunnel/ control location is still served' >&2
   exit 1
-}
+fi
 
 dashboard_html="$(ingress_curl --fail --silent --show-error \
   "http://${CONTAINER}:8099/_mcphub_tunnels/")"
