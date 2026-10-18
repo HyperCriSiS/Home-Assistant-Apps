@@ -90,7 +90,7 @@ jobs:
             gh pr create --repo "$GITHUB_REPOSITORY" \
               --head "$branch" --base dev-mcphub \
               --title "chore(mcphub): update OpenAI tunnel client" \
-              --body "Automated stable OpenAI tunnel-client update: only Dockerfile pin and changelog. Exact-SHA full CI required."
+              --body "Automated stable OpenAI tunnel-client update: pin and changelog only. Exact-SHA CI required."
           fi
           [[ "$sha" =~ ^[a-f0-9]{40}$ ]] || {
             echo "Cannot verify exact PR head SHA" >&2
