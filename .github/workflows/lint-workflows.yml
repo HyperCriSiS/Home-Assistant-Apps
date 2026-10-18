@@ -1,0 +1,62 @@
+---
+name: Lint repository
+
+on:
+  pull_request:
+    paths:
+      - "**.yml"
+      - "**.yaml"
+      - ".yamllint"
+      - ".github/actionlint.yaml"
+  push:
+    branches:
+      - main
+      - dev-trilium
+      - dev-mcphub
+    paths:
+      - "**.yml"
+      - "**.yaml"
+      - ".yamllint"
+      - ".github/actionlint.yaml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lint-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint YAML and GitHub Actions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install lint tools
+        run: |
+          python3 -m pip install \
+            --disable-pip-version-check \
+            --no-cache-dir \
+            'yamllint==1.37.1'
+          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
+
+      - name: Lint YAML
+        run: |
+          find . \
+            -type f \
+            \( -name '*.yml' -o -name '*.yaml' \) \
+            -not -path './.git/*' \
+            -print0 \
+            | xargs -0 yamllint
+
+      - name: Lint GitHub Actions
+        run: |
+          actionlint_bin="$(go env GOPATH)/bin/actionlint"
+          "${actionlint_bin}"
