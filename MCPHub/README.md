@@ -1,4 +1,8 @@
-# MCPHub
+<div align="center">
+
+<img src="logo.svg" alt="MCPHub" width="320">
+
+# 
 
 **Manage multiple MCP servers from one central dashboard inside Home Assistant.**
 

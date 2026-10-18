@@ -1,6 +1,6 @@
-# HyperCriSiS Home Assistant Apps
+# Home Assistant Apps
 
-Home Assistant Apps (formerly Add-ons) maintained by HyperCriSiS.
+Home Assistant Apps maintained by HyperCriSiS.
 
 [![Validate Trilium](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate.yml/badge.svg?branch=main)](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate.yml)
 [![Validate MCPHub](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate-mcphub.yml/badge.svg?branch=main)](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate-mcphub.yml)
