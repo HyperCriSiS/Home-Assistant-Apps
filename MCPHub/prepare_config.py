@@ -10,6 +10,7 @@ import secrets
 import sys
 import uuid
 from pathlib import Path
+from urllib.parse import urlsplit
 
 
 DATA_DIR = Path("/data/mcphub")
@@ -22,16 +23,30 @@ OPENAI_TOKEN_FILE = SECRET_DIR / "mcphub_tunnel_token"
 OPENAI_AUTH_FILE = SECRET_DIR / "mcphub_tunnel_authorization"
 HA_INGRESS_PROXY_SECRET_FILE = SECRET_DIR / "mcphub_ha_ingress_proxy_secret"
 LEGACY_INGRESS_TOKEN_FILE = SECRET_DIR / "mcphub_ingress_token"
-CLOUDFLARE_INTERNAL_TOKEN_FILE = SECRET_DIR / "mcphub_cloudflare_token"
-CLOUDFLARE_CLIENT_KEY_FILE = SECRET_DIR / "mcphub_cloudflare_client_key"
-TAILSCALE_INTERNAL_TOKEN_FILE = SECRET_DIR / "mcphub_tailscale_funnel_token"
-TAILSCALE_CLIENT_KEY_FILE = SECRET_DIR / "mcphub_tailscale_client_key"
 GITHUB_TOKEN_FILE = SECRET_DIR / "github_token"
+MANAGED_BASE_URL_FILE = DATA_DIR / ".managed_install_base_url"
+
+# Remote access now runs through the separate Cloudflared and Tailscale Apps
+# against the MCP-only gateway. Credentials and state of the removed built-in
+# Cloudflare connector and Tailscale gateway are deleted on start.
+OBSOLETE_SECRET_FILES = (
+    "cloudflare_tunnel_token",
+    "mcphub_cloudflare_token",
+    "mcphub_cloudflare_client_key",
+    "mcphub_cloudflare_tunnel_state",
+    "mcphub_tailscale_funnel_token",
+    "mcphub_tailscale_client_key",
+    "mcphub_tailscale_gateway_state",
+)
 
 OPENAI_KEY_NAME = "Home Assistant OpenAI Tunnel"
 INGRESS_KEY_NAME = "Home Assistant Ingress"
-CLOUDFLARE_KEY_NAME = "Home Assistant Cloudflare Tunnel"
-TAILSCALE_KEY_NAME = "Home Assistant Tailscale MCP Gateway"
+# System keys of the removed built-in remote origins; they must not stay valid.
+OBSOLETE_KEY_NAMES = (
+    INGRESS_KEY_NAME,
+    "Home Assistant Cloudflare Tunnel",
+    "Home Assistant Tailscale MCP Gateway",
+)
 GITHUB_CLI_SERVER_NAME = "ha-github-cli"
 HOME_ASSISTANT_MCP_DEFAULT_NAME = "ha-home-assistant"
 HOME_ASSISTANT_MCP_DESCRIPTION = (
@@ -41,6 +56,7 @@ MANAGED_HOME_ASSISTANT_NAME_FILE = DATA_DIR / ".managed_home_assistant_mcp_name"
 HOME_ASSISTANT_MCP_NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 
 MCP_PATH_PATTERN = re.compile(r"^/mcp(?:/[A-Za-z0-9._$-]+){0,2}$")
+EXTERNAL_HOST_PATTERN = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$")
 
 
 def ensure_secret(path: Path, factory) -> str:
@@ -63,7 +79,7 @@ def ensure_secret(path: Path, factory) -> str:
 def flatten_grouped_options(data: dict) -> dict:
     """Read legacy flat and grouped options."""
     result = dict(data)
-    for group in ("openai", "cloudflare", "tailscale", "home_assistant", "github", "logging"):
+    for group in ("openai", "remote_access", "home_assistant", "github", "logging"):
         section = data.get(group)
         if isinstance(section, dict):
             result.update(section)
@@ -108,6 +124,58 @@ def load_settings() -> dict:
 def valid_mcp_path(path: str) -> bool:
     return (bool(MCP_PATH_PATTERN.fullmatch(path))
             and all(part not in (".", "..") for part in path.split("/")[2:]))
+
+
+def normalize_external_url(value: str) -> str:
+    """Return the origin MCP clients use to reach the MCP gateway, or "".
+
+    MCPHub appends /mcp/... itself, so only scheme, host and port are accepted.
+    """
+    value = value.strip()
+    if not value:
+        return ""
+    if len(value) > 200:
+        raise ValueError("external_url is too long")
+    parsed = urlsplit(value)
+    if parsed.scheme not in {"http", "https"}:
+        raise ValueError("external_url must start with http:// or https://")
+    host = parsed.hostname or ""
+    if (parsed.username or parsed.password or parsed.query or parsed.fragment
+            or parsed.path not in {"", "/"}
+            or not (EXTERNAL_HOST_PATTERN.fullmatch(host) or ":" in host)):
+        raise ValueError(
+            "external_url must be an address such as https://mcp.example.com "
+            "or http://192.168.1.10:3001 without a path"
+        )
+    try:
+        port = parsed.port
+    except ValueError as err:
+        raise ValueError("external_url contains an invalid port") from err
+    host = f"[{host}]" if ":" in host else host
+    netloc = host if port is None else f"{host}:{port}"
+    return f"{parsed.scheme}://{netloc}"
+
+
+def apply_install_base_url(system_config: dict, external_url: str) -> str | None:
+    """Point MCPHub's copy-client-config URLs at the configured external address.
+
+    The App option wins while it is set. When it is cleared, only a value this
+    App wrote earlier is removed; a base URL set manually in MCPHub stays.
+    Returns the value to remember as App-managed, or None to forget it.
+    """
+    install = system_config.setdefault("install", {})
+    if not isinstance(install, dict):
+        raise ValueError("systemConfig.install must be a JSON object")
+    previous = (
+        MANAGED_BASE_URL_FILE.read_text(encoding="utf-8").strip()
+        if MANAGED_BASE_URL_FILE.exists() else ""
+    )
+    if external_url:
+        install["baseUrl"] = external_url
+        return external_url
+    if previous and install.get("baseUrl") == previous:
+        install.pop("baseUrl", None)
+    return None
 
 
 def scope_for_path(path: str) -> tuple[str, list[str], list[str]]:
@@ -192,6 +260,8 @@ def main() -> None:
 
     if LEGACY_INGRESS_TOKEN_FILE.exists():
         LEGACY_INGRESS_TOKEN_FILE.unlink()
+    for name in OBSOLETE_SECRET_FILES:
+        (SECRET_DIR / name).unlink(missing_ok=True)
 
     options = load_options()
 
@@ -204,27 +274,6 @@ def main() -> None:
         HA_INGRESS_PROXY_SECRET_FILE,
         lambda: "mha_" + secrets.token_urlsafe(48),
     )
-    # Existing manually configured client keys must remain valid across an App upgrade.
-    # New installs get a locally generated 384-bit secret; no Cloudflare Access account.
-    legacy_client_key = str(options.get("cloudflare_access_token") or "").strip()
-    if legacy_client_key and not re.fullmatch(r"[A-Za-z0-9_-]{32,256}", legacy_client_key):
-        print("[WARN] Invalid legacy Cloudflare client key; creating a new key", file=sys.stderr)
-        legacy_client_key = ""
-    ensure_secret(
-        CLOUDFLARE_CLIENT_KEY_FILE,
-        lambda: legacy_client_key or secrets.token_urlsafe(48),
-    )
-    cloudflare_internal_token = ensure_secret(
-        CLOUDFLARE_INTERNAL_TOKEN_FILE,
-        lambda: "mcf_" + secrets.token_urlsafe(48),
-    )
-    # Separate external and internal Tailscale keys; never share a Cloudflare key.
-    ensure_secret(TAILSCALE_CLIENT_KEY_FILE, lambda: secrets.token_urlsafe(48))
-    tailscale_internal_token = ensure_secret(
-        TAILSCALE_INTERNAL_TOKEN_FILE,
-        lambda: "mts_" + secrets.token_urlsafe(48),
-    )
-
     OPENAI_AUTH_FILE.write_text(f"Bearer {openai_token}", encoding="utf-8")
     os.chmod(OPENAI_AUTH_FILE, 0o600)
 
@@ -242,21 +291,24 @@ def main() -> None:
     routing["enableBearerAuth"] = True
     routing["bearerAuthHeaderName"] = "Authorization"
 
+    try:
+        external_url = normalize_external_url(str(options.get("external_url") or ""))
+    except ValueError as err:
+        print(f"[WARN] {err}; MCPHub's base URL is left unchanged", file=sys.stderr)
+        external_url = ""
+    managed_base_url = apply_install_base_url(system_config, external_url)
+
     bearer_keys = settings.setdefault("bearerKeys", [])
     if not isinstance(bearer_keys, list):
         raise ValueError("bearerKeys must be a JSON list")
 
     bearer_keys[:] = [
         item for item in bearer_keys
-        if item.get("name") != INGRESS_KEY_NAME
+        if item.get("name") not in OBSOLETE_KEY_NAMES
     ]
 
     for label, enabled_flag, path_option, key_name, token in (
         ("OpenAI", "tunnel_enabled", "tunnel_mcp_path", OPENAI_KEY_NAME, openai_token),
-        ("Cloudflare", "cloudflare_tunnel_enabled", "cloudflare_mcp_path",
-         CLOUDFLARE_KEY_NAME, cloudflare_internal_token),
-        ("Tailscale", "tailscale_funnel_enabled", "tailscale_mcp_path",
-         TAILSCALE_KEY_NAME, tailscale_internal_token),
     ):
         bearer_keys[:] = [item for item in bearer_keys if item.get("name") != key_name]
         if not bool(options.get(enabled_flag, False)):
@@ -348,6 +400,12 @@ def main() -> None:
     os.chmod(temporary, 0o600)
     temporary.replace(SETTINGS_FILE)
     os.chmod(SETTINGS_FILE, 0o600)
+
+    if managed_base_url:
+        MANAGED_BASE_URL_FILE.write_text(managed_base_url + "\n", encoding="utf-8")
+        os.chmod(MANAGED_BASE_URL_FILE, 0o600)
+    else:
+        MANAGED_BASE_URL_FILE.unlink(missing_ok=True)
 
     if home_assistant_mcp_enabled:
         name_tmp = MANAGED_HOME_ASSISTANT_NAME_FILE.with_suffix(".tmp")

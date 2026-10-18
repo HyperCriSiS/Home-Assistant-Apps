@@ -17,13 +17,7 @@ GROUPS = {
     "openai": (
         "tunnel_enabled", "openai_runtime_api_key", "tunnel_id", "tunnel_mcp_path",
     ),
-    "cloudflare": (
-        "cloudflare_tunnel_enabled", "cloudflare_tunnel_token",
-        "cloudflare_mcp_path",
-    ),
-    "tailscale": (
-        "tailscale_funnel_enabled", "tailscale_mcp_path", "tailscale_funnel_url",
-    ),
+    "remote_access": ("external_url",),
     "home_assistant": (
         "home_assistant_mcp_enabled", "home_assistant_mcp_server_name",
         "home_assistant_mcp_auth_mode", "home_assistant_mcp_user_token",

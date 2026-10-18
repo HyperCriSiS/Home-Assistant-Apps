@@ -69,7 +69,7 @@ class DescriptionUpdateTests(unittest.TestCase):
         self.assertEqual(
             config["description"],
             f"MCPHub {self.target_upstream} - central MCP server management "
-            "with optional Home Assistant, OpenAI and Cloudflare integrations",
+            "with optional Home Assistant, OpenAI and remote access integrations",
         )
         self.assertEqual(
             set(build["build_from"].values()),

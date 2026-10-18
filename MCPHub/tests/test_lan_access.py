@@ -73,10 +73,21 @@ class LanAccessTests(unittest.TestCase):
         self.assertEqual(config["backup"], "hot")
         self.assertIn("cache/*", config["backup_exclude"])
 
-    def test_remote_origins_forward_normalized_uri(self):
+    def test_gateway_is_the_only_remote_origin(self):
+        # Cloudflared and Tailscale Apps forward to port 3001; the App no longer
+        # renders separate Cloudflare or Tailscale origins with their own keys.
         proxy = (ROOT / "prepare_proxy_config.py").read_text()
-        self.assertNotIn("proxy_pass http://127.0.0.1:3000;", proxy)
-        self.assertEqual(proxy.count("proxy_pass http://127.0.0.1:3000$uri$is_args$args;"), 2)
+        template = (ROOT / "ingress.conf").read_text()
+        self.assertNotIn("127.0.0.1:3000", proxy)
+        for gone in ("8098", "listen 3002", "__CLOUDFLARE_SERVER_BLOCK__",
+                     "__TAILSCALE_SERVER_BLOCK__"):
+            self.assertNotIn(gone, template)
+            self.assertNotIn(gone, proxy)
+        config = yaml.safe_load((ROOT / "config.yaml").read_text())
+        self.assertEqual(list(config["ports"]), ["3001/tcp"])
+
+    def test_gateway_marks_its_responses_for_the_address_check(self):
+        self.assertIn('add_header X-MCPHub-Gateway "mcp-only" always;', lan_block())
 
 
 if __name__ == "__main__":

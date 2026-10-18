@@ -1,5 +1,25 @@
 [
   {
+    "revision": 115,
+    "version": "v2026.10.19-dev.115",
+    "source_sha": "e868c6cd5d284744eb591e607c49aaceb2fe6e18",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "e868c6cd5d284744eb591e607c49aaceb2fe6e18",
+        "subject": "feat(mcphub)!: use external Cloudflared/Tailscale Apps for remote access (#83)"
+      },
+      {
+        "sha": "1227a0b07f45b6f9194fa4d77b48548cc1c85149",
+        "subject": "Merge remote-tracking branch 'origin/main' into dev-mcphub"
+      },
+      {
+        "sha": "1bcf42204b7a25edb36874e6bf854a23f932e46f",
+        "subject": "Merge remote-tracking branch 'origin/main' into dev-mcphub"
+      }
+    ]
+  },
+  {
     "revision": 114,
     "version": "v2026.10.18-1-dev.114",
     "source_sha": "7a7ad0648b32143d6260e9ab2a5d04c59dac11d2",

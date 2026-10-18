@@ -106,13 +106,14 @@ class DashboardTests(unittest.TestCase):
         page = self.dashboard.PAGE
         script = self.dashboard.SCRIPT
         openai = page.index('id="t-openai"')
-        cloud = page.index('id="t-cloudflare"')
-        self.assertLess(openai, cloud)
+        remote = page.index('id="t-remote"')
+        self.assertLess(openai, remote)
         self.assertGreater(page.index("OpenAI Secure Tunnel"), openai)
-        self.assertGreater(page.index('id="copy-key"'), cloud)
-        self.assertEqual(page.count('data-panel="diagnostics"'), 3)
-        self.assertEqual(page.count('data-panel="logs"'), 2)
-        self.assertEqual(page.count('data-action="start"'), 3)
+        self.assertGreater(page.index('id="remote-check"'), remote)
+        # Only the OpenAI tunnel is a managed process with diagnostics and logs.
+        self.assertEqual(page.count('data-panel="diagnostics"'), 1)
+        self.assertEqual(page.count('data-panel="logs"'), 1)
+        self.assertEqual(page.count('data-action="start"'), 1)
         self.assertIn("Show logs", page)
         self.assertIn('href="../"', page)
         self.assertIn("if (!section.open) return;", script)
@@ -121,9 +122,7 @@ class DashboardTests(unittest.TestCase):
 
     def test_local_logs_endpoint_is_separate_and_unrecognized_modes_forbidden(self):
         manager = Mock()
-        manager.logs.side_effect = lambda mode: {
-            "lines": ["openai-one"] if mode == "openai" else ["cloudflare-two"]
-        }
+        manager.logs.side_effect = lambda mode: {"lines": ["openai-one"]}
         manager.diagnostics.side_effect = lambda mode: {"mode": mode}
         server = ThreadingHTTPServer(("127.0.0.1", 0),
                                      self.dashboard.handler_for(manager))
@@ -141,12 +140,10 @@ class DashboardTests(unittest.TestCase):
             status, value = get("/api/logs/openai")
             self.assertEqual(status, 200)
             self.assertEqual(json.loads(value)["lines"], ["openai-one"])
-            status, value = get("/api/logs/cloudflare")
-            self.assertEqual(json.loads(value)["lines"], ["cloudflare-two"])
             status, value = get("/api/diagnostics/openai")
             self.assertEqual(json.loads(value)["mode"], "openai")
-            status, value = get("/api/diagnostics/cloudflare")
-            self.assertEqual(json.loads(value)["mode"], "cloudflare")
+            self.assertEqual(get("/api/logs/cloudflare")[0], 404)
+            self.assertEqual(get("/api/diagnostics/cloudflare")[0], 404)
             self.assertEqual(get("/api/logs/serve")[0], 404)
             self.assertEqual(get("/api/diagnostics/funnel")[0], 404)
         finally:
