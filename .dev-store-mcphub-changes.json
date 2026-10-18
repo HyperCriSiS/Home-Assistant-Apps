@@ -1,5 +1,121 @@
 [
   {
+    "revision": 111,
+    "version": "v2026.10.17-1-dev.111",
+    "source_sha": "1e53b5717f62af5a7ed1b54f641dfde10910bd82",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "1e53b5717f62af5a7ed1b54f641dfde10910bd82",
+        "subject": "Merge pull request #75 from HyperCriSiS/fix/mcphub-standalone-tunnel-console"
+      },
+      {
+        "sha": "07c0f82202a2fd393f5660910cf0026b7553589c",
+        "subject": "style(mcphub): use exactly one trailing YAML newline"
+      },
+      {
+        "sha": "1ffcf5701de315dd0b9bd0b15360342a7eb03623",
+        "subject": "style(mcphub): preserve final YAML newline for yamllint"
+      },
+      {
+        "sha": "193f47a7c54db68abd73e46fb829d4c338fe3936",
+        "subject": "test(mcphub): align English assertions and gateway labels"
+      },
+      {
+        "sha": "8b0a44196a293902da70965b65a8c23616e8ff97",
+        "subject": "fix(mcphub): restore YAML trailing newline and English status age"
+      },
+      {
+        "sha": "b346e617080a32db56b8e8690fbb1335179c292b",
+        "subject": "fix(mcphub): remove remaining German tunnel console copy"
+      },
+      {
+        "sha": "e6fb7fa61202be6586fc46ed8a6143751228db18",
+        "subject": "fix(mcphub): use English consistently in tunnel console and documentation"
+      },
+      {
+        "sha": "9ded304656137fd8796ee3ee858866f601afd0c5",
+        "subject": "test(mcphub): validate Tailscale control API and key-rotation boundaries"
+      },
+      {
+        "sha": "d2b1930ac0615f3775b6786408254f64a4f81f3e",
+        "subject": "docs(mcphub): use verified Tailscale App binary path for manual Funnel CLI"
+      },
+      {
+        "sha": "31c5f90bfa5557f69bdc05f3b4b3a047adc8f2ac",
+        "subject": "ci(mcphub): validate optional Tailscale group and disabled-by-default host port"
+      },
+      {
+        "sha": "71af22ae8b8ac409554b4d620d422e96e71dc3e8",
+        "subject": "security(mcphub): reject dot-segment traversal in every MCP route validator"
+      },
+      {
+        "sha": "623a72de4684b59809043ccfdaaddd8c727fc4b8",
+        "subject": "test(mcphub): cover third config group and revise dashboard card assertions"
+      },
+      {
+        "sha": "d5474edff96a8edaf34065413a21b790ecc0201f",
+        "subject": "test(ci): exercise actual Tailscale MCP gateway, isolation, stop/start and key revocation"
+      },
+      {
+        "sha": "26be422ba4c67a08ec1a963d44793cdf3fad0f8c",
+        "subject": "test(mcphub): cover Tailscale gateway isolation, key scopes, persistence and HTTPS validation"
+      },
+      {
+        "sha": "d7664c24607ef0607b5873494cdc9c469b93459f",
+        "subject": "style(mcphub): preserve terminal newlines across all changed sources"
+      },
+      {
+        "sha": "04e3ab3780544b2b096e80cd4a6bb13ff2985b50",
+        "subject": "docs(test): integrate Tailscale configuration and preserve Store README unchanged"
+      },
+      {
+        "sha": "76747719957e851d8ecb357b4a0566bf487f2f64",
+        "subject": "ui(mcphub): integrate Tailscale into one unified tunnel dashboard card"
+      },
+      {
+        "sha": "4d1212cc78ed56a0919383a94abb9afe858aaa9c",
+        "subject": "feat(mcphub): expose ingress-only Tailscale gateway and client-key controls"
+      },
+      {
+        "sha": "9dbbe037258e3f76273c301b565b4d0ff090fd0f",
+        "subject": "feat(mcphub): add optional Tailscale MCP-only host origin with isolated route keys"
+      },
+      {
+        "sha": "dd72d7eaa9dce0743d72a1ad21806f968deff649",
+        "subject": "feat(mcphub): isolated Tailscale MCP gateway state and safe HTTPS checks"
+      },
+      {
+        "sha": "ea51bdd2ef9fad7b11856b45a927d2bd2248dfc2",
+        "subject": "Merge branch 'dev-mcphub' into fix/mcphub-standalone-tunnel-console"
+      },
+      {
+        "sha": "665af5d8907513d4a4643d3dbba860a0fce7b97c",
+        "subject": "test(mcphub): adapt tunnel UI tests to independent dashboard"
+      },
+      {
+        "sha": "12f32db68b0a8887488eb341f04338a33965256c",
+        "subject": "chore(mcphub): remove unused injected navigation script"
+      },
+      {
+        "sha": "a70ef53af6603316995993e1eb07554b61c6d8b7",
+        "subject": "chore(mcphub): remove unused injected navigation script"
+      },
+      {
+        "sha": "6b75ac0cd49dd8373bfd638c6cf2eb12ecae65b1",
+        "subject": "test(docs): verify standalone console and document HA configuration limitation"
+      },
+      {
+        "sha": "c5565520d4be4cdb33efd25f3bc014d5b9288f9d",
+        "subject": "fix(mcphub): remove injected dashboard menu and isolate tunnel UI"
+      },
+      {
+        "sha": "d79c2e4624985ae7d9620841193f6414b0d5a5b9",
+        "subject": "feat(mcphub): add clean standalone tunnel control console"
+      }
+    ]
+  },
+  {
     "revision": 110,
     "version": "v2026.10.17-1-dev.110",
     "source_sha": "606fa54ece9b98d8d60629b277c7759b6de7d635",
