@@ -67,14 +67,20 @@ The development App is shown as **MCPHub (Dev)** under
 - No privileged mode
 - No host networking
 - No Supervisor API permission
-- Home Assistant cold-backup support
+- Home Assistant hot-backup support (package caches excluded)
 - `amd64` and `aarch64` support
 
-## Direct access from your home network
+## MCP access from your home network
 
-Direct LAN access is **enabled by default** on host port **3001**. Open `http://<HA-IP>:3001` for MCPHub's own login, or connect an MCP client to `http://<HA-IP>:3001/mcp` with a MCPHub Bearer key.
+MCP clients in your LAN can connect on host port **3001**, enabled by default:
+`http://<HA-IP>:3001/mcp` (or `/mcp/<group>`, `/mcp/$smart`) with the header
+`Authorization: Bearer <key>`. Create the key in MCPHub under **Keys**.
 
-In Home Assistant, go to **MCPHub → Network** to change the **left-hand host port** if 3001 is occupied (3000 is also possible if free). The displayed `3001/tcp` on the right is the internal proxy port. Leave the host-port field empty to turn direct LAN access off. Ingress remains independent and uses Home Assistant authentication; direct LAN access uses **MCPHub's own authentication**. Only use HTTP on a trusted local network.
+Port 3001 serves **only MCP endpoints**. MCPHub's web interface, login and management API
+are not reachable there; they are available exclusively through the Home Assistant sidebar
+(Ingress) with your Home Assistant login.
+
+In Home Assistant, go to **MCPHub → Network** to change the **left-hand host port** if 3001 is occupied. Leave the host-port field empty to turn LAN MCP access off. The connection uses plain HTTP, so only use it on a trusted local network.
 
 See [LAN access instructions](LAN_ACCESS.md) for details and security notes.
 
@@ -120,10 +126,9 @@ MCP APIs other than the built-in Assist API.
 
 ## Tunnel health and controls
 
-The MCPHub top bar shows **Tunnelverwaltung** when opened through authenticated
-Home Assistant Ingress. The linked Ingress-only page at `/_mcphub_tunnels/` provides
-**Start**, **Stop**, **Reload** and local readiness monitoring for OpenAI and
-Cloudflare without restarting MCPHub. Administrators can also copy or rotate the
+Open MCPHub from the Home Assistant sidebar and select **Tunnels** in its top bar.
+The Ingress-only tunnel dashboard provides **Start**, **Stop**, **Reload** and local
+readiness monitoring for OpenAI and Cloudflare without restarting MCPHub. Administrators can also copy or rotate the
 automatically generated Cloudflare Client Key within the Cloudflare section.
 Each tunnel has its own local component diagnostics and bounded redacted live logs.
 LAN port settings remain under Home Assistant App **Network**.
@@ -195,7 +200,7 @@ Home Assistant Ingress provides single sign-on for the dashboard. The Supervisor
 
 MCP transport authentication remains independent from Home Assistant Ingress. OpenAI and Cloudflare each use their own route-scoped internal credentials. The public Cloudflare client key is validated by the local adapter and is never registered as a dashboard credential in MCPHub.
 
-Secrets, MCPHub configuration, and package caches are stored in the persistent App data directory and are included in Home Assistant cold backups.
+Secrets and MCPHub configuration are stored in the persistent App data directory and are included in Home Assistant hot backups. Re-downloadable package caches are excluded.
 
 > [!WARNING]
 > Backups can contain MCP server credentials and generated secrets. Treat Home Assistant backups as sensitive data.
