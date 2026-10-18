@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Strict update and merge gates for the two bundled MCPHub tunnel binaries.
+"""Strict update and merge gates for the bundled MCPHub OpenAI tunnel-client.
+
+Cloudflare remote access runs in the separate Cloudflared App, so MCPHub no
+longer pins a cloudflared binary and this helper only tracks the OpenAI pin.
 
 Invoked only by the trusted main-branch GitHub Actions workflow. Never execute
 this helper from a pull request checkout in a privileged job.
@@ -16,11 +19,8 @@ from pathlib import Path
 from urllib.parse import quote
 
 OPENAI = re.compile(r"v[0-9]+[.][0-9]+[.][0-9]+")
-CLOUDFLARE = re.compile(r"[0-9]{4}[.][0-9]+[.][0-9]+")
-BRANCH = re.compile(
-    r"automation/mcphub-tunnel-clients-(v[0-9]+_[0-9]+_[0-9]+)-([0-9]{4}_[0-9]+_[0-9]+)"
-)
-TITLE = "chore(mcphub): update OpenAI and Cloudflare tunnel clients"
+BRANCH = re.compile(r"automation/mcphub-tunnel-clients-(v[0-9]+_[0-9]+_[0-9]+)")
+TITLE = "chore(mcphub): update OpenAI tunnel client"
 ALLOWED_FILES = {"MCPHub/Dockerfile", "MCPHub/CHANGELOG.md"}
 
 
@@ -32,57 +32,41 @@ def git(*arguments: str) -> str:
     return subprocess.check_output(["git", *arguments], text=True)
 
 
-def pins(dockerfile: str) -> tuple[str, str]:
-    def value(variable: str, expected: re.Pattern[str]) -> str:
-        occurrences = re.findall(rf"^ARG {variable}=(\S+)$", dockerfile, re.M)
-        if len(occurrences) != 1 or not expected.fullmatch(occurrences[0]):
-            raise ValueError(f"Missing or invalid {variable} Dockerfile pin")
-        return occurrences[0]
-
-    return value("OPENAI_TUNNEL_VERSION", OPENAI), value("CLOUDFLARED_VERSION", CLOUDFLARE)
+def pin(dockerfile: str) -> str:
+    occurrences = re.findall(r"^ARG OPENAI_TUNNEL_VERSION=(\S+)$", dockerfile, re.M)
+    if len(occurrences) != 1 or not OPENAI.fullmatch(occurrences[0]):
+        raise ValueError("Missing or invalid OPENAI_TUNNEL_VERSION Dockerfile pin")
+    return occurrences[0]
 
 
 def as_tuple(value: str) -> tuple[int, int, int]:
     return tuple(int(x) for x in value.removeprefix("v").split("."))
 
 
-def branch_for(openai: str, cloudflare: str) -> str:
-    if not OPENAI.fullmatch(openai) or not CLOUDFLARE.fullmatch(cloudflare):
+def branch_for(openai: str) -> str:
+    if not OPENAI.fullmatch(openai):
         raise ValueError("Only official stable three-part release tags are supported")
-    return (
-        "automation/mcphub-tunnel-clients-"
-        + openai.replace(".", "_") + "-" + cloudflare.replace(".", "_")
-    )
+    return "automation/mcphub-tunnel-clients-" + openai.replace(".", "_")
 
 
-def prepare(dockerfile: str, changelog: str, openai: str, cloudflare: str) -> tuple[str, str, bool]:
-    if not OPENAI.fullmatch(openai) or not CLOUDFLARE.fullmatch(cloudflare):
+def prepare(dockerfile: str, changelog: str, openai: str) -> tuple[str, str, bool]:
+    if not OPENAI.fullmatch(openai):
         raise ValueError("Rejecting unrecognized, prerelease or floating tunnel image tags")
-    current_openai, current_cloudflare = pins(dockerfile)
-    if as_tuple(openai) < as_tuple(current_openai) or as_tuple(cloudflare) < as_tuple(current_cloudflare):
+    current_openai = pin(dockerfile)
+    if as_tuple(openai) < as_tuple(current_openai):
         raise ValueError("Refusing tunnel-client version downgrade")
-
-    changes = []
-    if openai != current_openai:
-        changes.append(f"OpenAI tunnel-client {current_openai} to {openai}")
-    if cloudflare != current_cloudflare:
-        changes.append(f"cloudflared {current_cloudflare} to {cloudflare}")
-    if not changes:
+    if openai == current_openai:
         return dockerfile, changelog, False
 
     updated = dockerfile.replace(
         f"ARG OPENAI_TUNNEL_VERSION={current_openai}",
         f"ARG OPENAI_TUNNEL_VERSION={openai}",
         1,
-    ).replace(
-        f"ARG CLOUDFLARED_VERSION={current_cloudflare}",
-        f"ARG CLOUDFLARED_VERSION={cloudflare}",
-        1,
     )
     if not re.match(r"^# Changelog\n\n## v[0-9]{4}[.][0-9]{2}[.][0-9]{2}(?:-[1-9][0-9]*)?\n", changelog):
         raise ValueError("Unexpected MCPHub source changelog header")
     first_break = changelog.find("\n", len("# Changelog\n\n"))
-    note = "- Updated bundled tunnel binaries: " + "; ".join(changes) + ".\n"
+    note = f"- Updated bundled OpenAI tunnel-client {current_openai} to {openai}.\n"
     new_changelog = changelog[:first_break + 1] + "\n" + note + changelog[first_break + 1:]
     return updated, new_changelog, True
 
@@ -91,8 +75,8 @@ def api(endpoint: str):
     return json.loads(gh("api", endpoint))
 
 
-def verify_candidate(repository: str, branch: str, sha: str, openai: str, cloudflare: str) -> int:
-    if branch != branch_for(openai, cloudflare):
+def verify_candidate(repository: str, branch: str, sha: str, openai: str) -> int:
+    if branch != branch_for(openai):
         raise ValueError("Automation branch/tag mismatch")
     if not re.fullmatch(r"[a-f0-9]{40}", sha):
         raise ValueError("Unrecognized candidate SHA")
@@ -126,9 +110,7 @@ def verify_candidate(repository: str, branch: str, sha: str, openai: str, cloudf
     git("fetch", "--no-tags", "origin", "dev-mcphub", branch)
     current_docker = git("show", "origin/dev-mcphub:MCPHub/Dockerfile")
     current_notes = git("show", "origin/dev-mcphub:MCPHub/CHANGELOG.md")
-    desired_docker, desired_notes, changed = prepare(
-        current_docker, current_notes, openai, cloudflare
-    )
+    desired_docker, desired_notes, changed = prepare(current_docker, current_notes, openai)
     if not changed:
         raise ValueError("Tunnel update is already on dev-mcphub")
     candidate_docker = git("show", f"{sha}:MCPHub/Dockerfile")
@@ -167,11 +149,11 @@ def wait_for_ci(repository: str, branch: str, sha: str, attempts: int = 168) -> 
     raise TimeoutError("No successful same-SHA validation of tunnel update")
 
 
-def verify_and_merge(repository: str, branch: str, sha: str, openai: str, cloudflare: str):
-    number = verify_candidate(repository, branch, sha, openai, cloudflare)
+def verify_and_merge(repository: str, branch: str, sha: str, openai: str):
+    number = verify_candidate(repository, branch, sha, openai)
     wait_for_ci(repository, branch, sha)
     # Recheck base, candidate contents and SHA immediately before merging.
-    if verify_candidate(repository, branch, sha, openai, cloudflare) != number:
+    if verify_candidate(repository, branch, sha, openai) != number:
         raise ValueError("Update PR changed during validation")
     gh("pr", "merge", str(number), "--repo", repository, "--squash",
        "--delete-branch", "--match-head-commit", sha)
@@ -184,7 +166,6 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("mode", choices=("prepare", "merge"))
     parser.add_argument("--openai", required=True)
-    parser.add_argument("--cloudflare", required=True)
     parser.add_argument("--branch")
     parser.add_argument("--sha")
     args = parser.parse_args()
@@ -193,17 +174,14 @@ def main():
         docker, notes, updated = prepare(
             docker_path.read_text(encoding="utf-8"),
             notes_path.read_text(encoding="utf-8"),
-            args.openai, args.cloudflare,
+            args.openai,
         )
         if updated:
             docker_path.write_text(docker, encoding="utf-8")
             notes_path.write_text(notes, encoding="utf-8")
         print("update=true" if updated else "update=false")
     else:
-        verify_and_merge(
-            os.environ["GITHUB_REPOSITORY"], args.branch, args.sha,
-            args.openai, args.cloudflare,
-        )
+        verify_and_merge(os.environ["GITHUB_REPOSITORY"], args.branch, args.sha, args.openai)
 
 
 if __name__ == "__main__":
