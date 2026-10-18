@@ -113,6 +113,17 @@ if [[ ! "${previous_image}" =~ ^docker\.io/triliumnext/trilium:v[0-9] ]]; then
   exit 1
 fi
 
+current_upstream="$(sed -nE \
+  's#^FROM[[:space:]]+(docker\.io/triliumnext/trilium:v[^[:space:]]+)$#\1#p' \
+  "TriliumNext Notes/Dockerfile" | head -n1)"
+if [[ "${previous_image}" == "${current_upstream}" ]]; then
+  # Same Trilium release on both sides (for example a push to main itself):
+  # no database migration happens, and restart persistence is already covered
+  # by the integration test.
+  echo "Upgrade test skipped: origin/${BASE_BRANCH} already uses ${previous_image}"
+  exit 0
+fi
+
 echo "Upgrade test: ${previous_image} -> ${CURRENT_IMAGE}"
 docker pull "${previous_image}" >/dev/null
 docker volume create "${VOLUME}" >/dev/null

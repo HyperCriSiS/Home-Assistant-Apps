@@ -1,6 +1,18 @@
 # Trilium Notes
 
-This Home Assistant add-on runs [Trilium Notes](https://github.com/TriliumNext/Trilium), a hierarchical note-taking application for building a personal knowledge base. It supports rich text and Markdown, encryption, synchronization, scripting, and extensive organization features.
+**Self-hosted hierarchical notes and personal knowledge base inside Home Assistant.**
+
+[![Validate Trilium](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate.yml/badge.svg?branch=main)](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate.yml)
+[![Trilium version](https://img.shields.io/badge/Trilium-v0.106.0-6E56CF)](https://github.com/TriliumNext/Trilium/releases/tag/v0.106.0)
+![Architecture amd64](https://img.shields.io/badge/amd64-supported-success)
+![Architecture aarch64](https://img.shields.io/badge/aarch64-supported-success)
+![Home Assistant](https://img.shields.io/badge/Home%20Assistant-App-41BDF5?logo=homeassistant&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-blue)
+
+This Home Assistant App runs [Trilium Notes](https://github.com/TriliumNext/Trilium), a hierarchical note-taking application for building a personal knowledge base. It supports rich text and Markdown, encryption, synchronization, scripting, and extensive organization features.
+
+> [!IMPORTANT]
+> Home Assistant Apps require **Home Assistant OS** or a **Supervised** installation. Older Home Assistant versions may still use the term **Add-ons** instead of **Apps**.
 
 ## Installation
 
@@ -44,7 +56,7 @@ The legacy `log_level` and `https_only` options are retained only for upgrade co
 
 ## Data and backups
 
-Persistent data is stored in `/home/node/trilium-data` and mapped to the Home Assistant add-on data volume. Home Assistant backups include this directory. Trilium can also create its own backups under **Options → Backup**.
+Persistent data is stored in `/home/node/trilium-data` and mapped to the Home Assistant App data volume. Home Assistant backups include this directory. The App uses **cold backups**: Home Assistant stops Trilium briefly while the backup is created, so the SQLite database is always captured in a consistent state. Trilium can also create its own backups under **Options → Backup**; these are stored in the same data volume and are therefore included in Home Assistant backups as well.
 
 Before upgrading, create a current Home Assistant backup. Database migrations are performed by Trilium during startup and downgrading across database schema versions may not be supported.
 
@@ -52,16 +64,19 @@ Before upgrading, create a current Home Assistant backup. Database migrations ar
 
 Ingress is enabled by default. Port `8080` is also exposed for optional direct access. Trilium trusts only the Home Assistant Ingress reverse proxy at `172.30.32.2` for forwarded client information instead of globally trusting arbitrary `X-Forwarded-For` headers.
 
+> [!TIP]
+> Direct access on port `8080` bypasses Home Assistant authentication and is protected only by Trilium's own login. If you only use Ingress or the Trilium desktop/mobile sync through a reverse proxy, clear the host port under **Settings → Apps → Trilium Notes → Configuration → Network** to disable it. Never forward this port to the internet without TLS.
+
 ## Troubleshooting
 
-- Review the add-on logs under **Settings → Apps → Trilium Notes → Logs**.
+- Review the App logs under **Settings → Apps → Trilium Notes → Logs**.
 - If the interface does not load after an update, restart the App and clear the browser cache.
 - If startup fails after an upgrade, restore the pre-upgrade backup and attach the complete log when opening an issue.
 
 ## Support
 
-For add-on-specific issues, use the [issue tracker](https://github.com/HyperCriSiS/Home-Assistant-Apps/issues). For Trilium application issues, use the [upstream project](https://github.com/TriliumNext/Trilium/issues).
+For App-specific issues, use the [issue tracker](https://github.com/HyperCriSiS/Home-Assistant-Apps/issues). For Trilium application issues, use the [upstream project](https://github.com/TriliumNext/Trilium/issues).
 
 ## License
 
-This add-on is licensed under the MIT License. Trilium Notes is licensed under the GNU Affero General Public License v3.0.
+This App packaging is licensed under the MIT License. Trilium Notes is licensed under the GNU Affero General Public License v3.0.

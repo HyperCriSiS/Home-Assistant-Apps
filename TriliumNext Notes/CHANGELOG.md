@@ -1,5 +1,28 @@
 # Changelog
 
+## v2026.10.18
+
+Trilium itself stays at v0.106.0. This release improves backup reliability, configuration and documentation.
+
+### Fixed
+
+- Home Assistant backups now capture a consistent Trilium database. The App uses cold backups, so Home Assistant stops Trilium while the backup is created and starts it again automatically afterwards. Previously a backup taken while Trilium was writing could contain an incomplete SQLite database.
+
+### Added
+
+- English and German names and descriptions for all configuration options and for port `8080` in the Home Assistant interface.
+- Status, Trilium version, architecture and license badges in the README.
+
+### Changed
+
+- The App's website link in Home Assistant now opens the Trilium Notes App page instead of the repository root.
+- The README now uses the term "App" consistently and explains how to disable the optional direct port `8080`.
+
+### Maintenance
+
+- Automated Trilium updates now also update the README version badge and never leave partially updated files behind.
+- CI runs only for Trilium-related changes, validates backups, translations and the version badge, and installs test dependencies from a lockfile.
+
 ## v2026.10.11
 
 ### Changed
