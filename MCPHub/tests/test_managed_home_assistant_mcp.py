@@ -26,16 +26,13 @@ class ManagedHomeAssistantMCPTests(unittest.TestCase):
         MODULE.MANAGED_HOME_ASSISTANT_NAME_FILE = (
             MODULE.DATA_DIR / ".managed_home_assistant_mcp_name"
         )
+        MODULE.MANAGED_BASE_URL_FILE = MODULE.DATA_DIR / ".managed_install_base_url"
         for constant, filename in (
             ("JWT_SECRET_FILE", "mcphub_jwt_secret"),
             ("OPENAI_TOKEN_FILE", "mcphub_tunnel_token"),
             ("OPENAI_AUTH_FILE", "mcphub_tunnel_authorization"),
             ("HA_INGRESS_PROXY_SECRET_FILE", "mcphub_ha_ingress_proxy_secret"),
             ("LEGACY_INGRESS_TOKEN_FILE", "mcphub_ingress_token"),
-            ("CLOUDFLARE_INTERNAL_TOKEN_FILE", "mcphub_cloudflare_token"),
-            ("CLOUDFLARE_CLIENT_KEY_FILE", "mcphub_cloudflare_client_key"),
-            ("TAILSCALE_INTERNAL_TOKEN_FILE", "mcphub_tailscale_funnel_token"),
-            ("TAILSCALE_CLIENT_KEY_FILE", "mcphub_tailscale_client_key"),
             ("GITHUB_TOKEN_FILE", "github_token"),
         ):
             setattr(MODULE, constant, MODULE.SECRET_DIR / filename)

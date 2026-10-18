@@ -24,4 +24,4 @@ Die Weboberfläche öffnest du ausschließlich über die Home-Assistant-Seitenle
 
 ## Sicherheit
 
-Die Verbindung nutzt unverschlüsseltes HTTP, der Bearer-Key wird also im Klartext übertragen. Nur in vertrauenswürdigen lokalen Netzen verwenden. Für den Zugriff von unterwegs den OpenAI-, Cloudflare- oder Tailscale-Zugang nutzen; der LAN-Port wird nicht automatisch ins Internet weitergeleitet.
+Die Verbindung nutzt unverschlüsseltes HTTP, der Bearer-Key wird also im Klartext übertragen. Nur in vertrauenswürdigen lokalen Netzen verwenden. Für den Zugriff von unterwegs den OpenAI-Tunnel oder die separate Cloudflared- bzw. Tailscale-App nutzen, die an diesen Port weiterleiten; der LAN-Port selbst wird nicht automatisch ins Internet weitergeleitet.

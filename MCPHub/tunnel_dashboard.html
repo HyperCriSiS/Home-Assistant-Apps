@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>MCPHub · Tunnel Management</title>
+  <title>MCPHub · Tunnels and remote access</title>
   <style>
     :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark light}
     *{box-sizing:border-box}
@@ -18,7 +18,7 @@
     a{color:var(--primary-color,#51b3f5)}
     .back{color:inherit;font-weight:600;text-decoration:none;border:1px solid var(--divider-color,#64748b88);border-radius:9px;padding:.48rem .78rem}
     .back:hover,.back:focus-visible{text-decoration:underline}
-    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+    .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:16px}
     .card{border:1px solid var(--divider-color,#64748b88);border-radius:16px;padding:clamp(17px,2.5vw,26px);background:var(--card-background-color,Canvas)}
     .card-head{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px}
     .badge{display:inline-flex;align-items:center;gap:7px;border:1px solid currentColor;border-radius:99px;padding:4px 11px;font-weight:750;font-size:.82rem}
@@ -50,11 +50,11 @@
     pre{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--secondary-background-color,#64748b12);padding:12px;border-radius:9px;max-height:245px;overflow:auto;font-size:.79rem}
     .help{color:var(--secondary-text-color,#94a3b8);font-size:.88rem}
     .footer{margin-top:22px;font-size:.85rem;color:var(--secondary-text-color,#94a3b8)}
-    #key-message,#tailscale-key-message{min-height:1.3rem}
-    .setup-command{display:block;overflow-wrap:anywhere;padding:12px;border-radius:9px;background:var(--secondary-background-color,#64748b12);font-size:.8rem;margin:12px 0}
+    .setup-command{display:block;white-space:pre-wrap;overflow-wrap:anywhere;padding:12px;border-radius:9px;background:var(--secondary-background-color,#64748b12);font-size:.8rem;margin:12px 0}
     .copy-helper{font-size:.81rem;color:var(--secondary-text-color,#94a3b8)}
-    #key-fallback{width:100%;resize:vertical;min-height:65px;padding:9px;border-radius:9px;font:inherit}
-    @media(max-width:1020px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    .copy-fallback{width:100%;resize:vertical;min-height:65px;padding:9px;border-radius:9px;font:inherit}
+    dd a{font-weight:500;margin-left:6px;white-space:nowrap}
+    @media(max-width:1020px){.grid{grid-template-columns:1fr}}
     @media(max-width:700px){.grid{grid-template-columns:1fr}.metadata{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(prefers-reduced-motion:no-preference){button,.back{transition:filter .15s}}
   </style>
@@ -65,8 +65,8 @@
       <div class="eyebrow">Home Assistant · MCPHub</div>
       <a class="back" href="../">Open MCPHub ↗</a>
     </div>
-    <h1>Tunnel Management</h1>
-    <p class="intro">Manage OpenAI, Cloudflare, and Tailscale. Enablement, routes, and credentials
+    <h1>Tunnels and remote access</h1>
+    <p class="intro">Control the OpenAI tunnel and check remote access. Settings and credentials
       remain under <strong>Home Assistant → Apps → MCPHub → Configuration</strong>.</p>
     <main class="grid">
       <article class="card" id="t-openai" aria-labelledby="openai-title">
@@ -97,103 +97,61 @@
         </details>
       </article>
 
-      <article class="card" id="t-cloudflare" aria-labelledby="cloudflare-title">
+      <article class="card" id="t-remote" aria-labelledby="remote-title">
         <div class="card-head">
-          <h2 id="cloudflare-title">Cloudflare Tunnel</h2>
+          <h2 id="remote-title">Remote access</h2>
           <span class="badge" data-tone="neutral" role="status" aria-live="polite">Loading…</span>
         </div>
-        <p class="summary">Checking tunnel status…</p>
+        <p class="summary">Cloudflare and Tailscale run in their own Home Assistant Apps and forward
+          to MCPHub's MCP gateway. This card shows their status and checks your external address.</p>
         <dl class="metadata">
-          <div><dt>Enabled</dt><dd data-field="configured">–</dd></div>
-          <div><dt>Connection</dt><dd data-field="connection">–</dd></div>
-          <div><dt>MCP route</dt><dd data-field="route">–</dd></div>
-          <div><dt>Last check</dt><dd data-field="age">–</dd></div>
-        </dl>
-        <div class="actions" aria-label="Manage Cloudflare">
-          <button type="button" class="primary" data-mode="cloudflare" data-action="start">Start</button>
-          <button type="button" data-mode="cloudflare" data-action="stop">Stop</button>
-          <button type="button" data-mode="cloudflare" data-action="reload">Reload</button>
-        </div>
-        <p class="feedback" role="status" aria-live="polite"></p>
-        <details data-panel="key" data-mode="cloudflare">
-          <summary>Manage Cloudflare client key</summary>
-          <div class="detail-content">
-            <p class="help">For external MCP clients: <code>Authorization: Bearer YOUR_KEY</code>.
-              Rotating the key immediately invalidates the previous key.</p>
-            <div class="actions">
-              <button type="button" id="copy-key">Copy key</button>
-              <button type="button" id="rotate-key">Rotate key</button>
-            </div>
-            <p id="key-message" role="status" aria-live="polite"></p>
-          </div>
-        </details>
-        <details data-panel="diagnostics" data-mode="cloudflare">
-          <summary>Show diagnostics</summary>
-          <div class="detail-content" data-diagnostics>Loading diagnostics…</div>
-        </details>
-        <details data-panel="logs" data-mode="cloudflare">
-          <summary>Show logs</summary>
-          <pre class="detail-content" data-logs>Loading logs…</pre>
-        </details>
-      </article>
-
-      <article class="card" id="t-tailscale" aria-labelledby="tailscale-title">
-        <div class="card-head">
-          <h2 id="tailscale-title">Tailscale Funnel</h2>
-          <span class="badge" data-tone="neutral" role="status" aria-live="polite">Loading…</span>
-        </div>
-        <p class="summary">Checking local MCP access…</p>
-        <dl class="metadata">
+          <div><dt>External address</dt><dd data-field="external-url">–</dd></div>
+          <div><dt>Address check</dt><dd data-field="check">Not checked</dd></div>
           <div><dt>MCP gateway</dt><dd data-field="gateway">–</dd></div>
-          <div><dt>Funnel</dt><dd data-field="funnel">Not available</dd></div>
-          <div><dt>MCP route</dt><dd data-field="route">–</dd></div>
-          <div><dt>HTTPS check</dt><dd data-field="https">Not checked</dd></div>
+          <div><dt>Cloudflared App</dt><dd><span data-field="cloudflared">–</span>
+            <a data-link="cloudflared" href="#" target="_blank" rel="noopener noreferrer">Open App ↗</a></dd></div>
+          <div><dt>Tailscale App</dt><dd><span data-field="tailscale">–</span>
+            <a data-link="tailscale" href="#" target="_blank" rel="noopener noreferrer">Open App ↗</a></dd></div>
         </dl>
-        <p class="help"><strong>Public URL:</strong>
-          <span data-field="public-url">Not configured</span></p>
-        <div class="actions" aria-label="Manage local Tailscale MCP gateway">
-          <button type="button" class="primary" data-mode="tailscale" data-action="start">Start MCP gateway</button>
-          <button type="button" data-mode="tailscale" data-action="stop">Stop MCP gateway</button>
-          <button type="button" id="tailscale-check">Check HTTPS</button>
+        <div class="actions" aria-label="Check remote access">
+          <button type="button" id="remote-check">Check external address</button>
         </div>
         <p class="feedback" role="status" aria-live="polite"></p>
+        <details data-panel="setup" data-mode="cloudflare">
+          <summary>Set up Cloudflare</summary>
+          <div class="detail-content">
+            <p class="help">In the <strong>Cloudflared App</strong> (local tunnel) add this entry under
+              <code>additional_hosts</code>. With a remote-managed tunnel (<code>tunnel_token</code>), create the
+              same public hostname and service in the Cloudflare dashboard instead.</p>
+            <code class="setup-command" id="cloudflare-entry">–</code>
+            <button type="button" data-copy="cloudflare-entry">Copy entry</button>
+          </div>
+        </details>
         <details data-panel="setup" data-mode="tailscale">
-          <summary>Set up Tailscale Funnel</summary>
+          <summary>Set up Tailscale</summary>
           <div class="detail-content">
-            <p class="help">1. In the MCPHub app <strong>Configuration → Tailscale</strong> enable the gateway and select the route.
-              Under <strong>Network</strong> map the additional host port <code>3002/tcp</code> to <code>3002</code> and restart the MCPHub app.</p>
-            <p class="help">2. In the existing <strong>Tailscale add-on</strong> keep <code>share_homeassistant: disabled</code>.
-              Enable MagicDNS, HTTPS, and Funnel permission in your tailnet. Run this once in the add-on CLI:</p>
-            <code class="setup-command" id="tailscale-command">/opt/tailscale funnel --bg --https=443 http://127.0.0.1:3002</code>
-            <button type="button" id="copy-tailscale-command">Copy command</button>
-            <p class="help">3. Use <code>/opt/tailscale funnel status</code> to inspect the actual Funnel configuration;
-              enter the HTTPS URL including the MCP route in the MCPHub app configuration.
-              In Claude, use the same route and the client key below as a Bearer header.</p>
+            <p class="help">Devices in your tailnet reach MCPHub directly at
+              <code id="tailnet-url">http://&lt;Home Assistant Tailscale name&gt;:3001/mcp</code>.</p>
+            <p class="help">For public access through Funnel, run this once in the Tailscale App container,
+              for example from the Advanced SSH &amp; Web Terminal App with protection mode disabled
+              (<code>docker exec addon_a0d7b954_tailscale …</code>). Port 8443 avoids a conflict when Home
+              Assistant itself is shared on 443.</p>
+            <code class="setup-command" id="funnel-command">–</code>
+            <button type="button" data-copy="funnel-command">Copy command</button>
           </div>
         </details>
-        <details data-panel="key" data-mode="tailscale">
-          <summary>Manage client key</summary>
+        <details data-panel="setup" data-mode="clients">
+          <summary>Connect MCP clients</summary>
           <div class="detail-content">
-            <p class="help">For Claude: <code>Authorization: Bearer YOUR_KEY</code>.
-              Rotating the key immediately invalidates the previous key.</p>
-            <div class="actions">
-              <button type="button" id="tailscale-copy-key">Copy client key</button>
-              <button type="button" id="tailscale-rotate-key">Rotate client key</button>
-            </div>
-            <p id="tailscale-key-message" role="status" aria-live="polite"></p>
+            <p class="help">Create a key in MCPHub under <strong>Keys</strong>, then use
+              <strong>Copy client config</strong> on a server or group. MCPHub fills in the external address
+              configured for this App, so the copied configuration works from outside Home Assistant.</p>
           </div>
-        </details>
-        <details data-panel="diagnostics" data-mode="tailscale">
-          <summary>Show diagnostics</summary>
-          <div class="detail-content" data-diagnostics>Loading…</div>
-          <p class="help">MCPHub controls only its own MCP gateway. The actual Funnel status and logs
-            remain managed exclusively by the existing Tailscale add-on.
-            An HTTPS check from Home Assistant does not prove public Internet reachability.</p>
         </details>
       </article>
     </main>
-    <p class="footer">Status indicators only reflect verifiable components. They do not confirm public Internet reachability.
-      Diagnostics and logs load when expanded and do not intentionally expose credentials.</p>
+    <p class="footer">The address check sends one request without credentials and expects MCPHub's gateway to
+      answer with 401. Diagnostics and logs load when expanded and do not intentionally expose credentials.</p>
   </div>
   <script src="app.js" defer></script>
 </body>

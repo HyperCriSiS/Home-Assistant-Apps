@@ -1,5 +1,15 @@
 # Changelog
 
+## v2026.10.19
+
+> **Breaking change:** Cloudflare and Tailscale now run in their own Home Assistant Apps. Reconfigure remote access as described in the documentation; the removed options are ignored.
+
+- Remove the bundled `cloudflared` connector and the Tailscale MCP gateway with host port `3002`, their options, and their generated client keys. On start the App deletes the old credentials and removes their MCPHub system keys so they no longer grant access.
+- Use the MCP-only gateway on port `3001` as the single entry point for LAN clients and for the separate Cloudflared and Tailscale Apps; remote clients use normal MCPHub bearer keys.
+- Add the optional `external_url` setting. MCPHub uses it as its base URL, so **Copy client config** produces configurations that work from outside Home Assistant.
+- Replace the Cloudflare and Tailscale dashboard cards with a **Remote access** card: Cloudflared and Tailscale App state through read-only Supervisor info calls, links to open or install them, ready-to-copy setup text, and an end-to-end check of the external address.
+- Link the Cloudflared and Tailscale Apps from the configuration page and documentation.
+
 ## v2026.10.18-1
 
 - Merge the OpenAI tunnel manager and the Cloudflare/Tailscale tunnel controller into one process with shared start, backoff and health logic; the legacy OpenAI-only page at `/_mcphub_tunnel/` is removed, use the **Tunnels** dashboard instead.

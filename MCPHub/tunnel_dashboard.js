@@ -1,7 +1,6 @@
 "use strict";
-const modes = ["openai", "cloudflare", "tailscale"];
+const modes = ["openai"];
 const stateNames = {
-  gateway_ready: ["Gateway ready", "success", "The MCP gateway is ready; Funnel is managed separately."],
   ready: ["Ready", "success", "The local tunnel is connected."],
   starting: ["Starting", "warning", "Connecting…"],
   retrying: ["Retrying", "warning", "Reconnecting…"],
@@ -41,17 +40,6 @@ function render(mode, state) {
   badge.dataset.tone = tone;
   text(badge, name);
   text(card.querySelector(".summary"), s.last_error || summary);
-  if (mode === "tailscale") {
-    text(card.querySelector('[data-field="gateway"]'),
-      s.gateway_ready ? "Ready in the App" : s.configured ? "Not ready" : "Disabled");
-    text(card.querySelector('[data-field="funnel"]'), "External App · manual");
-    text(card.querySelector('[data-field="route"]'), s.route || "–");
-    text(card.querySelector('[data-field="https"]'),
-      s.public_check === "gateway_answered" ? "Gateway answered" :
-      s.public_check === "not_verified" ? "Not confirmed" : "Not checked");
-    text(card.querySelector('[data-field="public-url"]'),
-      s.public_url || (s.public_url_invalid ? "Invalid URL" : "Not configured"));
-  } else {
     text(card.querySelector('[data-field="configured"]'),
       typeof s.configured === "boolean" ? (s.configured ? "Yes" : "No") : "Unknown");
   text(card.querySelector('[data-field="connection"]'),
@@ -59,7 +47,6 @@ function render(mode, state) {
   text(card.querySelector('[data-field="route"]'), s.route || "–");
   text(card.querySelector('[data-field="age"]'),
     typeof s.health_age_seconds === "number" ? "" + s.health_age_seconds + " s" : "–");
-  }
   for (const button of card.querySelectorAll("button[data-action]")) {
     const action = button.dataset.action;
     button.disabled = busy.has(mode) ||
@@ -96,30 +83,14 @@ async function loadDetails(mode, kind) {
     if (report.note) { message(target, report.note); return; }
     const list = document.createElement("ul");
     list.className = "diag-lines";
-    if (mode === "tailscale") {
-      message(target, report.note || "Tailscale diagnostics are available only in the Tailscale add-on.");
-      return;
+    for (const [name, item] of Object.entries(report.components || {})) {
+      if (!item || typeof item !== "object") continue;
+      const status = [item.status, item.state, item.reason_code].filter(Boolean).join(" · ");
+      detailLine(title[name] || name, status || "No details", list);
     }
-    if (mode === "openai") {
-      for (const [name, item] of Object.entries(report.components || {})) {
-        if (!item || typeof item !== "object") continue;
-        const status = [item.status, item.state, item.reason_code].filter(Boolean).join(" · ");
-        detailLine(title[name] || name, status || "No details", list);
-      }
-      if (!list.children.length) {
-        message(target, "No component data available yet.");
-        return;
-      }
-    } else {
-      for (const item of report.prechecks || []) {
-        if (!item || typeof item !== "object") continue;
-        const detail = [item.status, item.details, item.action].filter(Boolean).join(" · ");
-        detailLine(item.component || "Network check", detail || "No details", list);
-      }
-      if (!list.children.length) {
-        message(target, "No network check available yet.");
-        return;
-      }
+    if (!list.children.length) {
+      message(target, "No component data available yet.");
+      return;
     }
     target.replaceChildren(list);
   } catch {
@@ -132,8 +103,10 @@ async function refresh() {
   try {
     const all = await api("api/status");
     for (const mode of modes) render(mode, all[mode]);
+    renderRemote(all.remote);
   } catch {
     for (const mode of modes) render(mode, {state:"unavailable"});
+    renderRemote({});
   } finally { refreshing = false; }
 }
 for (const button of document.querySelectorAll("button[data-action]")) {
@@ -150,10 +123,7 @@ for (const button of document.querySelectorAll("button[data-action]")) {
         headers:{"Content-Type":"application/json", "X-MCPHub-Tunnel-Control":"1"},
         body:"{}"
       });
-      feedback(mode, mode === "tailscale"
-        ? (action === "stop" ? "Local MCP gateway stopped. Funnel unchanged." :
-          "Local MCP gateway started. Funnel unchanged.")
-        : action === "stop" ? "Tunnel stopped." :
+      feedback(mode, action === "stop" ? "Tunnel stopped." :
           action === "reload" ? "Settings reloaded." : "Start requested.");
     } catch (error) {
       feedback(mode, "Action failed: " + error.message, true);
@@ -168,125 +138,92 @@ for (const section of document.querySelectorAll('details[data-panel="logs"], det
     if (section.open) loadDetails(section.dataset.mode, section.dataset.panel);
   });
 }
-function keyMessage(message) {
-  text(document.getElementById("key-message"), message);
+const appStates = {
+  started: "Running", stopped: "Stopped", error: "Error",
+  not_installed: "Not installed", unknown: "Unknown"
+};
+const checkStates = {
+  reachable: ["Reaches MCPHub", "success"],
+  redirect: ["Redirected", "warning"],
+  other_service: ["Answers, but not MCPHub", "error"],
+  unreachable: ["Not reachable", "error"]
+};
+function remoteFeedback(message, error=false) { feedback("remote", message, error); }
+function renderRemote(state) {
+  const card = document.getElementById("t-remote");
+  const s = state || {};
+  const badge = card.querySelector(".badge");
+  const check = s.check && checkStates[s.check.result];
+  let tone = "neutral", name = "Not configured";
+  if (s.external_url_invalid) { tone = "error"; name = "Invalid address"; }
+  else if (s.external_url && check) { name = check[0]; tone = check[1]; }
+  else if (s.external_url) { name = "Not checked"; }
+  badge.dataset.tone = tone;
+  text(badge, name);
+  text(card.querySelector('[data-field="external-url"]'),
+    s.external_url || (s.external_url_invalid ? "Invalid, see App configuration" : "Not configured"));
+  text(card.querySelector('[data-field="check"]'), !check ? "Not checked" :
+    check[0] + (typeof s.check.age_seconds === "number" ? " · " + s.check.age_seconds + " s ago" : ""));
+  const gw = s.gateway || {};
+  const port = gw.host_port;
+  text(card.querySelector('[data-field="gateway"]'), port ?
+    (gw.host_ip || "<Home Assistant IP>") + ":" + port : "Host port disabled (Network settings)");
+  for (const key of ["cloudflared", "tailscale"]) {
+    const app = (s.apps || {})[key] || {};
+    text(card.querySelector('[data-field="' + key + '"]'),
+      (appStates[app.state] || "Unknown") + (app.version ? " · " + app.version : "") +
+      (app.update_available ? " · update available" : ""));
+    const link = card.querySelector('[data-link="' + key + '"]');
+    if (app.link && /^https:\/\/my\.home-assistant\.io\//.test(app.link)) link.href = app.link;
+    text(link, app.state === "not_installed" ? "Install App ↗" : "Open App ↗");
+  }
+  const target = "http://" + (gw.host_ip || "<Home Assistant IP>") + ":" + (port || 3001);
+  let hostname = "mcp.example.com";
+  try { if (s.external_url) hostname = new URL(s.external_url).hostname; } catch { /* keep example */ }
+  text(document.getElementById("cloudflare-entry"),
+    "- hostname: " + hostname + "\n  service: " + target);
+  text(document.getElementById("tailnet-url"),
+    "http://<Home Assistant Tailscale name>:" + (port || 3001) + "/mcp");
+  text(document.getElementById("funnel-command"),
+    "/opt/tailscale funnel --bg --https=8443 http://127.0.0.1:" + (port || 3001));
 }
-async function keyRequest(path, method) {
-  return api("api/client-key" + path, {
-    method:method || "GET",
-    headers:{"X-MCPHub-Tunnel-Control":"1",
-      ...(method ? {"Content-Type":"application/json"} : {})},
-    ...(method ? {body:"{}"} : {})
-  });
+async function copyFrom(button) {
+  const source = document.getElementById(button.dataset.copy);
+  const value = source.textContent;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try { await navigator.clipboard.writeText(value); remoteFeedback("Copied."); return; }
+    catch { /* Clipboard unavailable in non-secure contexts. */ }
+  }
+  let field = button.nextElementSibling;
+  if (!field || !field.classList.contains("copy-fallback")) {
+    field = document.createElement("textarea");
+    field.className = "copy-fallback"; field.readOnly = true; field.rows = 3;
+    button.after(field);
+  }
+  field.value = value; field.select();
+  remoteFeedback("Select and copy the text manually.");
 }
-document.getElementById("copy-key").addEventListener("click", async () => {
-  const button = document.getElementById("copy-key");
+for (const button of document.querySelectorAll("button[data-copy]"))
+  button.addEventListener("click", () => copyFrom(button));
+document.getElementById("remote-check").addEventListener("click", async () => {
+  const button = document.getElementById("remote-check");
   button.disabled = true;
+  remoteFeedback("Checking the external address without credentials…");
   try {
-    const data = await keyRequest("");
-    if (!data.key) throw Error("Key unavailable");
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      try {
-        await navigator.clipboard.writeText(data.key);
-        keyMessage("Key copied to clipboard.");
-        return;
-      } catch { /* Clipboard unavailable in non-secure contexts. */ }
-    }
-    let field = document.getElementById("key-fallback");
-    if (!field) {
-      field = document.createElement("textarea");
-      field.id = "key-fallback"; field.readOnly = true; field.rows = 2;
-      button.parentElement.after(field);
-    }
-    field.value = data.key;
-    field.select();
-    keyMessage("Select and copy the key manually.");
-  } catch {
-    keyMessage("Client key is currently unavailable.");
-  } finally { button.disabled = false; }
-});
-document.getElementById("rotate-key").addEventListener("click", async () => {
-  if (!confirm("Rotate client key? The previous key will be invalidated immediately.")) return;
-  const button = document.getElementById("rotate-key");
-  button.disabled = true;
-  try {
-    await keyRequest("/rotate", "POST");
-    const field = document.getElementById("key-fallback");
-    if (field) field.remove();
-    keyMessage("New key generated. Copy it again and update your MCP clients.");
-  } catch {
-    keyMessage("Key could not be rotated.");
-  } finally { button.disabled = false; }
-});
-
-const funnelCommand = "/opt/tailscale funnel --bg --https=443 http://127.0.0.1:3002";
-async function copyToClipboard(value) {
-  if (!navigator.clipboard || !navigator.clipboard.writeText) return false;
-  try { await navigator.clipboard.writeText(value); return true; }
-  catch { return false; }
-}
-document.getElementById("copy-tailscale-command").addEventListener("click", async () => {
-  const done = await copyToClipboard(funnelCommand);
-  feedback("tailscale", done ? "CLI command copied." :
-    "Clipboard unavailable. Copy the command above manually.", !done);
-});
-document.getElementById("tailscale-check").addEventListener("click", async () => {
-  const button = document.getElementById("tailscale-check");
-  button.disabled = true;
-  feedback("tailscale", "Checking HTTPS without sending credentials…");
-  try {
-    const report = await api("api/tailscale/https-check", {
-      headers: {"X-MCPHub-Tunnel-Control": "1"}
+    const response = await fetch("api/remote/check", {
+      cache: "no-store", headers: {"X-MCPHub-Tunnel-Control": "1"}
     });
-    feedback("tailscale", report.result === "gateway_answered" ?
-      "HTTPS gateway responded. Public Internet reachability is not confirmed." :
-      "No confirmed HTTPS response from the MCP gateway.", report.result !== "gateway_answered");
+    if (response.status === 409) throw Error(await response.text());
+    if (!response.ok) throw Error("HTTP " + response.status);
+    const report = await response.json();
+    const state = checkStates[report.result] || ["Unknown result", "warning"];
+    const detail = report.result === "redirect" && report.detail ? " → " + report.detail :
+      report.result === "other_service" && report.status ? " (HTTP " + report.status + ")" :
+      report.result === "unreachable" && report.detail ? " (" + report.detail + ")" : "";
+    remoteFeedback(state[0] + detail, state[1] === "error");
     await refresh();
-  } catch {
-    feedback("tailscale", "Configure a valid Funnel URL in the app settings first.", true);
-  } finally { button.disabled = false; }
-});
-document.getElementById("tailscale-copy-key").addEventListener("click", async () => {
-  const button = document.getElementById("tailscale-copy-key");
-  button.disabled = true;
-  const target = document.getElementById("tailscale-key-message");
-  try {
-    const data = await api("api/tailscale/client-key", {
-      headers: {"X-MCPHub-Tunnel-Control": "1"}
-    });
-    if (!data.key) throw Error("Missing key");
-    if (await copyToClipboard(data.key)) {
-      text(target, "Client key copied.");
-    } else {
-      let field = document.getElementById("tailscale-key-fallback");
-      if (!field) {
-        field = document.createElement("textarea");
-        field.id = "tailscale-key-fallback"; field.readOnly = true; field.rows = 2;
-        field.style.width = "100%";
-        button.parentElement.after(field);
-      }
-      field.value = data.key; field.select();
-      text(target, "Select and copy the key manually.");
-    }
-  } catch { text(target, "Client key could not be loaded."); }
-  finally { button.disabled = false; }
-});
-document.getElementById("tailscale-rotate-key").addEventListener("click", async () => {
-  if (!confirm("Rotate Tailscale client key? The previous key will immediately be invalidated.")) return;
-  const button = document.getElementById("tailscale-rotate-key");
-  button.disabled = true;
-  try {
-    await api("api/tailscale/client-key/rotate", {
-      method: "POST", headers: {
-        "Content-Type": "application/json", "X-MCPHub-Tunnel-Control": "1"
-      }, body: "{}"
-    });
-    const field = document.getElementById("tailscale-key-fallback");
-    if (field) field.remove();
-    text(document.getElementById("tailscale-key-message"),
-      "Key rotated. Copy the new key and update Claude.");
-  } catch {
-    text(document.getElementById("tailscale-key-message"), "Key rotation failed.");
+  } catch (error) {
+    remoteFeedback(error.message || "Check failed.", true);
   } finally { button.disabled = false; }
 });
 

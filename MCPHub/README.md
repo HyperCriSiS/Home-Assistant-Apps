@@ -61,12 +61,12 @@ The development App is shown as **MCPHub (Dev)** under
 - Optional managed Home Assistant MCP Server bridge
 - Bundled GitHub CLI (`gh`) for `amd64` / `aarch64` with an optional managed GitHub CLI MCP server
 - Optional OpenAI Secure MCP Tunnel for ChatGPT / OpenAI clients
-- Optional Cloudflare Tunnel for Claude, Cursor, VS Code, and other remote MCP clients
+- Remote access for Claude, Cursor, VS Code, and other MCP clients through the separate Cloudflared or Tailscale App, with status and an end-to-end address check
 - No public MCPHub port required
 - No Home Assistant Docker socket access
 - No privileged mode
 - No host networking
-- No Supervisor API permission
+- Read-only Supervisor info access only (no App control)
 - Home Assistant hot-backup support (package caches excluded)
 - `amd64` and `aarch64` support
 
@@ -128,16 +128,16 @@ MCP APIs other than the built-in Assist API.
 
 Open MCPHub from the Home Assistant sidebar and select **Tunnels** in its top bar.
 The Ingress-only tunnel dashboard provides **Start**, **Stop**, **Reload** and local
-readiness monitoring for OpenAI and Cloudflare without restarting MCPHub. Administrators can also copy or rotate the
-automatically generated Cloudflare Client Key within the Cloudflare section.
-Each tunnel has its own local component diagnostics and bounded redacted live logs.
+readiness monitoring for the OpenAI tunnel without restarting MCPHub, with local component
+diagnostics and bounded redacted live logs. Its **Remote access** card shows the state of the
+Cloudflared and Tailscale Apps and checks your external address end to end.
 LAN port settings remain under Home Assistant App **Network**.
 
 Local process health does not guarantee internet-side connectivity.
 
 ## Remote access
 
-MCPHub supports two independent remote-access paths. Both are optional and can be enabled at the same time.
+MCPHub supports two remote-access paths. Both are optional and can be combined.
 
 ### ChatGPT through OpenAI Secure MCP Tunnel
 
@@ -167,13 +167,19 @@ It starts with `tunnel_`. Do not use the API key's Tracking ID.
 
 See [DOCS.md](DOCS.md) for the complete OpenAI tunnel configuration.
 
-### Generic remote MCP through Cloudflare Tunnel
+### Claude, Cursor, VS Code and others through Cloudflare or Tailscale
 
-Cloudflare Tunnel exposes one explicitly selected MCPHub route through a normal HTTPS hostname. This is useful for Claude, Cursor, VS Code, and other clients that support remote Streamable HTTP MCP.
+> [!IMPORTANT]
+> Breaking change in v2026.10.19: MCPHub no longer bundles `cloudflared` or its own
+> Tailscale gateway. Use the separate Cloudflared or Tailscale App instead.
 
-The App runs a loopback-only Cloudflare origin on `127.0.0.1:8098`. That adapter exposes exactly the configured `cloudflare_mcp_path`; all other paths return 404. Remote clients must also provide the automatically generated client key, available at the Ingress-only tunnel control page.
+Install the [Cloudflared App](https://my.home-assistant.io/redirect/supervisor_addon/?addon=396f0234_cloudflared&repository_url=https%3A%2F%2Fgithub.com%2Fhomeassistant-apps%2Frepository)
+or the [Tailscale App](https://my.home-assistant.io/redirect/supervisor_addon/?addon=a0d7b954_tailscale&repository_url=https%3A%2F%2Fgithub.com%2Fhassio-addons%2Frepository)
+and let it forward to MCPHub's MCP-only gateway on port `3001`. Set `external_url` to the
+resulting public address, create a bearer key in MCPHub under **Keys**, and use
+**Copy client config** in MCPHub to get a ready-made configuration for your client.
 
-For the smallest tool surface, create a focused MCPHub group and expose only that group:
+For the smallest tool surface, create a focused MCPHub group and use only that group's route:
 
 ```text
 /mcp/development
@@ -181,9 +187,7 @@ For the smallest tool surface, create a focused MCPHub group and expose only tha
 /mcp/web
 ```
 
-This prevents clients from discovering every server and tool in MCPHub at once.
-
-See [DOCS.md](DOCS.md) for the Cloudflare setup.
+See [DOCS.md](DOCS.md) for the Cloudflare and Tailscale setup.
 
 ## Security model
 
@@ -198,7 +202,7 @@ The dashboard is exposed through a dedicated Home Assistant Ingress adapter. The
 
 Home Assistant Ingress provides single sign-on for the dashboard. The Supervisor-provided Home Assistant user identity is mapped into MCPHub only when the request also carries a private per-installation proxy trust secret injected by the local Ingress adapter.
 
-MCP transport authentication remains independent from Home Assistant Ingress. OpenAI and Cloudflare each use their own route-scoped internal credentials. The public Cloudflare client key is validated by the local adapter and is never registered as a dashboard credential in MCPHub.
+MCP transport authentication remains independent from Home Assistant Ingress. The OpenAI tunnel uses its own route-scoped internal credential; LAN, Cloudflare and Tailscale clients use MCPHub bearer keys through the MCP-only gateway, which never serves the dashboard or management API.
 
 Secrets and MCPHub configuration are stored in the persistent App data directory and are included in Home Assistant hot backups. Re-downloadable package caches are excluded.
 
@@ -223,10 +227,7 @@ The Home Assistant App configuration contains Home Assistant MCP and remote-acce
 | `tunnel_id` | empty | Tunnel ID (`tunnel_...`) from [OpenAI Tunnel settings](https://platform.openai.com/settings/organization/tunnels); not the API key Tracking ID |
 | `tunnel_mcp_path` | `/mcp` | MCPHub route exposed through the tunnel |
 | `tunnel_log_level` | `info` | OpenAI tunnel log verbosity |
-| `cloudflare_tunnel_enabled` | `false` | Enables Cloudflare Tunnel |
-| `cloudflare_tunnel_token` | empty | Connector token for a remotely managed Cloudflare Tunnel |
-| `cloudflare_mcp_path` | `/mcp` | Exact MCPHub route exposed through Cloudflare |
-| Cloudflare Client Key | generated automatically | Copy/rotate through the protected Ingress-only Tunnel Control page |
+| `external_url` | empty | Address MCP clients use (for example `https://mcp.example.com`); sets MCPHub's base URL for **Copy client config** and enables the dashboard's address check |
 
 MCP server configuration itself is managed from the MCPHub Web UI. Changing
 `home_assistant_mcp_server_name` removes the old managed entry; update any

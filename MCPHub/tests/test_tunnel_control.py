@@ -1,4 +1,4 @@
-"""Regression tests for independent OpenAI, Cloudflare and Tailscale access."""
+"""Regression tests for OpenAI tunnel control and the remote access dashboard."""
 import importlib.util
 import json
 import sys
@@ -8,7 +8,7 @@ import unittest
 from http.client import HTTPConnection
 from http.server import ThreadingHTTPServer
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -28,122 +28,56 @@ class TunnelControllerTests(unittest.TestCase):
         self.addCleanup(tmp.cleanup)
         directory = Path(tmp.name)
         self.mod.OPTIONS = directory / "options.json"
-        self.mod.CF_SECRET = directory / "secret" / "token"
-        self.mod.CF_CLIENT_KEY = directory / "secret" / "client_key"
-        self.mod.TS_CLIENT_KEY = directory / "secret" / "tailscale_key"
-        self.mod.CF_STATE = directory / "secret" / "cloudflare_state"
         self.mod.OPENAI_STATE = directory / "secret" / "openai_state"
         self.mod.OPENAI_KEY_FILE = directory / "secret" / "openai_key"
         self.mod.OPENAI_AUTH_FILE = directory / "auth"
         self.mod.OPENAI_AUTH_FILE.write_text("Bearer test-auth", encoding="utf-8")
-        self.mod.CF_CLIENT_KEY.parent.mkdir()
-        self.mod.CF_CLIENT_KEY.write_text("c" * 48, encoding="utf-8")
-        self.mod.TS_CLIENT_KEY.write_text("t" * 48, encoding="utf-8")
         self.set_options()
 
     def set_options(self, **options):
         self.mod.OPTIONS.write_text(json.dumps(options), encoding="utf-8")
 
-    def test_cloudflare_start_protects_secret_and_checks_both_health_probes(self):
-        self.set_options(cloudflare={
-            "cloudflare_tunnel_enabled": True,
-            "cloudflare_tunnel_token": "sensitive-token",
-            "cloudflare_mcp_path": "/mcp/development",
-        })
-        cloudflare = self.mod.CloudflareTunnel()
-        with patch.object(self.mod.subprocess, "Popen") as spawn, \
-             patch.object(self.mod, "check", return_value=False) as check:
-            proc = MagicMock()
-            proc.poll.return_value = None
-            spawn.return_value = proc
-            cloudflare.command("start")
-            self.assertEqual(self.mod.CF_SECRET.read_text(), "sensitive-token")
-            self.assertEqual(self.mod.CF_SECRET.stat().st_mode & 0o777, 0o600)
-            self.assertNotIn("sensitive-token", str(spawn.call_args))
-            cloudflare.tick(cloudflare.started + 45)
-            self.assertEqual(cloudflare.state, "degraded")
-            self.assertFalse(cloudflare.status(cloudflare.started + 45)["transport_ready"])
-            self.assertEqual(check.call_count, 2)
-            cloudflare.command("stop")
-            self.assertEqual(cloudflare.state, "stopped")
-
-    def test_stale_cloudflare_ready_never_appears_healthy(self):
-        cloudflare = self.mod.CloudflareTunnel()
-        process = MagicMock()
-        process.poll.return_value = None
-        cloudflare.proc = process
-        cloudflare.state = "ready"
-        cloudflare.desired = True
-        cloudflare.checked = 3.0
-        result = cloudflare.status(30.0)
-        self.assertEqual(result["state"], "stale")
-        self.assertFalse(result["transport_ready"])
-
-    def test_unconfigured_cloudflare_fails_closed_without_leaking_credentials(self):
-        cloudflare = self.mod.CloudflareTunnel()
-        with patch.object(self.mod.subprocess, "Popen") as spawn:
-            cloudflare.command("start")
-            spawn.assert_not_called()
-        self.assertEqual(cloudflare.state, "error")
-        self.assertFalse(cloudflare.desired)
-        self.assertFalse(self.mod.CF_STATE.exists())
-        self.assertNotIn("token", json.dumps(cloudflare.status(2.0)).lower())
-
-    def test_enabled_cloudflare_with_missing_token_fails_closed(self):
-        self.set_options(cloudflare={"cloudflare_tunnel_enabled": True})
-        cloudflare = self.mod.CloudflareTunnel()
-        with patch.object(self.mod.subprocess, "Popen") as spawn:
-            cloudflare.command("start")
-            spawn.assert_not_called()
-        self.assertEqual(cloudflare.state, "error")
-        self.assertFalse(cloudflare.desired)
-        # The operator's Start choice survives; a fixed config resumes on restart.
-        self.assertEqual(self.mod.CF_STATE.read_text(), "running")
-
-    def test_cloudflare_start_stop_state_persists_across_restarts(self):
-        self.set_options(cloudflare={
-            "cloudflare_tunnel_enabled": True,
-            "cloudflare_tunnel_token": "sensitive-token",
-        })
-        with patch.object(self.mod.subprocess, "Popen") as spawn:
-            spawn.return_value.poll.return_value = None
-            first = self.mod.CloudflareTunnel()
-            self.assertTrue(first.desired)  # nothing persisted: option decides
-            first.command("stop")
-            self.assertEqual(self.mod.CF_STATE.read_text(), "stopped")
-            self.assertEqual(self.mod.CF_STATE.stat().st_mode & 0o777, 0o600)
-            self.assertFalse(self.mod.CloudflareTunnel().desired)
-            first.command("start")
-            self.assertEqual(self.mod.CF_STATE.read_text(), "running")
-            self.assertTrue(self.mod.CloudflareTunnel().desired)
-        # The App option stays the permission gate for a persisted Start.
-        self.set_options(cloudflare={"cloudflare_tunnel_enabled": False})
-        gated = self.mod.CloudflareTunnel()
-        self.assertFalse(gated.desired)
-        self.assertEqual(gated.status(1.0)["state"], "stopped")
-
-    def test_three_cards_and_stale_openai_is_unhealthy(self):
+    def controller(self):
         controller = self.mod.Controls()
-        controller.tailscale.status = Mock(return_value={"state": "stopped"})
+        controller.remote.status = Mock(return_value={"external_url": ""})
+        return controller
+
+    def test_openai_and_remote_cards_and_stale_openai_is_unhealthy(self):
+        controller = self.controller()
         controller.openai.desired = True
         controller.openai.state = "ready"
         controller.openai.checked = self.mod.time.monotonic() - 35
         snapshot = controller.snapshot()
-        self.assertEqual(set(snapshot), {"openai", "cloudflare", "tailscale"})
+        self.assertEqual(set(snapshot), {"openai", "remote"})
         self.assertEqual(snapshot["openai"]["state"], "stale")
         self.assertFalse(snapshot["openai"]["transport_ready"])
-        with self.assertRaises(ValueError):
-            controller.command("funnel", "start")
-        with self.assertRaises(ValueError):
-            controller.command("serve", "stop")
+        for mode in ("cloudflare", "tailscale", "funnel"):
+            with self.subTest(mode=mode):
+                with self.assertRaises(ValueError):
+                    controller.command(mode, "start")
+                with self.assertRaises(ValueError):
+                    controller.logs(mode)
+                with self.assertRaises(ValueError):
+                    controller.diagnostics(mode)
+
+    def test_no_bundled_cloudflare_or_tailscale_code(self):
+        source = (ROOT / "tunnel_control.py").read_text(encoding="utf-8")
+        for gone in ("cloudflared", "CloudflareTunnel", "TailscaleGateway",
+                     "rotate_client_key", "/api/client-key", "/api/tailscale"):
+            self.assertNotIn(gone, source)
+        self.assertFalse((ROOT / "tailscale_gateway.py").exists())
+        dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
+        self.assertNotIn("cloudflared", dockerfile)
+        self.assertNotIn("CLOUDFLARED_VERSION", dockerfile)
+        self.assertIn("COPY remote_access.py /usr/local/bin/remote_access.py", dockerfile)
 
     def test_status_does_not_wait_for_slow_health_probes(self):
-        self.set_options(cloudflare={
-            "cloudflare_tunnel_enabled": True,
-            "cloudflare_tunnel_token": "sensitive-token",
+        self.set_options(openai={
+            "tunnel_enabled": True,
+            "openai_runtime_api_key": "test-private-key",
+            "tunnel_id": "tunnel_" + "a" * 32,
         })
-        controller = self.mod.Controls()
-        controller.tailscale.status = Mock(return_value={"state": "stopped"})
+        controller = self.controller()
         entered, release = threading.Event(), threading.Event()
 
         def slow_check(*_args, **_kwargs):
@@ -154,8 +88,8 @@ class TunnelControllerTests(unittest.TestCase):
         with patch.object(self.mod.subprocess, "Popen") as spawn, \
              patch.object(self.mod, "check", side_effect=slow_check):
             spawn.return_value.poll.return_value = None
-            controller.cloudflare.tick(100.0)  # starts the process
-            worker = threading.Thread(target=controller.cloudflare.tick, args=(110.0,), daemon=True)
+            controller.openai.tick(100.0)  # starts the process
+            worker = threading.Thread(target=controller.openai.tick, args=(110.0,), daemon=True)
             worker.start()
             self.assertTrue(entered.wait(5))
             done = threading.Event()
@@ -165,21 +99,25 @@ class TunnelControllerTests(unittest.TestCase):
             release.set()
             worker.join(5)
 
-    def test_dashboard_contains_one_tailscale_card(self):
-        self.assertIn('id="t-openai"', self.mod.PAGE)
-        self.assertIn('id="t-cloudflare"', self.mod.PAGE)
-        self.assertIn("Configuration", self.mod.PAGE)
-        self.assertEqual(self.mod.PAGE.count('id="t-tailscale"'), 1)
-        self.assertIn("Tailscale Funnel", self.mod.PAGE)
-        self.assertNotIn("Tailscale Serve</h2>", self.mod.PAGE)
-        self.assertNotIn("Cloudflare Access", self.mod.PAGE)
-        self.assertNotIn("Zero Trust erforderlich", self.mod.PAGE)
+    def test_dashboard_has_openai_and_remote_access_cards(self):
+        page = self.mod.PAGE
+        self.assertIn('id="t-openai"', page)
+        self.assertIn('id="t-remote"', page)
+        self.assertNotIn('id="t-cloudflare"', page)
+        self.assertNotIn('id="t-tailscale"', page)
+        self.assertIn("Configuration", page)
+        self.assertIn('data-link="cloudflared"', page)
+        self.assertIn('data-link="tailscale"', page)
+        self.assertIn('rel="noopener noreferrer"', page)
+        self.assertIn("additional_hosts", page)
+        self.assertIn("Copy client config", page)
+        self.assertNotIn("client key", page.lower())
 
     def test_dashboard_is_independent_and_diagnostics_are_optional(self):
         page, script = self.mod.PAGE, self.mod.SCRIPT
         dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
         self.assertIn('href="../"', page)
-        self.assertIn("Tunnel Management", page)
+        self.assertIn("Tunnels and remote access", page)
         self.assertIn("Show diagnostics", page)
         self.assertIn("Show logs", page)
         self.assertIn('data-panel="diagnostics"', page)
@@ -187,107 +125,17 @@ class TunnelControllerTests(unittest.TestCase):
         self.assertIn("setInterval(refresh, 10000)", script)
         self.assertIn("if (!section.open) return;", script)
         self.assertNotIn("JSON.stringify", script)
+        self.assertNotIn("innerHTML", script)
+        # App links come from the server but are only used for my.home-assistant.io.
+        self.assertIn(r"/^https:\/\/my\.home-assistant\.io\//.test(app.link)", script)
         self.assertIn("COPY tunnel_dashboard.html", dockerfile)
         self.assertIn("COPY tunnel_dashboard.js", dockerfile)
 
-    def test_key_rotation_reloads_proxy_and_rejects_previous_token(self):
-        controller = self.mod.Controls()
-        original = self.mod.CF_CLIENT_KEY.read_text()
-        with patch.object(self.mod.subprocess, "run") as run:
-            response = controller.rotate_client_key()
-        changed = self.mod.CF_CLIENT_KEY.read_text()
-        self.assertEqual(response, {"rotated": True})
-        self.assertNotEqual(changed, original)
-        self.assertEqual(len(changed), 64)
-        self.assertEqual(self.mod.CF_CLIENT_KEY.stat().st_mode & 0o777, 0o600)
-        self.assertEqual(controller.client_key()["key"], changed)
-        self.assertEqual(run.call_count, 3)
-        self.assertIn("nginx", str(run.call_args_list))
-        self.assertNotIn(changed, str(run.call_args_list))
-
-    def test_key_rotation_failure_restores_original_key(self):
-        controller = self.mod.Controls()
-        original = self.mod.CF_CLIENT_KEY.read_text()
-        from subprocess import CalledProcessError
-        with patch.object(self.mod.subprocess, "run", side_effect=[
-            None, CalledProcessError(1, "nginx -t"), None, None
-        ]), self.assertRaises(RuntimeError):
-            controller.rotate_client_key()
-        self.assertEqual(self.mod.CF_CLIENT_KEY.read_text(), original)
-
-    def test_tailscale_key_rotation_is_separate_and_rollback_safe(self):
-        controller = self.mod.Controls()
-        old_cf = self.mod.CF_CLIENT_KEY.read_text()
-        old_ts = self.mod.TS_CLIENT_KEY.read_text()
-        with patch.object(self.mod.subprocess, "run") as run:
-            self.assertEqual(controller.rotate_tailscale_client_key(), {"rotated": True})
-        new_ts = self.mod.TS_CLIENT_KEY.read_text()
-        self.assertNotEqual(old_ts, new_ts)
-        self.assertEqual(len(new_ts), 64)
-        self.assertEqual(self.mod.TS_CLIENT_KEY.stat().st_mode & 0o777, 0o600)
-        self.assertEqual(controller.tailscale_client_key()["key"], new_ts)
-        self.assertEqual(self.mod.CF_CLIENT_KEY.read_text(), old_cf)
-        self.assertEqual(run.call_count, 3)
-        from subprocess import CalledProcessError
-        with patch.object(self.mod.subprocess, "run", side_effect=[
-            None, CalledProcessError(1, "nginx -t"), None, None
-        ]), self.assertRaises(RuntimeError):
-            controller.rotate_tailscale_client_key()
-        self.assertEqual(self.mod.TS_CLIENT_KEY.read_text(), new_ts)
-
-    def test_tailscale_control_http_safety(self):
-        manager = Mock()
-        manager.tailscale.authorized.return_value = False
-        manager.tailscale_client_key.return_value = {"key": "never_leak_without_header"}
-        manager.rotate_tailscale_client_key.return_value = {"rotated": True}
-        manager.command.return_value = {"state": "stopped"}
-        server = ThreadingHTTPServer(("127.0.0.1", 0), self.mod.handler_for(manager))
-        thread = threading.Thread(target=server.serve_forever, daemon=True)
-        thread.start()
-
-        def request(method, route, body=None, headers=None):
-            conn = HTTPConnection(*server.server_address, timeout=5)
-            try:
-                conn.request(method, route, body=body, headers=headers or {})
-                response = conn.getresponse()
-                return response.status, response.read()
-            finally:
-                conn.close()
-
-        allowed = {"X-MCPHub-Tunnel-Control": "1"}
-        post_headers = {**allowed, "Content-Type": "application/json"}
-        try:
-            self.assertEqual(request("GET", "/api/tailscale/client-key")[0], 403)
-            manager.tailscale_client_key.assert_not_called()
-            status, body = request("GET", "/api/tailscale/client-key", headers=allowed)
-            self.assertEqual(status, 200)
-            self.assertIn(b"never_leak_without_header", body)
-            self.assertEqual(request("GET", "/api/tailscale/https-check")[0], 403)
-            self.assertEqual(request("GET", "/api/tailscale/gate")[0], 403)
-            manager.tailscale.authorized.return_value = True
-            self.assertEqual(request("GET", "/api/tailscale/gate")[0], 204)
-            self.assertEqual(request("POST", "/api/tailscale/client-key/rotate",
-                                     "{}", {"Content-Type": "application/json"})[0], 403)
-            self.assertEqual(request("POST", "/api/tailscale/client-key/rotate",
-                                     "{}", post_headers)[0], 200)
-            manager.rotate_tailscale_client_key.assert_called_once()
-            self.assertEqual(request("POST", "/api/control/tailscale/stop",
-                                     "{}", post_headers)[0], 200)
-            manager.command.assert_called_once_with("tailscale", "stop")
-            self.assertEqual(request("POST", "/api/control/tailscale/reload",
-                                     "{}", post_headers)[0], 200)
-            # Route parsing allows legacy action spelling, but an actual
-            # TailscaleGateway rejects reload; controller uses that class.
-        finally:
-            server.shutdown()
-            server.server_close()
-
     def test_http_controls_deny_missing_headers_and_unknown_tunnels(self):
         manager = Mock()
-        manager.snapshot.return_value = {"openai": {"state": "ready"}}
+        manager.snapshot.return_value = {"openai": {"state": "ready"}, "remote": {}}
         manager.command.return_value = {"state": "stopped"}
-        manager.client_key.return_value = {"key": "test_sensitive_key"}
-        manager.rotate_client_key.return_value = {"rotated": True}
+        manager.remote.check.return_value = {"result": "reachable", "age_seconds": 0}
         server = ThreadingHTTPServer(("127.0.0.1", 0), self.mod.handler_for(manager))
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
@@ -301,36 +149,39 @@ class TunnelControllerTests(unittest.TestCase):
             finally:
                 conn.close()
 
+        allowed = {"Content-Type": "application/json", "X-MCPHub-Tunnel-Control": "1"}
         try:
             status, body = request("GET", "/api/status")
             self.assertEqual(status, 200)
             self.assertEqual(json.loads(body)["openai"]["state"], "ready")
-            status, _ = request("POST", "/api/control/cloudflare/stop", "{}",
+            status, _ = request("POST", "/api/control/openai/stop", "{}",
                                 {"Content-Type": "application/json"})
             self.assertEqual(status, 403)
-            status, _ = request("POST", "/api/control/funnel/start", "{}",
-                                {"Content-Type": "application/json", "X-MCPHub-Tunnel-Control": "1"})
-            self.assertEqual(status, 403)
+            for mode in ("cloudflare", "tailscale", "funnel"):
+                status, _ = request("POST", "/api/control/%s/start" % mode, "{}", allowed)
+                self.assertEqual(status, 403)
             manager.command.assert_not_called()
-            status, body = request("POST", "/api/control/cloudflare/stop", "{}",
-                                   {"Content-Type": "application/json", "X-MCPHub-Tunnel-Control": "1"})
+            status, body = request("POST", "/api/control/openai/stop", "{}", allowed)
             self.assertEqual(status, 200)
-            self.assertEqual(json.loads(body)["state"], "stopped")
-            manager.command.assert_called_once_with("cloudflare", "stop")
-            status, _ = request("GET", "/api/client-key")
-            self.assertEqual(status, 403)
-            status, body = request("GET", "/api/client-key", headers={
-                "X-MCPHub-Tunnel-Control": "1"})
+            manager.command.assert_called_once_with("openai", "stop")
+            # The outbound address check needs the dashboard header.
+            self.assertEqual(request("GET", "/api/remote/check")[0], 403)
+            manager.remote.check.assert_not_called()
+            status, body = request("GET", "/api/remote/check",
+                                   headers={"X-MCPHub-Tunnel-Control": "1"})
             self.assertEqual(status, 200)
-            self.assertEqual(json.loads(body)["key"], "test_sensitive_key")
-            status, _ = request("POST", "/api/client-key/rotate", "{}",
-                                {"Content-Type": "application/json"})
-            self.assertEqual(status, 403)
-            status, body = request("POST", "/api/client-key/rotate", "{}",
-                                {"Content-Type": "application/json", "X-MCPHub-Tunnel-Control": "1"})
-            self.assertEqual(status, 200)
-            self.assertTrue(json.loads(body)["rotated"])
-            manager.rotate_client_key.assert_called_once()
+            self.assertEqual(json.loads(body)["result"], "reachable")
+            manager.remote.check.side_effect = ValueError("No external address is configured")
+            status, body = request("GET", "/api/remote/check",
+                                   headers={"X-MCPHub-Tunnel-Control": "1"})
+            self.assertEqual(status, 409)
+            self.assertIn(b"No external address", body)
+            for route in ("/api/client-key", "/api/tailscale/client-key",
+                          "/api/tailscale/gate", "/api/logs/cloudflare",
+                          "/api/diagnostics/tailscale"):
+                self.assertEqual(request("GET", route, headers=allowed)[0], 404, route)
+            for route in ("/api/client-key/rotate", "/api/tailscale/client-key/rotate"):
+                self.assertEqual(request("POST", route, "{}", allowed)[0], 403, route)
         finally:
             server.shutdown()
             server.server_close()
@@ -348,7 +199,6 @@ class OpenAITunnelTests(unittest.TestCase):
         self.mod.OPENAI_KEY_FILE = home / "secret" / "key"
         self.mod.OPENAI_AUTH_FILE = home / "auth"
         self.mod.OPENAI_STATE = home / "secret" / "openai_state"
-        self.mod.CF_STATE = home / "secret" / "cloudflare_state"
         self.mod.OPENAI_AUTH_FILE.write_text("Bearer test-auth")
         self.values = {"openai": {
             "tunnel_enabled": True,

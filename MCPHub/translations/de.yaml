@@ -22,43 +22,23 @@ configuration:
       tunnel_mcp_path:
         name: "OpenAI MCP-Route"
         description: "MCPHub-Endpunkt für ChatGPT, zum Beispiel /mcp, /mcp/$smart oder /mcp/<gruppe>."
-  cloudflare:
-    name: "Cloudflare Tunnel"
+  remote_access:
+    name: "Fernzugriff (Cloudflare, Tailscale)"
     description: >-
-      Einstellungen für Cloudflare Tunnel. Live-Status, Start/Stopp, Client-Key
-      und Logs: MCPHub in der Seitenleiste öffnen und oben auf „Tunnels“ klicken.
+      Fernzugriff läuft über die separate Cloudflared- oder Tailscale-App, die an
+      MCPHubs MCP-Eingang auf Port 3001 weiterleiten. Status, Adressprüfung und
+      Einrichtungstext: MCPHub in der Seitenleiste öffnen und oben auf „Tunnels“ klicken.
+      Cloudflared-App:
+      https://my.home-assistant.io/redirect/supervisor_addon/?addon=396f0234_cloudflared&repository_url=https%3A%2F%2Fgithub.com%2Fhomeassistant-apps%2Frepository
+      Tailscale-App:
+      https://my.home-assistant.io/redirect/supervisor_addon/?addon=a0d7b954_tailscale&repository_url=https%3A%2F%2Fgithub.com%2Fhassio-addons%2Frepository
     fields:
-      cloudflare_tunnel_enabled:
-        name: "Cloudflare Tunnel aktivieren"
-        description: "Stellt eine gewählte MCPHub-Route über Cloudflare bereit."
-      cloudflare_tunnel_token:
-        name: "Cloudflare Tunnel-Token"
+      external_url:
+        name: "Externe MCPHub-Adresse (optional)"
         description: >-
-          Connector-Token im Cloudflare Dashboard unter Networking → Tunnels.
-      cloudflare_mcp_path:
-        name: "Cloudflare MCP-Route"
-        description: "Die über Cloudflare bereitgestellte MCPHub-Route."
-  tailscale:
-    name: "Tailscale Funnel"
-    description: >-
-      Verwendet das vorhandene Home-Assistant-Tailscale-Add-on. Funnel wird dort
-      eingerichtet. Gateway-Status und Client-Key: MCPHub in der Seitenleiste
-      öffnen und oben auf „Tunnels“ klicken.
-    fields:
-      tailscale_funnel_enabled:
-        name: "Tailscale MCP-Gateway aktivieren"
-        description: >-
-          Aktiviert einen eigenen, nur auf MCP beschränkten Proxy mit Bearer-Schutz.
-          Zusätzlich unter Netzwerk den Host-Port 3002 ausdrücklich freigeben und
-          Funnel manuell im vorhandenen Tailscale-Add-on einrichten.
-      tailscale_mcp_path:
-        name: "Tailscale MCP-Route"
-        description: "Exakte MCPHub-Route, zum Beispiel /mcp oder /mcp/home."
-      tailscale_funnel_url:
-        name: "Öffentliche Tailscale-Funnel-URL (optional)"
-        description: >-
-          HTTPS-Adresse aus tailscale funnel status einschließlich MCP-Route,
-          z. B. https://node.tailnet.ts.net/mcp. Dient nur einer Prüfung ohne Zugangsdaten.
+          Adresse, über die deine MCP-Clients MCPHub erreichen, ohne Pfad, z. B.
+          https://mcp.example.com oder http://192.168.1.10:3001. MCPHub nutzt sie für
+          „Copy client config“, und das Tunnel-Dashboard kann sie prüfen.
   home_assistant:
     name: "Home Assistant MCP"
     description: "Einstellungen für Home Assistant MCP"
@@ -117,8 +97,6 @@ configuration:
         description: "Ausführlichkeit der OpenAI-tunnel-client-Logs."
 network:
   3001/tcp: >-
-    MCP-Zugriff im LAN: nur /mcp-Endpunkte mit MCPHub-Bearer-Key (in MCPHub
-    unter Keys anlegen). Keine Weboberfläche. Leer lassen zum Deaktivieren.
-  3002/tcp: >-
-    Optionales Tailscale-Funnel-MCP-Gateway. Nur freigeben, nachdem das
-    geschützte Gateway in der Konfiguration aktiviert wurde.
+    MCP-Eingang: nur /mcp-Endpunkte mit MCPHub-Bearer-Key (in MCPHub unter Keys
+    anlegen), keine Weboberfläche. Genutzt von LAN-Clients sowie der Cloudflared-
+    und Tailscale-App. Leer lassen zum Deaktivieren.
