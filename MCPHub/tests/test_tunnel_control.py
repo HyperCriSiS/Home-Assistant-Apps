@@ -120,8 +120,6 @@ class TunnelControllerTests(unittest.TestCase):
         self.assertIn("setInterval(refresh, 10000)", script)
         self.assertIn("if (!section.open) return;", script)
         self.assertNotIn("JSON.stringify", script)
-        self.assertNotIn("inject_tunnel_nav.py", dockerfile)
-        self.assertNotIn("ha_tunnel_nav.js", dockerfile)
         self.assertIn("COPY tunnel_dashboard.html", dockerfile)
         self.assertIn("COPY tunnel_dashboard.js", dockerfile)
 

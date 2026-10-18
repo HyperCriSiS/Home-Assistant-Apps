@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Add a HA-Ingress-only tunnel control link to the pinned upstream SPA shell."""
+"""Add the Ingress-only tunnel link to the pinned upstream MCPHub SPA shell."""
 from pathlib import Path
 
 INDEX = Path("/app/frontend/dist/index.html")
 TAG = '<script defer src="./mcphub-ha-nav.js"></script>'
 
 
-def inject_shell(html):
+def inject_shell(html: str) -> str:
     if html.count("</body>") != 1:
         raise ValueError("Unexpected MCPHub frontend HTML: missing closing body")
     if TAG in html:
@@ -14,7 +14,7 @@ def inject_shell(html):
     return html.replace("</body>", TAG + "\n</body>", 1)
 
 
-def main():
+def main() -> None:
     if not INDEX.is_file():
         raise SystemExit("MCPHub upstream frontend bundle not found")
     INDEX.write_text(inject_shell(INDEX.read_text(encoding="utf-8")),

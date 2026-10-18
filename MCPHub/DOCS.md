@@ -198,12 +198,10 @@ to the App log.
 
 ### Live tunnel controls and automatic recovery
 
-The OpenAI tunnel is supervised separately from MCPHub. Open the MCPHub Web UI
-through Home Assistant Ingress and append `/_mcphub_tunnel/` to its browser URL.
-For example, if the Ingress page ends in `/api/hassio_ingress/<session>/`, open
-`/api/hassio_ingress/<session>/_mcphub_tunnel/` on the same Home Assistant host.
-The control page provides **Start**, **Stop**, and **Reload** without restarting
-MCPHub itself. Access is restricted to the Home Assistant Ingress adapter.
+The OpenAI tunnel is supervised separately from MCPHub. Open MCPHub from the
+Home Assistant sidebar and select **Tunnels** in its top bar. The tunnel dashboard
+provides **Start**, **Stop**, and **Reload** without restarting MCPHub itself.
+Access is restricted to the Home Assistant Ingress adapter.
 
 - The App starts the tunnel automatically if `tunnel_enabled` is true.
 - **Stop** pauses it for the running App session; the configured setting remains
@@ -229,7 +227,8 @@ contain no API keys, Tunnel IDs, or user tokens.
 ## Cloudflare Tunnel
 
 OpenAI and Cloudflare process controls, health, and Cloudflare client-key copy/rotation are
-available at `/_mcphub_tunnels/` within the authenticated Home Assistant Ingress page.
+available on the tunnel dashboard: open MCPHub from the Home Assistant sidebar and select
+**Tunnels** in its top bar.
 
 Cloudflare Tunnel provides a normal public HTTPS endpoint for remote MCP clients while
 MCPHub itself remains private inside the Home Assistant App container.
@@ -248,9 +247,9 @@ forwarding is required.
    ```
 
 4. Copy the tunnel connector token from Cloudflare.
-5. MCPHub automatically generates and persists a separate secure client key. Open the
-   authenticated Home Assistant MCPHub Ingress page and visit `/_mcphub_tunnels/`;
-   select **Client Key kopieren** to get it.
+5. MCPHub automatically generates and persists a separate secure client key. Open
+   MCPHub from the Home Assistant sidebar, select **Tunnels**, and copy the key from
+   the Cloudflare card.
 6. Configure the Cloudflare Tunnel connector token in the Home Assistant App and restart MCPHub.
 7. Configure the remote MCP client with the public URL plus the selected route, for
    example:
@@ -297,22 +296,22 @@ MCPHub creates a random 384-bit client key on first launch and keeps it in
 `/data/secrets/mcphub_cloudflare_client_key` (mode `0600`) across updates/backups.
 Key generation and rotation are managed by MCPHub.
 
-### Standalone tunnel dashboard
+### Tunnel dashboard
 
-Tunnel management is available at `/_mcphub_tunnels/` within an authenticated
-Home Assistant Ingress session. This standalone page does not modify or inject
-controls into the upstream MCPHub frontend. OpenAI, Cloudflare, and Tailscale
-Funnel each have a single card with their own status and controls. Diagnostics
-and logs expand on demand.
+Open MCPHub from the Home Assistant sidebar and select **Tunnels** in its top bar.
+The dashboard is a separate page served only through authenticated Home Assistant
+Ingress; **Open MCPHub** returns to the MCPHub interface. OpenAI, Cloudflare, and
+Tailscale Funnel each have a single card with their own status and controls.
+Diagnostics and logs expand on demand.
 
-Home Assistant app configuration does not support custom buttons or arbitrary
-links. Ingress tokens are installation-specific, so a complete static Ingress
-URL cannot be specified in the app options. The original MCPHub app UI remains
-unchanged. From an authenticated Ingress session, the relative route
-`_mcphub_tunnels/` opens the tunnel dashboard.
+The App adds only this one link to MCPHub's top bar. The link is rendered solely
+inside a Home Assistant Ingress session; the LAN MCP gateway never serves the
+MCPHub interface. Home Assistant's App configuration page cannot show buttons or
+session-specific Ingress links, so its tunnel sections point to the **Tunnels**
+button instead.
 
-Visit the authenticated Home Assistant Ingress route `/_mcphub_tunnels/` to
-**copy** the key, or **rotate** it (immediately replacing the key used by Nginx).
+Use the Cloudflare card to **copy** the key, or **rotate** it (immediately replacing
+the key used by Nginx).
 Existing valid `cloudflare_access_token` values from older installations are imported
 when the new key file is not yet present. Current installations no longer expose that
 option in the App configuration.
@@ -389,10 +388,13 @@ access should also be restricted. Default host mapping is off.
 
 MCPHub is patched to bind to `127.0.0.1:3000` inside the App container.
 
-Nginx provides two local adapters:
+Nginx provides these adapters:
 
 - `8099` — Home Assistant Ingress, reachable only from the Supervisor Ingress gateway
+- `3001` — LAN MCP gateway: only `/mcp` routes with an MCPHub bearer key, no web
+  interface or management API
 - `127.0.0.1:8098` — Cloudflare origin, reachable only from processes inside the App
+- `3002` — optional Tailscale Funnel MCP gateway, disabled by default
 
 MCPHub dashboard authentication is not globally disabled. Instead, authenticated Home
 Assistant Ingress requests carry the Home Assistant user identity plus a private
@@ -498,8 +500,10 @@ not supported through host Docker access in this version.
 
 ## Backups
 
-The App uses Home Assistant cold backups. The persistent `/data` directory contains the
-MCPHub configuration and generated secrets required to restore the instance consistently.
+The App uses Home Assistant hot backups, so MCPHub and its tunnels keep running while
+a backup is created. The persistent `/data` directory contains the MCPHub configuration
+and generated secrets required to restore the instance. Re-downloadable npm and uv
+package caches below `/data/cache` are excluded from backups.
 
 Treat backups as sensitive because they may contain MCP server credentials and tunnel
 configuration.
@@ -515,8 +519,8 @@ failures normally appear before the wrapper reports that MCPHub exited.
 
 Check that MCPHub reached the ready state and that Nginx started afterward.
 
-The App intentionally does not publish a normal host port; use Home Assistant **Web UI**
-instead of browsing directly to port 3000 or 8099.
+The MCPHub interface is available only through Home Assistant; use **Open Web UI** or
+the sidebar entry. Port 3001 is an MCP-only gateway and returns 404 for the interface.
 
 ### Cloudflare Tunnel does not start
 

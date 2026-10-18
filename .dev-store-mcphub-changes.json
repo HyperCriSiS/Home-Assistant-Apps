@@ -1,5 +1,21 @@
 [
   {
+    "revision": 112,
+    "version": "v2026.10.18-dev.112",
+    "source_sha": "1338ddf800712434565bf264a79ef4e0e4413cef",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "1338ddf800712434565bf264a79ef4e0e4413cef",
+        "subject": "Merge pull request #78 from HyperCriSiS/feat/mcphub-lan-mcp-gateway"
+      },
+      {
+        "sha": "f02c9c310899309904fe09ea6f2b7838251ee3d1",
+        "subject": "feat(mcphub): MCP-only LAN gateway, Ingress tunnel link and hot backups"
+      }
+    ]
+  },
+  {
     "revision": 111,
     "version": "v2026.10.17-1-dev.111",
     "source_sha": "1e53b5717f62af5a7ed1b54f641dfde10910bd82",

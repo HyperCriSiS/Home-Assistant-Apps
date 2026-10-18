@@ -1,6 +1,6 @@
 ---
 name: "MCPHub (Dev)"
-version: "v2026.10.17-1-dev.111"
+version: "v2026.10.18-dev.112"
 slug: mcphub
 description: >-
   MCPHub 1.1.5 - central MCP server management with optional Home Assistant,
@@ -21,8 +21,12 @@ panel_title: "MCPHub (Dev)"
 panel_admin: true
 watchdog: "http://[HOST]:[PORT:8099]/health"
 homeassistant_api: true
-backup: cold
-# Direct LAN access defaults to host port 3001. Set null to disable or choose another free host port.
+# MCPHub keeps running during backups; re-downloadable package caches are skipped.
+backup: hot
+backup_exclude:
+  - "cache/*"
+# LAN MCP gateway (only /mcp endpoints with a bearer key) on host port 3001.
+# Leave the host port blank to disable it or choose another free port.
 ports:
   3001/tcp: 3001
   # Optional MCP-only Tailscale Funnel origin; requires explicit host publishing.
@@ -32,8 +36,8 @@ ports_description:
     Optional Tailscale Funnel MCP gateway. Map host port 3002 only after enabling
     the protected Funnel gateway in the app configuration.
   3001/tcp: >-
-    LAN access: default port 3001. Choose another free port if needed.
-    Leave blank to disable.
+    LAN MCP access (only /mcp with an MCPHub bearer key, no web interface):
+    default port 3001. Choose another free port if needed. Leave blank to disable.
 map:
   - type: ssl
     read_only: true
