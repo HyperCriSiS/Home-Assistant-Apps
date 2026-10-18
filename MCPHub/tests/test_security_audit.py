@@ -1,4 +1,4 @@
-"""Regression tests for HTTPS verification and independent optional tunnels."""
+"""Regression tests for HTTPS verification and remote access configuration."""
 
 from __future__ import annotations
 
@@ -119,10 +119,9 @@ class HomeAssistantProxyTlsTests(unittest.TestCase):
                     self.proxy.validate_home_assistant_mcp_url(url)
 
 
-class IndependentTunnelTests(unittest.TestCase):
+class RemoteAccessConfigurationTests(unittest.TestCase):
     def setUp(self):
         self.prepare = load_module("prepare_config")
-        self.proxy = load_module("prepare_proxy_config")
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         root = Path(self.temp.name)
@@ -133,6 +132,7 @@ class IndependentTunnelTests(unittest.TestCase):
             "SETTINGS_FILE": root / "mcphub" / "mcp_settings.json",
             "MANAGED_HOME_ASSISTANT_NAME_FILE":
                 root / "mcphub" / ".managed_home_assistant_mcp_name",
+            "MANAGED_BASE_URL_FILE": root / "mcphub" / ".managed_install_base_url",
         }
         for name, value in mapping.items():
             patcher = patch.object(self.prepare, name, value)
@@ -141,8 +141,6 @@ class IndependentTunnelTests(unittest.TestCase):
         for name in (
             "JWT_SECRET_FILE", "OPENAI_TOKEN_FILE", "OPENAI_AUTH_FILE",
             "HA_INGRESS_PROXY_SECRET_FILE", "LEGACY_INGRESS_TOKEN_FILE",
-            "CLOUDFLARE_INTERNAL_TOKEN_FILE", "CLOUDFLARE_CLIENT_KEY_FILE",
-            "TAILSCALE_INTERNAL_TOKEN_FILE", "TAILSCALE_CLIENT_KEY_FILE",
             "GITHUB_TOKEN_FILE",
         ):
             patcher = patch.object(self.prepare, name, root / "secrets" / name.lower())
@@ -152,67 +150,85 @@ class IndependentTunnelTests(unittest.TestCase):
     def set_options(self, **kwargs):
         self.prepare.OPTIONS_FILE.write_text(json.dumps(kwargs), encoding="utf-8")
 
+    def settings(self):
+        return json.loads(self.prepare.SETTINGS_FILE.read_text(encoding="utf-8"))
+
     def key_names(self):
-        settings = json.loads(self.prepare.SETTINGS_FILE.read_text(encoding="utf-8"))
-        return [key["name"] for key in settings["bearerKeys"]]
+        return [key["name"] for key in self.settings()["bearerKeys"]]
 
-    def test_disabled_tunnels_ignore_invalid_old_paths(self):
-        self.set_options(
-            tunnel_enabled=False, tunnel_mcp_path="/mcp/",
-            cloudflare_tunnel_enabled=False, cloudflare_mcp_path="/mcp/",
-        )
+    def base_url(self):
+        return self.settings()["systemConfig"].get("install", {}).get("baseUrl")
+
+    def test_disabled_tunnel_ignores_invalid_old_path(self):
+        self.set_options(tunnel_enabled=False, tunnel_mcp_path="/mcp/")
         self.prepare.main()
         self.assertNotIn(self.prepare.OPENAI_KEY_NAME, self.key_names())
-        self.assertNotIn(self.prepare.CLOUDFLARE_KEY_NAME, self.key_names())
 
-    def test_enabled_invalid_routes_fail_closed_without_startup_failure(self):
-        self.set_options(
-            tunnel_enabled=True, tunnel_mcp_path="/mcp/",
-            cloudflare_tunnel_enabled=True, cloudflare_mcp_path="/mcp/",
-        )
+    def test_enabled_invalid_route_fails_closed_without_startup_failure(self):
+        self.set_options(tunnel_enabled=True, tunnel_mcp_path="/mcp/")
         self.prepare.main()
         self.assertNotIn(self.prepare.OPENAI_KEY_NAME, self.key_names())
-        self.assertNotIn(self.prepare.CLOUDFLARE_KEY_NAME, self.key_names())
-        proxy = self.proxy.cloudflare_server_block(
-            enabled=True, mcp_path="/mcp/", client_token="test_" + "a" * 32,
-            internal_token="internal_secret",
-        )
-        self.assertIn("return 404;", proxy)
-        self.assertNotIn("proxy_pass", proxy)
 
     def test_valid_enabled_key_stays_scoped_and_disable_clears_it(self):
         self.set_options(tunnel_enabled=True, tunnel_mcp_path="/mcp/room")
         self.prepare.main()
         self.assertIn(self.prepare.OPENAI_KEY_NAME, self.key_names())
-        settings = json.loads(self.prepare.SETTINGS_FILE.read_text(encoding="utf-8"))
-        key = next(k for k in settings["bearerKeys"]
+        key = next(k for k in self.settings()["bearerKeys"]
                    if k["name"] == self.prepare.OPENAI_KEY_NAME)
         self.assertNotEqual(key["accessType"], "all")
         self.set_options(tunnel_enabled=False, tunnel_mcp_path="/mcp/")
         self.prepare.main()
         self.assertNotIn(self.prepare.OPENAI_KEY_NAME, self.key_names())
 
-    def test_cloudflare_client_key_generated_once_persisted_and_migrated(self):
-        self.set_options(cloudflare={"cloudflare_tunnel_enabled": True})
+    def test_removed_remote_origins_lose_keys_and_secrets(self):
+        self.prepare.SECRET_DIR.mkdir(parents=True)
+        self.prepare.DATA_DIR.mkdir(parents=True)
+        for name in self.prepare.OBSOLETE_SECRET_FILES:
+            (self.prepare.SECRET_DIR / name).write_text("old-secret", encoding="utf-8")
+        self.prepare.SETTINGS_FILE.write_text(json.dumps({"bearerKeys": [
+            {"id": "1", "name": "Home Assistant Cloudflare Tunnel", "token": "mcf_x"},
+            {"id": "2", "name": "Home Assistant Tailscale MCP Gateway", "token": "mts_x"},
+            {"id": "3", "name": "My laptop", "token": "user-key"},
+        ]}), encoding="utf-8")
+        self.set_options(cloudflare={"cloudflare_tunnel_enabled": True},
+                         tailscale={"tailscale_funnel_enabled": True})
         self.prepare.main()
-        path = self.prepare.CLOUDFLARE_CLIENT_KEY_FILE
-        key = path.read_text()
-        self.assertRegex(key, r"^[A-Za-z0-9_-]{64}$")
-        self.assertEqual(path.stat().st_mode & 0o777, 0o600)
-        self.prepare.main()
-        self.assertEqual(key, path.read_text())
-        path.unlink()
-        self.set_options(cloudflare={"cloudflare_access_token": "legacy_" + "a" * 55})
-        self.prepare.main()
-        self.assertEqual(path.read_text(), "legacy_" + "a" * 55)
+        self.assertEqual(self.key_names(), ["My laptop"])
+        for name in self.prepare.OBSOLETE_SECRET_FILES:
+            self.assertFalse((self.prepare.SECRET_DIR / name).exists(), name)
 
-    def test_invalid_cloudflare_key_never_opens_proxy(self):
-        proxy = self.proxy.cloudflare_server_block(
-            enabled=True, mcp_path="/mcp", client_token="short",
-            internal_token="internal",
-        )
-        self.assertIn("return 404;", proxy)
-        self.assertNotIn("proxy_pass", proxy)
+    def test_external_url_sets_and_clears_only_its_own_base_url(self):
+        self.set_options(remote_access={"external_url": "https://MCP.example.com/"})
+        self.prepare.main()
+        self.assertEqual(self.base_url(), "https://mcp.example.com")
+        self.set_options(remote_access={"external_url": "http://192.168.1.10:3001"})
+        self.prepare.main()
+        self.assertEqual(self.base_url(), "http://192.168.1.10:3001")
+        self.set_options(remote_access={"external_url": ""})
+        self.prepare.main()
+        self.assertIsNone(self.base_url())
+
+    def test_manual_base_url_survives_when_option_is_unset(self):
+        self.prepare.DATA_DIR.mkdir(parents=True)
+        self.prepare.SETTINGS_FILE.write_text(json.dumps({
+            "systemConfig": {"install": {"baseUrl": "https://manual.example.com"}},
+        }), encoding="utf-8")
+        self.set_options(remote_access={"external_url": ""})
+        self.prepare.main()
+        self.assertEqual(self.base_url(), "https://manual.example.com")
+
+    def test_invalid_external_url_never_changes_base_url(self):
+        normalize = self.prepare.normalize_external_url
+        for value in ("ftp://mcp.example.com", "https://mcp.example.com/mcp",
+                      "https://user:pw@mcp.example.com", "https://mcp.example.com?x=1",
+                      "https://mcp.example.com:99999", "javascript:alert(1)",
+                      "https://" + "a" * 250 + ".com"):
+            with self.subTest(value=value):
+                with self.assertRaises(ValueError):
+                    normalize(value)
+        self.set_options(remote_access={"external_url": "https://mcp.example.com/mcp"})
+        self.prepare.main()
+        self.assertIsNone(self.base_url())
 
 
 if __name__ == "__main__":

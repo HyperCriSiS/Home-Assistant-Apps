@@ -33,7 +33,7 @@ path, key = sys.argv[1], sys.argv[2]
 with open(path, "r", encoding="utf-8") as handle:
     data = json.load(handle)
 
-for group in ("openai", "cloudflare", "tailscale", "home_assistant", "github", "logging"):
+for group in ("openai", "remote_access", "home_assistant", "github", "logging"):
     nested = data.get(group)
     if isinstance(nested, dict):
         data.update(nested)
@@ -45,17 +45,6 @@ elif value is None:
 else:
     print(value)
 PY
-}
-
-valid_mcp_path() {
-    local path="$1"
-    [[ "${path}" =~ ^/mcp(/[A-Za-z0-9._\$-]+){0,2}$ ]] || return 1
-    local segments segment
-    IFS='/' read -r -a segments <<< "${path}"
-    for segment in "${segments[@]:2}"; do
-        [[ "${segment}" != "." && "${segment}" != ".." ]] || return 1
-    done
-    return 0
 }
 
 shutdown_processes() {
@@ -82,11 +71,6 @@ trap 'shutdown_processes 143' TERM
 trap 'shutdown_processes 130' INT
 
 
-cloudflare_tunnel_enabled="$(option cloudflare_tunnel_enabled)"
-cloudflare_tunnel_enabled="${cloudflare_tunnel_enabled:-false}"
-cloudflare_mcp_path="$(option cloudflare_mcp_path)"
-cloudflare_mcp_path="${cloudflare_mcp_path:-/mcp}"
-
 home_assistant_mcp_enabled="$(option home_assistant_mcp_enabled)"
 home_assistant_mcp_enabled="${home_assistant_mcp_enabled:-false}"
 home_assistant_mcp_auth_mode="$(option home_assistant_mcp_auth_mode)"
@@ -95,11 +79,6 @@ home_assistant_mcp_auth_mode="${home_assistant_mcp_auth_mode:-restricted_user}"
 mkdir -p     "${MCPHUB_DATA_DIR}"     "${SECRET_DIR}"     /data/home     /data/cache/npm     /data/cache/uv
 
 chmod 0700 "${SECRET_DIR}"
-
-if [[ "${cloudflare_tunnel_enabled}" == "true" ]] && ! valid_mcp_path "${cloudflare_mcp_path}"; then
-    log_warn "Invalid Cloudflare MCP path; tunnel stays disabled while MCPHub starts."
-    cloudflare_tunnel_enabled="false"
-fi
 
 /usr/local/bin/prepare_mcphub_config.py
 /usr/local/bin/prepare_proxy_config.py
@@ -163,7 +142,7 @@ log_info "MCPHub is ready. Starting the Home Assistant Ingress adapter on port 8
 nginx -g 'daemon off;' &
 nginx_pid="$!"
 
-log_info "Starting the isolated tunnel controller (OpenAI, Cloudflare, Tailscale) and its dashboard."
+log_info "Starting the isolated tunnel controller (OpenAI tunnel, remote access status) and its dashboard."
 /usr/local/bin/tunnel_control.py &
 tunnel_control_pid="$!"
 

@@ -1,9 +1,7 @@
 ARG OPENAI_TUNNEL_VERSION=v0.0.16
-ARG CLOUDFLARED_VERSION=2026.10.1
 ARG BUILD_FROM=samanhappy/mcphub:1.1.5
 
 FROM ghcr.io/openai/tunnel-client:${OPENAI_TUNNEL_VERSION} AS openai_tunnel
-FROM cloudflare/cloudflared:${CLOUDFLARED_VERSION} AS cloudflare_tunnel
 FROM ${BUILD_FROM}
 
 ARG BUILD_VERSION
@@ -17,12 +15,12 @@ LABEL \
     io.hass.type="app" \
     io.hass.arch="${BUILD_ARCH}" \
     org.opencontainers.image.source="https://github.com/HyperCriSiS/Home-Assistant-Apps" \
-    org.opencontainers.image.description="MCPHub with optional OpenAI and Cloudflare remote access for Home Assistant"
+    org.opencontainers.image.description="MCPHub with optional OpenAI tunnel and remote access for Home Assistant"
 
 USER root
 
-# Nginx provides the Home Assistant Ingress adapter and the restricted local
-# origin used by Cloudflare Tunnel.
+# Nginx provides the Home Assistant Ingress adapter and the MCP-only gateway
+# used by LAN clients and the Cloudflared and Tailscale Apps.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl nginx \
     && rm -rf /var/lib/apt/lists/* \
@@ -81,7 +79,6 @@ path.write_text(text.replace(old, new), encoding="utf-8")
 PY
 
 COPY --from=openai_tunnel /usr/bin/tunnel-client /usr/local/bin/tunnel-client
-COPY --from=cloudflare_tunnel /usr/local/bin/cloudflared /usr/local/bin/cloudflared
 
 COPY patch_home_assistant_auth.py /usr/local/bin/patch_home_assistant_auth.py
 RUN python3 /usr/local/bin/patch_home_assistant_auth.py \
@@ -93,7 +90,7 @@ COPY prepare_proxy_config.py /usr/local/bin/prepare_proxy_config.py
 COPY github_cli_mcp.sh /usr/local/bin/github_cli_mcp.sh
 COPY tunnel_control.py /usr/local/bin/tunnel_control.py
 COPY tunnel_diagnostics.py /usr/local/bin/tunnel_diagnostics.py
-COPY tailscale_gateway.py /usr/local/bin/tailscale_gateway.py
+COPY remote_access.py /usr/local/bin/remote_access.py
 # Ingress-only tunnel management console, linked from a small "Tunnels"
 # button in MCPHub's topbar. The button script only renders under Ingress.
 COPY tunnel_dashboard.html /usr/local/bin/tunnel_dashboard.html

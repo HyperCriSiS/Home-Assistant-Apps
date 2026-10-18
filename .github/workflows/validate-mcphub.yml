@@ -129,7 +129,7 @@ jobs:
           datetime.strptime(match.group(1), "v%Y.%m.%d")
           assert changelog.startswith(f"# Changelog\n\n## {version}\n")
 
-          groups = ["openai", "cloudflare", "tailscale", "home_assistant", "github", "logging"]
+          groups = ["openai", "remote_access", "home_assistant", "github", "logging"]
           assert list(config["options"]) == groups
           assert list(config["schema"]) == groups
           for group in groups:
@@ -146,11 +146,12 @@ jobs:
           assert home_assistant["home_assistant_mcp_auth_mode"] == "restricted_user"
           assert home_assistant["home_assistant_mcp_url"] == "http://homeassistant:8123/api/mcp"
           assert config["options"]["openai"]["tunnel_enabled"] is False
-          assert config["options"]["cloudflare"]["cloudflare_tunnel_enabled"] is False
-          assert config["options"]["cloudflare"]["cloudflare_mcp_path"] == "/mcp"
-          assert config["options"]["tailscale"]["tailscale_funnel_enabled"] is False
-          assert config["options"]["tailscale"]["tailscale_mcp_path"] == "/mcp"
-          assert config["ports"]["3002/tcp"] is None
+          assert config["options"]["remote_access"] == {"external_url": ""}
+          assert config["schema"]["remote_access"] == {"external_url": "str?"}
+          # Cloudflare and Tailscale run in their own Apps against port 3001.
+          assert config["ports"] == {"3001/tcp": 3001}
+          assert config["hassio_api"] is True
+          assert "hassio_role" not in config
           assert list(config["options"]["logging"])[-1] == "tunnel_log_level"
           assert list(config["schema"]["logging"])[-1] == "tunnel_log_level"
 
@@ -170,7 +171,7 @@ jobs:
 
           assert config["description"] == (
               f"MCPHub {upstream_version} - central MCP server management "
-              "with optional Home Assistant, OpenAI and Cloudflare integrations"
+              "with optional Home Assistant, OpenAI and remote access integrations"
           ), "MCPHub description must match the packaged upstream image version"
 
           import os
@@ -192,7 +193,6 @@ jobs:
           text = Path("MCPHub/Dockerfile").read_text(encoding="utf-8")
           for name, pattern in (
               ("OPENAI_TUNNEL_VERSION", r"v[0-9]+[.][0-9]+[.][0-9]+"),
-              ("CLOUDFLARED_VERSION", r"[0-9]{4}[.][0-9]+[.][0-9]+"),
           ):
               match = re.search(rf"^ARG {name}=({pattern})$", text, re.M)
               if not match:
@@ -202,8 +202,6 @@ jobs:
           )"
           docker manifest inspect \
             "ghcr.io/openai/tunnel-client:${OPENAI_TUNNEL_VERSION}" > /tmp/tunnel-manifest.json
-          docker manifest inspect \
-            "docker.io/cloudflare/cloudflared:${CLOUDFLARED_VERSION}" > /tmp/cloudflared-manifest.json
 
           python3 - <<'PY'
           import json
@@ -213,7 +211,6 @@ jobs:
           for name, path in (
               ("MCPHub", "/tmp/mcphub-manifest.json"),
               ("OpenAI tunnel-client", "/tmp/tunnel-manifest.json"),
-              ("Cloudflare cloudflared", "/tmp/cloudflared-manifest.json"),
           ):
               with open(path, encoding="utf-8") as handle:
                   manifest = json.load(handle)
@@ -265,7 +262,12 @@ jobs:
 
       - name: Verify bundled clients
         run: |
-          docker run --rm --entrypoint /usr/local/bin/cloudflared mcphub-addon:test version
+          # Cloudflare runs in the separate Cloudflared App; no bundled connector.
+          if docker run --rm --entrypoint /bin/sh mcphub-addon:test \
+              -c 'command -v cloudflared'; then
+            echo "cloudflared must no longer be bundled" >&2
+            exit 1
+          fi
           docker run --rm --entrypoint /usr/local/bin/tunnel-client mcphub-addon:test --version
           docker run --rm --entrypoint /usr/local/bin/gh mcphub-addon:test --version \
             | grep -q 'gh version 2.101.0'
@@ -320,7 +322,6 @@ jobs:
           data_dir="$(mktemp -d)"
           mkdir -p "${data_dir}/secrets" "${data_dir}/mcphub"
           printf 'ingress-test-secret\n' > "${data_dir}/secrets/mcphub_ha_ingress_proxy_secret"
-          printf 'cloudflare-test-secret\n' > "${data_dir}/secrets/mcphub_cloudflare_token"
 
           cat > "${data_dir}/options.json" <<'EOF'
           {
@@ -411,15 +412,16 @@ jobs:
 
           grep -q 'allow 172.30.32.2;' "MCPHub/ingress.conf"
 
-      - name: Validate restricted Cloudflare proxy
+      - name: Validate external address and removed remote origins
         run: |
           data_dir="$(mktemp -d)"
           mkdir -p "${data_dir}/secrets" "${data_dir}/mcphub"
+          printf 'old-secret\n' > "${data_dir}/secrets/mcphub_cloudflare_client_key"
           cat > "${data_dir}/options.json" <<'EOF'
           {
-            "cloudflare_tunnel_enabled": true,
-            "cloudflare_mcp_path": "/mcp/$smart/development",
-            "cloudflare_access_token": "test_client_key_0123456789abcdefghijklmnop"
+            "remote_access": {"external_url": "https://mcp.example.com/"},
+            "cloudflare": {"cloudflare_tunnel_enabled": true},
+            "tailscale": {"tailscale_funnel_enabled": true}
           }
           EOF
 
@@ -430,7 +432,10 @@ jobs:
             -c '/usr/local/bin/prepare_mcphub_config.py &&
                 /usr/local/bin/prepare_proxy_config.py &&
                 nginx -t &&
-                grep -q "listen 127.0.0.1:8098" /etc/nginx/conf.d/mcphub.conf'
+                ! grep -q "8098" /etc/nginx/conf.d/mcphub.conf &&
+                ! grep -q "listen 3002" /etc/nginx/conf.d/mcphub.conf &&
+                test ! -e /data/secrets/mcphub_cloudflare_client_key &&
+                grep -q "\"baseUrl\": \"https://mcp.example.com\"" /data/mcphub/mcp_settings.json'
 
       - name: MCPHub container integration test
         run: bash .github/scripts/integration-test-mcphub.sh mcphub-addon:test

@@ -11,12 +11,15 @@ A managed Home Assistant MCP bridge is also available. It can connect MCPHub
 back to Home Assistant's own MCP Server without storing the Home Assistant
 credential in MCPHub.
 
-Two independent remote-access methods are available:
+MCP clients reach MCPHub in these ways:
 
-- **OpenAI Secure MCP Tunnel** for ChatGPT and supported OpenAI clients
-- **Cloudflare Tunnel** for Claude, Cursor, VS Code, and other remote MCP clients
+- **LAN:** the MCP-only gateway on port 3001, with an MCPHub bearer key
+- **OpenAI Secure MCP Tunnel** for ChatGPT and supported OpenAI clients, built in
+- **Cloudflare or Tailscale** for Claude, Cursor, VS Code, and other remote MCP
+  clients, through the separate Cloudflared or Tailscale App, which forward to
+  the same MCP-only gateway
 
-Both are optional and can be enabled at the same time.
+All remote access is optional; the methods can be combined.
 
 ## Installation
 
@@ -24,8 +27,8 @@ Add this repository to the Home Assistant App store:
 
 `https://github.com/HyperCriSiS/Home-Assistant-Apps`
 
-Install **MCPHub** and start it with the default configuration first. Both remote-access
-methods are disabled by default so the dashboard can be verified independently.
+Install **MCPHub** and start it with the default configuration first. Remote access is
+disabled by default so the dashboard can be verified independently.
 
 ## First start
 
@@ -198,23 +201,21 @@ to the App log.
 
 ### Live tunnel controls and automatic recovery
 
-The OpenAI and Cloudflare tunnels are supervised by one tunnel controller that
-runs separately from MCPHub. Open MCPHub from the Home Assistant sidebar and
+The OpenAI tunnel is supervised by a tunnel controller that runs separately
+from MCPHub. Open MCPHub from the Home Assistant sidebar and
 select **Tunnels** in its top bar. The tunnel dashboard provides **Start**,
 **Stop**, and **Reload** without restarting MCPHub itself. Access is restricted
 to the Home Assistant Ingress adapter.
 
-- The App option (`tunnel_enabled`, `cloudflare_tunnel_enabled`) is the
-  permission gate: a disabled tunnel never starts, and **Start** reports an error.
+- The App option `tunnel_enabled` is the permission gate: a disabled tunnel never starts, and **Start** reports an error.
 - On first start the tunnel runs automatically if its option is enabled.
 - **Start** and **Stop** are remembered across App restarts and updates
   (stored as `0600` files in `/data/secrets`). After **Stop**, the tunnel stays
   stopped until you press **Start** again, even if the option remains enabled.
 - **Reload** rereads the current App options, including the Runtime API Key,
   without exposing the credentials to the page.
-- Redacted output of `tunnel-client` and `cloudflared` appears in the Home
-  Assistant App log (prefixed `[openai-tunnel]` / `[cloudflare-tunnel]`) and
-  under **Show logs** on the dashboard.
+- Redacted output of `tunnel-client` appears in the Home Assistant App log
+  (prefixed `[openai-tunnel]`) and under **Show logs** on the dashboard.
 - The manager checks `/healthz` and `/readyz` every five seconds. A running
   but temporarily unready client is allowed to recover on its own. If its
   process exits, its liveness fails for one minute, or its readiness stays
@@ -227,169 +228,102 @@ to the Home Assistant Ingress adapter.
   own bearer-key scope; live reload only changes the tunnel client itself.
 
 The tunnel controller binds `127.0.0.1:8093`. The OpenAI client's native health
-listener is `127.0.0.1:8080`. Neither address is exposed directly through the
-Home Assistant host or the Cloudflare tunnel. The control page and JSON API
+listener is `127.0.0.1:8080`. Neither address is exposed through the Home
+Assistant host or the MCP gateway. The control page and JSON API
 contain no API keys, Tunnel IDs, or user tokens.
 
-## Cloudflare Tunnel
+## Remote access through the Cloudflared and Tailscale Apps
 
-OpenAI and Cloudflare process controls, health, and Cloudflare client-key copy/rotation are
-available on the tunnel dashboard: open MCPHub from the Home Assistant sidebar and select
-**Tunnels** in its top bar.
+> **Breaking change in v2026.10.19:** MCPHub no longer bundles `cloudflared` or
+> its own Tailscale gateway. The options `cloudflare_tunnel_enabled`,
+> `cloudflare_tunnel_token`, `cloudflare_mcp_path`, `tailscale_funnel_enabled`,
+> `tailscale_mcp_path` and `tailscale_funnel_url`, host port `3002`, and the
+> generated Cloudflare and Tailscale client keys are removed. Remote clients
+> now use a normal MCPHub bearer key.
 
-Cloudflare Tunnel provides a normal public HTTPS endpoint for remote MCP clients while
-MCPHub itself remains private inside the Home Assistant App container.
+Cloudflare and Tailscale run in their own Home Assistant Apps, which already
+manage connectors, updates and logs. They forward to MCPHub's MCP-only gateway
+on port `3001` (see [LAN access](LAN_ACCESS.md)). The gateway accepts only
+`/mcp` routes, MCPHub checks the bearer key, and the web interface, login and
+management API are never reachable through it.
 
-The App uses `cloudflared` only for outbound tunnel connectivity. No router port
-forwarding is required.
+- Cloudflared App: https://my.home-assistant.io/redirect/supervisor_addon/?addon=396f0234_cloudflared&repository_url=https%3A%2F%2Fgithub.com%2Fhomeassistant-apps%2Frepository
+- Tailscale App: https://my.home-assistant.io/redirect/supervisor_addon/?addon=a0d7b954_tailscale&repository_url=https%3A%2F%2Fgithub.com%2Fhassio-addons%2Frepository
 
-### Cloudflare setup
+### `external_url`
 
-1. Create a remotely managed Cloudflare Tunnel in the Cloudflare dashboard.
-2. Add a public hostname such as `mcp.example.com`.
-3. Set the hostname service to:
+Optional. The address your MCP clients use, without a path, for example
+`https://mcp.example.com` or `http://192.168.1.10:3001`.
 
-   ```text
-   http://127.0.0.1:8098
-   ```
+- MCPHub uses it as its base URL, so **Copy client config** on a server or group
+  card produces configurations that work from outside Home Assistant. While the
+  option is set it overrides the base URL in MCPHub's own settings; when you
+  clear it, a base URL set manually in MCPHub is kept.
+- The tunnel dashboard's **Check external address** sends one request to
+  `<external_url>/mcp` without credentials and without following redirects.
+  Only a `401` that carries the gateway's `X-MCPHub-Gateway` marker counts as
+  reachable, which proves the full path through Cloudflare or Funnel.
 
-4. Copy the tunnel connector token from Cloudflare.
-5. MCPHub automatically generates and persists a separate secure client key. Open
-   MCPHub from the Home Assistant sidebar, select **Tunnels**, and copy the key from
-   the Cloudflare card.
-6. Configure the Cloudflare Tunnel connector token in the Home Assistant App and restart MCPHub.
-7. Configure the remote MCP client with the public URL plus the selected route, for
-   example:
+### Cloudflare
 
-   ```text
-   https://mcp.example.com/mcp/development
-   ```
+With the Cloudflared App's **local tunnel** (it manages `external_hostname`),
+add MCPHub under `additional_hosts` in that App's configuration:
 
-8. Configure the remote client to send:
+```yaml
+additional_hosts:
+  - hostname: mcp.example.com
+    service: http://<Home Assistant IP>:3001
+```
 
-   ```text
-   Authorization: Bearer <your-client-key>
-   ```
+With a **remote-managed tunnel** (`tunnel_token`), `additional_hosts` is
+ignored; create the same public hostname and service in the Cloudflare
+dashboard instead. The tunnel dashboard shows this entry with your Home
+Assistant address and the published host port filled in.
 
-The Cloudflare hostname may route all HTTP paths to port 8098. The local adapter still
-serves only the exact configured MCP route and returns 404 for every other path.
+Then set `external_url` to `https://mcp.example.com`, create a bearer key in
+MCPHub under **Keys**, and use **Copy client config** in MCPHub.
 
-### `cloudflare_tunnel_enabled`
+### Tailscale
 
-Default: `false`
+Devices in your tailnet reach MCPHub directly at
+`http://<Home Assistant Tailscale name>:3001/mcp`. Tailscale encrypts this
+traffic, so the plain `http://` address is fine inside the tailnet.
 
-Enables the bundled Cloudflare Tunnel client.
+For public access through **Funnel**, the Tailscale App's own options only share
+Home Assistant itself. Configure Funnel for MCPHub once with the Tailscale CLI
+inside the Tailscale App container, for example from the Advanced SSH & Web
+Terminal App with protection mode disabled:
 
-### `cloudflare_tunnel_token`
+```bash
+docker exec addon_a0d7b954_tailscale /opt/tailscale funnel --bg --https=8443 http://127.0.0.1:3001
+docker exec addon_a0d7b954_tailscale /opt/tailscale funnel status
+```
 
-Connector token for the remotely managed Cloudflare Tunnel.
-
-Treat this value as a secret. Anyone with the connector token can run a connector for
-that tunnel.
-
-### `cloudflare_mcp_path`
-
-Default: `/mcp`
-
-Exact MCPHub route exposed through the local Cloudflare adapter.
-
-For least privilege, prefer a focused group such as:
-
-`/mcp/development`
-
-### Automatically managed Cloudflare Client Key
-
-MCPHub creates a random 384-bit client key on first launch and keeps it in
-`/data/secrets/mcphub_cloudflare_client_key` (mode `0600`) across updates/backups.
-Key generation and rotation are managed by MCPHub.
+- `--bg` stores the setting in Tailscale's state, so it survives restarts and
+  updates of the Tailscale App. This is not an officially supported option of
+  that App; check `funnel status` after major Tailscale App updates.
+- Port `8443` avoids a conflict when `share_homeassistant` already uses `443`.
+- Funnel must be allowed for the node in your tailnet policy.
+- Set `external_url` to `https://<node>.<tailnet>.ts.net:8443`.
 
 ### Tunnel dashboard
 
 Open MCPHub from the Home Assistant sidebar and select **Tunnels** in its top bar.
 The dashboard is a separate page served only through authenticated Home Assistant
-Ingress; **Open MCPHub** returns to the MCPHub interface. OpenAI, Cloudflare, and
-Tailscale Funnel each have a single card with their own status and controls.
-Diagnostics and logs expand on demand.
+Ingress; **Open MCPHub** returns to the MCPHub interface. It has two cards:
+
+- **OpenAI Secure Tunnel** with status, **Start**, **Stop**, **Reload**,
+  diagnostics and logs.
+- **Remote access** with the external address and its check, the published MCP
+  gateway address, and the state and version of the Cloudflared and Tailscale
+  Apps with links to open or install them. It reads App state through
+  read-only Supervisor info calls and never starts, stops or reconfigures the
+  other Apps.
 
 The App adds only this one link to MCPHub's top bar. The link is rendered solely
-inside a Home Assistant Ingress session; the LAN MCP gateway never serves the
+inside a Home Assistant Ingress session; the MCP gateway never serves the
 MCPHub interface. Home Assistant's App configuration page cannot show buttons or
-session-specific Ingress links, so its tunnel sections point to the **Tunnels**
-button instead.
-
-Use the Cloudflare card to **copy** the key, or **rotate** it (immediately replacing
-the key used by Nginx).
-Existing valid `cloudflare_access_token` values from older installations are imported
-when the new key file is not yet present. Current installations no longer expose that
-option in the App configuration.
-
-Remote MCP clients still send `Authorization: Bearer <your-client-key>`.
-The key is local to MCPHub; it is not a Cloudflare dashboard credential.
-
-## Tailscale Funnel through the EXISTING Home Assistant Tailscale App
-
-The optional Tailscale integration **does not install or run Tailscale** inside
-MCPHub and does not control the separate Tailscale App. It adds one restricted
-origin in the MCPHub *wrapper* on container port `3002`, protected by an
-independent 384-bit external client key and a separate MCPHub system key
-scoped to the exact configured MCP route. All other HTTP paths return 404.
-Home Assistant Ingress identity headers are stripped. The original upstream
-MCPHub application code is unchanged.
-
-### Setup
-
-1. Leave `share_homeassistant: disabled` in the existing Home Assistant
-   Tailscale App. Its `services` setting is **not** a public Funnel.
-2. In **MCPHub → Configuration → Tailscale**, enable
-   `tailscale_funnel_enabled` and choose the exact `tailscale_mcp_path`.
-3. In **MCPHub → Network**, explicitly map `3002/tcp` to host port `3002`
-   (default is **disabled**). Restart MCPHub so the wrapper can register its
-   path-scoped system key and Nginx gateway. Never point Funnel at 3001
-   (native MCPHub admin-capable service) or 8099 (Home Assistant Ingress).
-4. In the Tailscale admin console enable MagicDNS, HTTPS and the Funnel
-   permission for the existing Home Assistant Tailscale node.
-5. In the CLI **inside the existing Tailscale App container**, run
-   (the binary is installed as `/opt/tailscale` in this App; use the
-   Advanced SSH App to enter its container manually if needed):
-
-   ```bash
-   /opt/tailscale funnel --bg --https=443 http://127.0.0.1:3002
-   /opt/tailscale funnel status
-   ```
-
-   The Tailscale App uses host networking. The Funnel CLI only proxies
-   localhost on that host, which is why the optional host port is needed.
-   `--bg` persists Tailscale's setting independently across restarts.
-   The public hostname is assigned under `*.ts.net`; no Hetzner DNS
-   changes are necessary.
-6. Paste the public URL including the exact MCP route into
-   `tailscale_funnel_url`, e.g. `https://node.tailnet.ts.net/mcp`.
-   The tunnel dashboard's **Check HTTPS** button makes an *unauthenticated*
-   HTTPS request and looks for a 401 reply with our gateway marker. It never
-   transmits the client key to the configured URL. **A check from the HA host
-   cannot prove public Internet reachability:** it may use tailnet routing.
-7. In Claude configure `https://node.tailnet.ts.net/mcp` and send the
-   request header `Authorization: Bearer <key-from-tunnel-dashboard>`.
-   Test from Claude or another device outside the tailnet to prove public access.
-
-### Dashboard and security boundaries
-
-The dedicated Ingress-only dashboard contains **one Tailscale card**, not a
-separate Serve and Funnel panel. Its Start/Stop buttons affect **only the local
-MCP gateway**, not the real Tailscale Funnel daemon, listener, or settings.
-The gate persists across MCPHub restarts; disabled options always fail closed.
-Its client key can be copied and rotated independently of Cloudflare. Key
-rotation reloads Nginx, with rollback and gateway stop on unrecoverable error.
-
-Funnel configuration and its actual status/logs remain in the existing
-Tailscale App (`tailscale funnel status`). A local gateway-health check or
-HTTPS reply must never be mislabeled as a confirmed active public Funnel.
-
-**Network caveat:** Mapping `3002/tcp` to a Home Assistant host port can make
-it reachable from the LAN as well as from localhost. The gateway requires its
-dedicated bearer key even on LAN, allows only the configured MCP route, and
-rejects everything else. Use appropriate host/network firewall rules if LAN
-access should also be restricted. Default host mapping is off.
+session-specific Ingress links, so its sections point to the **Tunnels** button.
 
 ## Dashboard and local proxy architecture
 
@@ -398,19 +332,18 @@ MCPHub is patched to bind to `127.0.0.1:3000` inside the App container.
 Nginx provides these adapters:
 
 - `8099` — Home Assistant Ingress, reachable only from the Supervisor Ingress gateway
-- `3001` — LAN MCP gateway: only `/mcp` routes with an MCPHub bearer key, no web
-  interface or management API
-- `127.0.0.1:8098` — Cloudflare origin, reachable only from processes inside the App
-- `3002` — optional Tailscale Funnel MCP gateway, disabled by default
+- `3001` — MCP-only gateway for LAN clients and the Cloudflared and Tailscale
+  Apps: only `/mcp` routes with an MCPHub bearer key, no web interface or
+  management API
+- `127.0.0.1:8097` — optional bridge to Home Assistant's own MCP Server
 
 MCPHub dashboard authentication is not globally disabled. Instead, authenticated Home
 Assistant Ingress requests carry the Home Assistant user identity plus a private
 per-installation trust marker generated by the App.
 
-The Cloudflare adapter explicitly removes all Home Assistant identity and trust headers
-before proxying to MCPHub. This avoids a dangerous failure mode where a remote client or
-misconfigured tunnel could impersonate a Home Assistant user or expose an
-unauthenticated MCPHub dashboard/API.
+The MCP gateway explicitly removes all Home Assistant identity and trust headers
+before proxying to MCPHub. A remote client or misconfigured tunnel can therefore
+never impersonate a Home Assistant user or reach the MCPHub dashboard or API.
 
 ## Authentication model
 
@@ -419,16 +352,14 @@ paths:
 
 - Home Assistant Ingress uses the authenticated Home Assistant user identity plus a
   private local proxy trust secret.
-- OpenAI Secure MCP Tunnel uses its own internal MCPHub bearer key.
-- Cloudflare Tunnel uses a separate route-scoped internal MCPHub bearer key plus the
-  configured remote-client key.
+- OpenAI Secure MCP Tunnel uses its own internal MCPHub bearer key, automatically
+  scoped to the configured MCP route whenever possible.
+- LAN, Cloudflare and Tailscale clients use MCPHub bearer keys you create under
+  **Keys**; MCPHub can limit each key to specific servers or groups.
 
-The OpenAI and Cloudflare internal keys are automatically scoped to the configured MCP
-route whenever possible. Home Assistant Ingress does not reuse either tunnel credential.
-
-The public Cloudflare client key is intentionally separate from the private MCPHub key.
-Even if the public key is presented directly to MCPHub, it is not accepted as a
-dashboard credential.
+Home Assistant Ingress does not reuse any of these credentials. When upgrading from
+an older version, the App removes the system keys of the former built-in Cloudflare
+and Tailscale origins so they no longer grant access.
 
 ## Persistence
 
@@ -529,28 +460,29 @@ Check that MCPHub reached the ready state and that Nginx started afterward.
 The MCPHub interface is available only through Home Assistant; use **Open Web UI** or
 the sidebar entry. Port 3001 is an MCP-only gateway and returns 404 for the interface.
 
-### Cloudflare Tunnel does not start
+### A remote client cannot connect
 
-Verify that:
+Open the tunnel dashboard and select **Check external address**:
 
-- `cloudflare_tunnel_enabled` is enabled
-- the Cloudflare connector token is present
-- MCPHub has created the Client Key (copy it from the authenticated tunnel page)
-- the public hostname service points to `http://127.0.0.1:8098`
-- the remote client URL includes the exact configured `cloudflare_mcp_path`
+- **Reaches MCPHub:** the path works; check the client's bearer key and URL path.
+- **Not reachable:** check the Cloudflared or Tailscale App and its log, and that
+  host port `3001` is published under **MCPHub → Network**.
+- **Answers, but not MCPHub:** the hostname forwards somewhere else, for example
+  to Home Assistant on port `8123` instead of `3001`.
+- **Redirected:** often a Cloudflare Access login or an `http://` to `https://`
+  redirect; use the final `https://` address as `external_url`.
 
 ### The remote client receives 401
 
-Verify that the client sends:
-
-`Authorization: Bearer <your-client-key>`
-
-and that the value exactly matches the key copied from the MCPHub tunnel page.
+Create or copy a valid key in MCPHub under **Keys** and send it as
+`Authorization: Bearer <key>`. Keys limited to certain servers or groups only work
+for those routes.
 
 ### The remote client receives 404
 
-Verify that its URL path exactly matches `cloudflare_mcp_path`. The Cloudflare adapter
-intentionally rejects every other path.
+The MCP gateway serves only `/mcp`, `/mcp/<group-or-server>` and
+`/mcp/$smart[/<group>]`. Every other path, including the MCPHub interface,
+returns 404.
 
 ### A server fails to start
 

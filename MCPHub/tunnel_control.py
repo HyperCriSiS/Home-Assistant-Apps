@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Ingress-only tunnel control and local health for OpenAI, Cloudflare and Tailscale.
+"""Ingress-only OpenAI tunnel control and remote access status.
 
-One loopback process supervises the optional OpenAI tunnel-client and
-cloudflared subprocesses, gates the Tailscale MCP origin, and serves the
-dashboard. Only the Nginx Home Assistant Ingress adapter proxies it.
-Credentials are never returned through its status, log or diagnostics API.
+One loopback process supervises the optional OpenAI tunnel-client subprocess,
+reports read-only status of remote access through the separate Cloudflared and
+Tailscale Apps, and serves the dashboard. Only the Nginx Home Assistant Ingress
+adapter proxies it. Credentials are never returned through its status, log or
+diagnostics API.
 """
 from __future__ import annotations
 
@@ -12,7 +13,6 @@ import json
 import logging
 import os
 import re
-import secrets
 import signal
 import subprocess
 import threading
@@ -21,15 +21,10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
-from tunnel_diagnostics import TunnelLog, redact
-from tailscale_gateway import TailscaleGateway
+from tunnel_diagnostics import TunnelLog
+from remote_access import RemoteAccess
 
 OPTIONS = Path('/data/options.json')
-CF_SECRET = Path('/data/secrets/cloudflare_tunnel_token')
-CF_STATE = Path('/data/secrets/mcphub_cloudflare_tunnel_state')
-CF_CLIENT = '/usr/local/bin/cloudflared'
-CF_CLIENT_KEY = Path('/data/secrets/mcphub_cloudflare_client_key')
-TS_CLIENT_KEY = Path('/data/secrets/mcphub_tailscale_client_key')
 OPENAI_KEY_FILE = Path('/data/secrets/openai_runtime_api_key')
 OPENAI_AUTH_FILE = Path('/data/secrets/mcphub_tunnel_authorization')
 OPENAI_STATE = Path('/data/secrets/mcphub_openai_tunnel_state')
@@ -39,7 +34,6 @@ TUNNEL_ID = re.compile(r'^tunnel_[0-9a-f]{32}$')
 PORT = ('127.0.0.1', 8093)
 CHECK_INTERVAL = 5
 PATH = re.compile(r'^/mcp(?:/[A-Za-z0-9._$-]+){0,2}$')
-CLIENT_KEY = re.compile(r'^[A-Za-z0-9_-]{32,256}$')
 LOG = logging.getLogger('tunnel-control')
 
 
@@ -53,7 +47,7 @@ def options():
     if not isinstance(data, dict):
         raise ValueError('Invalid Home Assistant App options')
     value = dict(data)
-    for group in ('openai', 'cloudflare', 'tailscale', 'home_assistant', 'github', 'logging'):
+    for group in ('openai', 'remote_access', 'home_assistant', 'github', 'logging'):
         if isinstance(data.get(group), dict):
             value.update(data[group])
     return value
@@ -385,69 +379,19 @@ class OpenAITunnel(TunnelProcess):
         return None
 
 
-class CloudflareTunnel(TunnelProcess):
-    name = 'cloudflare'
-    label = 'Cloudflare'
-    process_name = 'cloudflared'
-    enabled_option = 'cloudflare_tunnel_enabled'
-    route_option = 'cloudflare_mcp_path'
-    startup_grace = 35
-    degraded_timeout = 180
-
-    def default_state_file(self):
-        return CF_STATE
-
-    def reset_health(self):
-        self.degraded_at = 0.0
-
-    def launch(self, opts):
-        token = str(opts.get('cloudflare_tunnel_token') or '').strip()
-        key = CF_CLIENT_KEY.read_text(encoding='utf-8').strip() if CF_CLIENT_KEY.is_file() else ''
-        if not token or not valid_mcp_route(self.route) or not CLIENT_KEY.fullmatch(key):
-            raise ValueError('Cloudflare tunnel configuration is incomplete')
-        save_secret(CF_SECRET, token)
-        argv = [CF_CLIENT, 'tunnel', '--no-autoupdate', '--metrics', '127.0.0.1:20091',
-                'run', '--token-file', str(CF_SECRET)]
-        return argv, None, (token, key)
-
-    def probe(self, route):
-        return (check('http://127.0.0.1:20091/ready'),
-                check('http://127.0.0.1:8098' + route, expected=401))
-
-    def assess(self, now, result):
-        connected, origin = result
-        if connected and origin:
-            self.state = 'ready'
-            self.degraded_at = 0.0
-            self.failed = 0
-            self.error = ''
-            return None
-        self.state = 'starting' if now - self.started < self.startup_grace else 'degraded'
-        self.error = 'Cloudflare connector unready' if not connected else 'MCP origin unready'
-        self.degraded_at = self.degraded_at or now
-        if now - self.started >= self.startup_grace and now - self.degraded_at > self.degraded_timeout:
-            return self._fail(self.error, now)
-        return None
-
-
 class Controls:
     def __init__(self):
-        # Serializes client-key reads/rotation only; tunnel status, commands
-        # and probes use the per-tunnel locks and never wait on this one.
-        self.lock = threading.RLock()
         self.openai = OpenAITunnel()
-        self.cloudflare = CloudflareTunnel()
-        self.tailscale = TailscaleGateway(options)
+        self.remote = RemoteAccess(options)
 
     def processes(self):
-        return {'openai': self.openai, 'cloudflare': self.cloudflare}
+        return {'openai': self.openai}
 
     def snapshot(self):
         now = time.monotonic()
         return {
             'openai': self.openai.status(now),
-            'cloudflare': self.cloudflare.status(now),
-            'tailscale': self.tailscale.status(),
+            'remote': self.remote.status(now),
         }
 
     def command(self, mode, action):
@@ -455,137 +399,38 @@ class Controls:
             raise ValueError('Unsupported action')
         if mode in self.processes():
             return self.processes()[mode].command(action)
-        if mode == 'tailscale':
-            return self.tailscale.command(action)
         raise ValueError('Unknown tunnel')
 
     def logs(self, mode):
         """Return separately buffered logs; never expose the HA App log globally."""
         if mode in self.processes():
             return self.processes()[mode].logs.snapshot()
-        if mode == 'tailscale':
-            return {'lines': ['Tailscale daemon logs are available only in the Tailscale App.'], 'limited': True}
         raise ValueError('Unknown tunnel')
 
     def diagnostics(self, mode):
         """Bounded local component diagnostics; do not return raw configuration."""
-        if mode == 'openai':
-            if not self.openai.alive():
-                return {'note': 'OpenAI tunnel process is not running'}
-            try:
-                with urlopen(OPENAI_HEALTH + '/health?details=true', timeout=3) as response:
-                    report = json.loads(response.read(65536))
-                components = {}
-                for name in ('mcp', 'control-plane', 'response-delivery', 'queue', 'proxy'):
-                    item = report.get('components', {}).get(name)
-                    if isinstance(item, dict):
-                        components[name] = {
-                            k: item[k] for k in ('status', 'state', 'reason_code', 'observed_at')
-                            if k in item and isinstance(item[k], (str, bool, int))
-                        }
-                return {
-                    'live': report.get('live') is True,
-                    'ready': report.get('ready') is True,
-                    'components': components,
-                }
-            except (HTTPError, URLError, OSError, ValueError, TimeoutError):
-                return {'note': 'OpenAI component diagnostics are unavailable'}
-        if mode == 'tailscale':
-            return {'note': 'Tailscale Funnel is operated by the separate Tailscale App. The MCP gateway here controls only local, authenticated access.'}
-        if mode == 'cloudflare':
-            if not self.cloudflare.alive():
-                return {'note': 'Cloudflare tunnel process is not running'}
-            try:
-                with urlopen('http://127.0.0.1:20091/diag/precheck', timeout=3) as response:
-                    if response.status == 204:
-                        return {'note': 'Precheck results are not available yet'}
-                    report = json.loads(response.read(32768))
-                results = []
-                for item in report.get('results', [])[:20]:
-                    if isinstance(item, dict):
-                        results.append({
-                            k: redact(item[k])
-                            for k in ('component', 'status', 'details', 'action')
-                            if isinstance(item.get(k), str)
-                        })
-                return {'hard_fail': report.get('hard_fail') is True,
-                        'suggested_protocol': redact(report.get('suggested_protocol', '')),
-                        'prechecks': results}
-            except (HTTPError, URLError, OSError, ValueError, TimeoutError):
-                return {'note': 'Cloudflare network diagnostics are unavailable'}
-        raise ValueError('Unknown tunnel')
-
-    def client_key(self):
-        with self.lock:
-            key = CF_CLIENT_KEY.read_text(encoding='utf-8').strip()
-            if not CLIENT_KEY.fullmatch(key):
-                raise ValueError('The local Cloudflare client key is missing or invalid')
-            return {'key': key}
-
-    def rotate_client_key(self):
-        """Atomically swap key and reload Nginx; restore old key on any failure."""
-        with self.lock:
-            old = CF_CLIENT_KEY.read_text(encoding='utf-8').strip()
-            if not CLIENT_KEY.fullmatch(old):
-                raise ValueError('The current Cloudflare client key is invalid')
-            new = secrets.token_urlsafe(48)
-            save_secret(CF_CLIENT_KEY, new)
-            try:
-                subprocess.run(['/usr/local/bin/prepare_proxy_config.py'],
-                               check=True, timeout=15, capture_output=True)
-                subprocess.run(['nginx', '-t'], check=True, timeout=10, capture_output=True)
-                subprocess.run(['nginx', '-s', 'reload'],
-                               check=True, timeout=10, capture_output=True)
-            except (OSError, subprocess.SubprocessError) as error:
-                save_secret(CF_CLIENT_KEY, old)
-                # Always attempt restoring the previous proxy config and revocation state.
-                try:
-                    subprocess.run(['/usr/local/bin/prepare_proxy_config.py'],
-                                   check=True, timeout=15, capture_output=True)
-                    subprocess.run(['nginx', '-s', 'reload'],
-                                   check=True, timeout=10, capture_output=True)
-                except (OSError, subprocess.SubprocessError):
-                    # Inability to restore is critical: shut down the remote tunnel.
-                    self.cloudflare.command('stop')
-                    LOG.error('Cloudflare key rollback failed; connector stopped')
-                raise RuntimeError('Cloudflare client key rotation failed') from error
-            LOG.info('Cloudflare client key rotated')
-            return {'rotated': True}
-
-    def tailscale_client_key(self):
-        with self.lock:
-            key = TS_CLIENT_KEY.read_text(encoding='utf-8').strip()
-            if not CLIENT_KEY.fullmatch(key):
-                raise ValueError('Tailscale client key missing or invalid')
-            return {'key': key}
-
-    def rotate_tailscale_client_key(self):
-        """Revoke old external key by reloading Nginx; fail closed on rollback problems."""
-        with self.lock:
-            old = TS_CLIENT_KEY.read_text(encoding='utf-8').strip()
-            if not CLIENT_KEY.fullmatch(old):
-                raise ValueError('Existing Tailscale client key invalid')
-            new = secrets.token_urlsafe(48)
-            save_secret(TS_CLIENT_KEY, new)
-            try:
-                subprocess.run(['/usr/local/bin/prepare_proxy_config.py'],
-                               check=True, timeout=15, capture_output=True)
-                subprocess.run(['nginx', '-t'], check=True, timeout=10, capture_output=True)
-                subprocess.run(['nginx', '-s', 'reload'],
-                               check=True, timeout=10, capture_output=True)
-            except (OSError, subprocess.SubprocessError) as error:
-                save_secret(TS_CLIENT_KEY, old)
-                try:
-                    subprocess.run(['/usr/local/bin/prepare_proxy_config.py'],
-                                   check=True, timeout=15, capture_output=True)
-                    subprocess.run(['nginx', '-s', 'reload'],
-                                   check=True, timeout=10, capture_output=True)
-                except (OSError, subprocess.SubprocessError):
-                    self.tailscale.command('stop')
-                    LOG.error('Tailscale key rollback failed; MCP gateway stopped')
-                raise RuntimeError('Tailscale client key rotation failed') from error
-            LOG.info('Tailscale client key rotated')
-            return {'rotated': True}
+        if mode != 'openai':
+            raise ValueError('Unknown tunnel')
+        if not self.openai.alive():
+            return {'note': 'OpenAI tunnel process is not running'}
+        try:
+            with urlopen(OPENAI_HEALTH + '/health?details=true', timeout=3) as response:
+                report = json.loads(response.read(65536))
+            components = {}
+            for name in ('mcp', 'control-plane', 'response-delivery', 'queue', 'proxy'):
+                item = report.get('components', {}).get(name)
+                if isinstance(item, dict):
+                    components[name] = {
+                        k: item[k] for k in ('status', 'state', 'reason_code', 'observed_at')
+                        if k in item and isinstance(item[k], (str, bool, int))
+                    }
+            return {
+                'live': report.get('live') is True,
+                'ready': report.get('ready') is True,
+                'components': components,
+            }
+        except (HTTPError, URLError, OSError, ValueError, TimeoutError):
+            return {'note': 'OpenAI component diagnostics are unavailable'}
 
     def tick(self):
         for tunnel in self.processes().values():
@@ -627,73 +472,26 @@ def handler_for(manager):
                 self.send(200, SCRIPT.encode(), 'text/javascript; charset=utf-8')
             elif self.path == '/api/status':
                 self.send(200, json.dumps(manager.snapshot()).encode())
-            elif self.path == '/api/tailscale/gate':
-                # This controller listens on container loopback only; Nginx
-                # exposes the subrequest location as internal, never public.
-                self.send(204 if manager.tailscale.authorized() else 403)
-            elif self.path == '/api/tailscale/https-check':
+            elif self.path == '/api/remote/check':
+                # Makes one outbound request; require the dashboard's header.
                 if self.headers.get('X-MCPHub-Tunnel-Control') != '1':
                     self.send(403, b'Forbidden', 'text/plain')
                     return
                 try:
-                    self.send(200, json.dumps(manager.tailscale.check_https()).encode())
-                except (OSError, ValueError):
-                    self.send(409, b'Invalid or missing Funnel URL', 'text/plain')
-            elif self.path == '/api/tailscale/client-key':
-                if self.headers.get('X-MCPHub-Tunnel-Control') != '1':
-                    self.send(403, b'Forbidden', 'text/plain')
-                    return
-                try:
-                    self.send(200, json.dumps(manager.tailscale_client_key()).encode())
-                except (OSError, ValueError):
-                    self.send(503, b'Key unavailable', 'text/plain')
-            elif self.path in ('/api/logs/openai', '/api/logs/cloudflare', '/api/logs/tailscale'):
-                self.send(200, json.dumps(manager.logs(self.path.rsplit('/', 1)[-1])).encode())
-            elif self.path in ('/api/diagnostics/openai', '/api/diagnostics/cloudflare', '/api/diagnostics/tailscale'):
-                self.send(200, json.dumps(manager.diagnostics(self.path.rsplit('/', 1)[-1])).encode())
-            elif self.path == '/api/client-key':
-                if self.headers.get('X-MCPHub-Tunnel-Control') != '1':
-                    self.send(403, b'Forbidden', 'text/plain')
-                    return
-                try:
-                    self.send(200, json.dumps(manager.client_key()).encode())
-                except (OSError, ValueError):
-                    self.send(503, b'Key unavailable', 'text/plain')
+                    self.send(200, json.dumps(manager.remote.check()).encode())
+                except ValueError as error:
+                    self.send(409, str(error).encode(), 'text/plain')
+            elif self.path == '/api/logs/openai':
+                self.send(200, json.dumps(manager.logs('openai')).encode())
+            elif self.path == '/api/diagnostics/openai':
+                self.send(200, json.dumps(manager.diagnostics('openai')).encode())
             else:
                 self.send(404, b'Not found', 'text/plain')
 
         def do_POST(self):
-            if self.path == '/api/tailscale/client-key/rotate':
-                if (self.headers.get('X-MCPHub-Tunnel-Control') != '1'
-                    or self.headers.get('Content-Type', '').split(';')[0] != 'application/json'
-                    or self.headers.get('Content-Length') != '2'):
-                    self.send(403, b'Forbidden', 'text/plain')
-                    return
-                if self.rfile.read(2) != b'{}':
-                    self.send(400, b'Bad request', 'text/plain')
-                    return
-                try:
-                    self.send(200, json.dumps(manager.rotate_tailscale_client_key()).encode())
-                except (OSError, ValueError, RuntimeError):
-                    self.send(503, b'Key rotation failed', 'text/plain')
-                return
-            if self.path == '/api/client-key/rotate':
-                if (self.headers.get('X-MCPHub-Tunnel-Control') != '1'
-                    or self.headers.get('Content-Type', '').split(';')[0] != 'application/json'
-                    or self.headers.get('Content-Length') != '2'):
-                    self.send(403, b'Forbidden', 'text/plain')
-                    return
-                if self.rfile.read(2) != b'{}':
-                    self.send(400, b'Bad request', 'text/plain')
-                    return
-                try:
-                    self.send(200, json.dumps(manager.rotate_client_key()).encode())
-                except (OSError, ValueError, RuntimeError):
-                    self.send(503, b'Key rotation failed', 'text/plain')
-                return
             parts = self.path.split('/')
             if (len(parts) != 5 or parts[:3] != ['', 'api', 'control']
-                    or parts[3] not in ('openai', 'cloudflare', 'tailscale')
+                    or parts[3] != 'openai'
                     or parts[4] not in ('start', 'stop', 'reload')
                     or self.headers.get('X-MCPHub-Tunnel-Control') != '1'
                     or self.headers.get('Content-Type', '').split(';')[0] != 'application/json'
@@ -726,7 +524,7 @@ def main():
     signal.signal(signal.SIGINT, stop)
     worker = threading.Thread(target=server.serve_forever, daemon=True)
     worker.start()
-    LOG.info('Tunnel control for OpenAI, Cloudflare and Tailscale is available on loopback only')
+    LOG.info('OpenAI tunnel control and remote access status are available on loopback only')
     try:
         while not stopped.is_set():
             manager.tick()
