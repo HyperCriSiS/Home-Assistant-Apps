@@ -20,6 +20,7 @@ def main() -> None:
     config = yaml.safe_load((ADDON_DIR / "config.yaml").read_text(encoding="utf-8"))
     dockerfile = (ADDON_DIR / "Dockerfile").read_text(encoding="utf-8")
     changelog = (ADDON_DIR / "CHANGELOG.md").read_text(encoding="utf-8")
+    readme = (ADDON_DIR / "README.md").read_text(encoding="utf-8")
 
     if set(config.get("arch", [])) != {"amd64", "aarch64"}:
         fail(f"Unexpected architectures: {config.get('arch')!r}")
@@ -50,6 +51,18 @@ def main() -> None:
     if environment.get("TRILIUM_DATA_DIR") != "/home/node/trilium-data":
         fail("TRILIUM_DATA_DIR must match the persistent Home Assistant data mapping")
 
+    if config.get("backup") != "cold":
+        fail("Backups must stay cold so the Trilium SQLite database is captured consistently")
+
+    schema_options = set(config.get("schema", {}))
+    for translation_path in sorted((ADDON_DIR / "translations").glob("*.yaml")):
+        translation = yaml.safe_load(translation_path.read_text(encoding="utf-8")) or {}
+        missing = schema_options - set(translation.get("configuration", {}))
+        if missing:
+            fail(f"{translation_path.name} is missing option translations: {sorted(missing)}")
+    if not (ADDON_DIR / "translations" / "en.yaml").is_file():
+        fail("English option translations are missing")
+
     version = str(config["version"])
     if not changelog.startswith(f"# Changelog\n\n## {version}\n"):
         fail("The first changelog entry must match config.yaml version")
@@ -73,6 +86,11 @@ def main() -> None:
             "config.yaml description must expose the pinned Trilium version "
             f"and start with {expected_description_prefix!r}"
         )
+
+    badge = f"badge/Trilium-{upstream_version.replace('-', '--')}-"
+    release_link = f"(https://github.com/TriliumNext/Trilium/releases/tag/{upstream_version})"
+    if badge not in readme or release_link not in readme:
+        fail("README.md Trilium version badge must match the pinned Trilium image")
 
     output = os.environ.get("GITHUB_OUTPUT")
     if output:

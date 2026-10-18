@@ -9,10 +9,12 @@ on:
       - ".github/scripts/upgrade-test.sh"
       - ".github/scripts/test_websocket.py"
       - ".github/scripts/validate_metadata.py"
+      - ".github/scripts/update_trilium.py"
       - ".github/tests/e2e/**"
-      - ".github/workflows/**"
-      - ".github/actionlint.yaml"
-      - ".yamllint"
+      - ".github/workflows/validate.yml"
+      - ".github/workflows/update-trilium.yml"
+      - ".github/workflows/haos-integration.yml"
+      - ".github/scripts/haos-e2e.sh"
   push:
     branches:
       - main
@@ -23,10 +25,12 @@ on:
       - ".github/scripts/upgrade-test.sh"
       - ".github/scripts/test_websocket.py"
       - ".github/scripts/validate_metadata.py"
+      - ".github/scripts/update_trilium.py"
       - ".github/tests/e2e/**"
-      - ".github/workflows/**"
-      - ".github/actionlint.yaml"
-      - ".yamllint"
+      - ".github/workflows/validate.yml"
+      - ".github/workflows/update-trilium.yml"
+      - ".github/workflows/haos-integration.yml"
+      - ".github/scripts/haos-e2e.sh"
   workflow_dispatch:
 
 permissions:
@@ -59,19 +63,27 @@ jobs:
             'yamllint==1.37.1'
           go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
 
-      - name: Lint YAML
+      # Repository-wide YAML and workflow linting runs in lint-workflows.yml, so
+      # an unrelated MCPHub workflow never blocks a Trilium release.
+      - name: Lint Trilium YAML
         run: |
-          find . \
+          find "TriliumNext Notes" \
             -type f \
             \( -name '*.yml' -o -name '*.yaml' \) \
-            -not -path './.git/*' \
             -print0 \
             | xargs -0 yamllint
+          yamllint \
+            .github/workflows/validate.yml \
+            .github/workflows/update-trilium.yml \
+            .github/workflows/haos-integration.yml
 
-      - name: Lint GitHub Actions
+      - name: Lint Trilium GitHub Actions
         run: |
           actionlint_bin="$(go env GOPATH)/bin/actionlint"
-          "${actionlint_bin}"
+          "${actionlint_bin}" \
+            .github/workflows/validate.yml \
+            .github/workflows/update-trilium.yml \
+            .github/workflows/haos-integration.yml
 
       - name: Lint Dockerfile
         run: |
@@ -83,6 +95,18 @@ jobs:
       - name: Validate metadata consistency
         id: metadata
         run: python3 .github/scripts/validate_metadata.py
+
+      - name: Dry-run Trilium update automation
+        run: |
+          # The scheduled updater must keep producing metadata that passes validation.
+          scratch="$(mktemp -d)"
+          mkdir -p "${scratch}/.github"
+          cp -r .github/scripts "${scratch}/.github/"
+          cp -r "TriliumNext Notes" "${scratch}/"
+          python3 "${scratch}/.github/scripts/update_trilium.py" --upstream v999.0.0
+          python3 "${scratch}/.github/scripts/validate_metadata.py"
+          grep -q 'badge/Trilium-v999.0.0-' "${scratch}/TriliumNext Notes/README.md"
+          rm -rf "${scratch}"
 
       - name: Validate upstream image architectures
         env:
@@ -151,7 +175,7 @@ jobs:
       - name: Install browser test dependencies
         working-directory: .github/tests/e2e
         run: |
-          npm install --no-audit --no-fund
+          npm ci --no-audit --no-fund
           npx playwright install --with-deps chromium
 
       - name: Functional, Ingress, WebSocket and browser tests
