@@ -1,5 +1,3 @@
-![Trilium Notes logo](https://github.com/user-attachments/assets/7b39fd05-4c0d-46f3-8283-117e2093f3e3)
-
 # Trilium Notes for Home Assistant
 
 This Home Assistant add-on runs [Trilium Notes](https://github.com/TriliumNext/Trilium), a hierarchical note-taking application for building a personal knowledge base. It supports rich text and Markdown, encryption, synchronization, scripting, and extensive organization features.
