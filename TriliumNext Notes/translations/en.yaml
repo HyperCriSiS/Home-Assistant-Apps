@@ -1,0 +1,22 @@
+---
+configuration:
+  timezone:
+    name: "Timezone"
+    description: >-
+      IANA timezone used by Trilium, for example Europe/Berlin or America/New_York.
+  log_retention_days:
+    name: "Log retention (days)"
+    description: >-
+      Number of days Trilium keeps its log files (1-3650).
+  log_level:
+    name: "Log level (deprecated)"
+    description: >-
+      No longer used. Kept only for compatibility with existing installations.
+  https_only:
+    name: "HTTPS only (deprecated)"
+    description: >-
+      No longer used. TLS is terminated by Home Assistant Ingress or an external reverse proxy.
+network:
+  8080/tcp: >-
+    Optional direct Trilium web interface and sync access. Not required for Ingress.
+    Leave blank to disable.

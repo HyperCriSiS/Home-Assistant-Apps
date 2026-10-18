@@ -1,10 +1,11 @@
 {
   "mcphub": {
-    "revision": 113,
-    "tree": "e98617de36a03e4ce49dcb1359aaa373d1868901"
+    "fingerprint": "afa0b8c09dbf60c31b4f5848a973ee44acb197ad04380fbf7ebb90008e655a61",
+    "revision": 114,
+    "tree": "cf25a69ea1cd83d159ab773e89b093ca2eb7759b"
   },
   "trilium": {
-    "revision": 84,
-    "tree": "c17cb157c6dde68150df7f09adc22a56167dbab1"
+    "revision": 85,
+    "tree": "7d403318d964e2bc54f7ba557442c4c1c65b2cd2"
   }
 }

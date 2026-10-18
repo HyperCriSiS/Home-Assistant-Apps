@@ -1,5 +1,49 @@
 [
   {
+    "revision": 114,
+    "version": "v2026.10.18-1-dev.114",
+    "source_sha": "7a7ad0648b32143d6260e9ab2a5d04c59dac11d2",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "7a7ad0648b32143d6260e9ab2a5d04c59dac11d2",
+        "subject": "Merge pull request #81: merge main into dev-mcphub and resolve README/logo conflict"
+      },
+      {
+        "sha": "860be43b572ee85c24294348e51fbc03af8bb740",
+        "subject": "test(mcphub): wait for the Tailscale gate backend before asserting bearer access"
+      },
+      {
+        "sha": "40db058efdb3fbd3e7b32221852c9bcf4a5dbfb2",
+        "subject": "Merge origin/main into dev-mcphub"
+      },
+      {
+        "sha": "5eae11d3178661c671feb0ad465cbab5cbc6dd0c",
+        "subject": "Update logo.svg"
+      },
+      {
+        "sha": "0788b393d40438eae863ef951b6e54571f8bfdb5",
+        "subject": "Update README.md"
+      },
+      {
+        "sha": "2f9f651e1bd166cfe64a6fe64223400e12b94f16",
+        "subject": "ci(mcphub): automatically validate and merge stable tunnel-client updates"
+      },
+      {
+        "sha": "f8ddcdd52b3a56a2f2d58dff65987e4cd3bfa3eb",
+        "subject": "fix(ci): update Trilium workflow_run references after rename (#44)"
+      },
+      {
+        "sha": "435136767d97125287c5f151008f4cce0cd632f8",
+        "subject": "ci: require manual MCPHub stable release promotion (#40)"
+      },
+      {
+        "sha": "e3bcaa6f1f3fceffa0996bd4713e1c025abac12c",
+        "subject": "fix(mcphub): use centered font-independent wordmark in main (#39)"
+      }
+    ]
+  },
+  {
     "revision": 113,
     "version": "v2026.10.18-1-dev.113",
     "source_sha": "a9c5289418b73dd8e4de86ff7a293ed2df844060",
