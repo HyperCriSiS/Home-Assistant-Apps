@@ -403,11 +403,17 @@ code="$(curl --silent --output /dev/null --write-out '%{http_code}' \
   exit 1
 }
 
-code="$(curl --silent --output /dev/null --write-out '%{http_code}' \
-  --max-time 10 --request POST -H 'Content-Type: application/json' \
-  -H 'Accept: application/json, text/event-stream' \
-  -H "Authorization: Bearer ${tailscale_key}" \
-  --data "${test_initialize}" "http://127.0.0.1:${ts_host_port}/mcp")"
+# The gate's auth_request backend (tunnel control on :8093) can start a few
+# seconds after MCPHub's /health, so allow transient 000/5xx responses first.
+for _ in $(seq 1 30); do
+  code="$(curl --silent --output /dev/null --write-out '%{http_code}' \
+    --max-time 10 --request POST -H 'Content-Type: application/json' \
+    -H 'Accept: application/json, text/event-stream' \
+    -H "Authorization: Bearer ${tailscale_key}" \
+    --data "${test_initialize}" "http://127.0.0.1:${ts_host_port}/mcp")"
+  [[ "${code}" == "000" || "${code}" == 5* ]] || break
+  sleep 1
+done
 [[ "${code}" != "000" && "${code}" != "401" && "${code}" != "403" && "${code}" != "404" && "${code}" != 5* ]] || {
   echo "Tailscale bearer key could not reach MCPHub through gateway (HTTP ${code})" >&2
   exit 1
