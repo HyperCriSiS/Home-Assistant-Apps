@@ -82,6 +82,7 @@ jobs:
           git switch -C "${branch}"
           git add 'TriliumNext Notes/Dockerfile' \
             'TriliumNext Notes/config.yaml' \
+            'TriliumNext Notes/README.md' \
             'TriliumNext Notes/CHANGELOG.md'
           git commit -m "chore: update Trilium to ${LATEST}"
 
@@ -120,14 +121,19 @@ jobs:
 
       - name: Dispatch full validation for update branch
         if: steps.version.outputs.update == 'true'
+        id: dispatch
         env:
           BRANCH: ${{ steps.update.outputs.branch }}
-        run: gh workflow run validate.yml --repo "${GITHUB_REPOSITORY}" --ref "${BRANCH}"
+        run: |
+          # Remember the dispatch time so an older run for the same branch is never awaited.
+          echo "since=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "${GITHUB_OUTPUT}"
+          gh workflow run validate.yml --repo "${GITHUB_REPOSITORY}" --ref "${BRANCH}"
 
       - name: Wait for update validation
         if: steps.version.outputs.update == 'true'
         env:
           BRANCH: ${{ steps.update.outputs.branch }}
+          SINCE: ${{ steps.dispatch.outputs.since }}
         run: |
           run_id=""
           for _ in $(seq 1 30); do
@@ -136,9 +142,9 @@ jobs:
               --workflow validate.yml \
               --branch "${BRANCH}" \
               --event workflow_dispatch \
-              --limit 1 \
-              --json databaseId \
-              --jq '.[0].databaseId // empty')"
+              --limit 5 \
+              --json databaseId,createdAt \
+              --jq "map(select(.createdAt >= \"${SINCE}\")) | .[0].databaseId // empty")"
             [[ -n "${run_id}" ]] && break
             sleep 2
           done

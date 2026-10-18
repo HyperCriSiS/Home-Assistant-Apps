@@ -1,10 +1,10 @@
 ---
-name: "Trilium Notes (Dev)"
-version: "v2026.10.18-dev.85"
+name: "Trilium Notes"
+version: "v2026.10.18"
 slug: trilium
 description: >-
   Trilium v0.106.0 - hierarchical note-taking and personal knowledge base.
-url: "https://github.com/HyperCriSiS/Home-Assistant-Apps/tree/dev-trilium/TriliumNext%20Notes"
+url: "https://github.com/HyperCriSiS/Home-Assistant-Apps/tree/main/TriliumNext%20Notes"
 ingress: true
 ingress_port: 8080
 ingress_stream: true
@@ -18,7 +18,6 @@ arch:
 startup: application
 boot: auto
 init: false
-stage: experimental
 # Stop Trilium during backups so the SQLite database is captured consistently.
 backup: cold
 map:

@@ -31,6 +31,7 @@ def main() -> None:
     dockerfile_path = ADDON_DIR / "Dockerfile"
     config_path = ADDON_DIR / "config.yaml"
     changelog_path = ADDON_DIR / "CHANGELOG.md"
+    readme_path = ADDON_DIR / "README.md"
 
     dockerfile = dockerfile_path.read_text(encoding="utf-8")
     current_upstream_match = re.search(
@@ -45,12 +46,12 @@ def main() -> None:
         print(f"Already on {args.upstream}")
         return
 
+    # Compute every change first so a failure never leaves half-updated files behind.
     dockerfile = dockerfile.replace(
         f"docker.io/triliumnext/trilium:{current_upstream}",
         f"docker.io/triliumnext/trilium:{args.upstream}",
         1,
     )
-    dockerfile_path.write_text(dockerfile, encoding="utf-8")
 
     config = config_path.read_text(encoding="utf-8")
     version_match = re.search(r'^version:\s*"([^"]+)"$', config, re.MULTILINE)
@@ -78,7 +79,20 @@ def main() -> None:
     if count != 1:
         raise SystemExit("Could not update Trilium version in config description")
 
-    config_path.write_text(config, encoding="utf-8")
+    # Shields.io escapes a literal dash in badge text as a double dash.
+    readme = readme_path.read_text(encoding="utf-8")
+    readme, count = re.subn(
+        r"badge/Trilium-v(?:[^-)\s]|--)+-(\w+)\)\]"
+        r"\(https://github\.com/TriliumNext/Trilium/releases/tag/v[^)\s]+\)",
+        lambda match: (
+            f"badge/Trilium-{args.upstream.replace('-', '--')}-{match.group(1)})]"
+            f"(https://github.com/TriliumNext/Trilium/releases/tag/{args.upstream})"
+        ),
+        readme,
+        count=1,
+    )
+    if count != 1:
+        raise SystemExit("Could not update the Trilium version badge in README.md")
 
     changelog = changelog_path.read_text(encoding="utf-8")
     entry = (
@@ -89,6 +103,10 @@ def main() -> None:
     marker = "# Changelog\n\n"
     if not changelog.startswith(marker):
         raise SystemExit("Unexpected CHANGELOG.md format")
+
+    dockerfile_path.write_text(dockerfile, encoding="utf-8")
+    config_path.write_text(config, encoding="utf-8")
+    readme_path.write_text(readme, encoding="utf-8")
     changelog_path.write_text(marker + entry + changelog[len(marker):], encoding="utf-8")
 
     print(f"Updated Trilium {current_upstream} -> {args.upstream}")
