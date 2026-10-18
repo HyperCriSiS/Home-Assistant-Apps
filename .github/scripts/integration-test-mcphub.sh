@@ -82,8 +82,8 @@ write_options
 start_addon
 wait_ready
 
-# Exercise the opt-in LAN proxy through a real Docker host-port mapping.
-# Home Assistant does not publish this port by default (config.yaml: null).
+# Exercise the LAN MCP gateway through a real Docker host-port mapping.
+# It must serve only MCP routes; MCPHub's web interface stays Ingress-only.
 lan_binding="$(docker port "${CONTAINER}" 3001/tcp)"
 [[ "${lan_binding}" == 127.0.0.1:* ]] || {
   echo "LAN proxy was not mapped to host loopback" >&2
@@ -130,6 +130,25 @@ no_key_code="$(curl --silent --output /dev/null --write-out '%{http_code}'   --m
   echo "LAN MCP endpoint failed to reject missing bearer key (HTTP ${no_key_code})" >&2
   exit 1
 }
+
+# The LAN gateway must not serve the web interface, login or management API,
+# including raw dot-segment paths that normalize to an MCP route.
+for path in / /login /api/servers /api/better-auth/user /api/settings \
+    /_mcphub_tunnels/ /_mcphub_tunnels/api/status /sse /messages \
+    /api/../mcp /mcp/../api/servers /mcp/%2e%2e/api/servers; do
+  lan_code="$(curl --silent --path-as-is --output /dev/null --write-out '%{http_code}' \
+    --max-time 5 "http://127.0.0.1:${lan_port}${path}")"
+  if [[ "${path}" == "/api/../mcp" ]]; then
+    # Normalizes to /mcp: MCPHub must still demand a bearer key.
+    [[ "${lan_code}" == "401" || "${lan_code}" == "403" || "${lan_code}" == "405" ]] || {
+      echo "LAN gateway mishandled ${path} (HTTP ${lan_code})" >&2
+      exit 1
+    }
+  elif [[ "${lan_code}" != "404" && "${lan_code}" != "400" ]]; then
+    echo "LAN gateway exposed ${path} (HTTP ${lan_code})" >&2
+    exit 1
+  fi
+done
 
 # The OpenAI tunnel supervisor must be reachable through Supervisor Ingress
 # without exposing a separate unauthenticated port or requiring a running tunnel.
@@ -187,15 +206,20 @@ assert isinstance(json.loads(sys.argv[1]), dict)
 PYDETAIL
 done
 
-# Tunnel administration is separate; MCPHub's upstream frontend must stay
-# unmodified and never inject a tunnel button into its topbar.
+# MCPHub's Ingress frontend links to the tunnel console via a small script.
 frontend_html="$(ingress_curl --fail --silent --show-error \
   --header "X-Ingress-Path: ${INGRESS_PATH}" \
   "http://${CONTAINER}:8099/")"
-if grep -q 'mcphub-ha-nav.js' <<<"${frontend_html}"; then
-  echo "Unexpected tunnel navigation injected into original MCPHub" >&2
+grep -q 'mcphub-ha-nav.js' <<<"${frontend_html}" || {
+  echo "MCPHub frontend is missing the Ingress tunnel link" >&2
   exit 1
-fi
+}
+nav_script="$(ingress_curl --fail --silent --show-error \
+  "http://${CONTAINER}:8099/mcphub-ha-nav.js")"
+grep -q '_mcphub_tunnels/' <<<"${nav_script}" || {
+  echo "MCPHub tunnel link script was not served through Ingress" >&2
+  exit 1
+}
 
 # Even in the CI fixture (which explicitly publishes the test host port), the
 # Tailscale MCP gateway is disabled by default and must deny all routes.

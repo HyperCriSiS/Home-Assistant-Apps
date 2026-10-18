@@ -256,7 +256,7 @@ def cloudflare_server_block(
             return 401;
         }}
 
-        proxy_pass http://127.0.0.1:3000;
+        proxy_pass http://127.0.0.1:3000$uri$is_args$args;
         proxy_http_version 1.1;
 
         proxy_set_header Authorization "Bearer {internal_token}";
@@ -332,7 +332,7 @@ def tailscale_gateway_server_block(
         }}
         auth_request /__mcphub_tailscale_gate;
 
-        proxy_pass http://127.0.0.1:3000;
+        proxy_pass http://127.0.0.1:3000$uri$is_args$args;
         proxy_http_version 1.1;
         proxy_set_header Authorization "Bearer {internal_token}";
 

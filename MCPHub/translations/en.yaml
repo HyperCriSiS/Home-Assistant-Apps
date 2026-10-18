@@ -2,7 +2,9 @@
 configuration:
   openai:
     name: "OpenAI Secure Tunnel"
-    description: "Settings for OpenAI Secure Tunnel"
+    description: >-
+      Settings for OpenAI Secure Tunnel. Live status, start/stop and logs:
+      open MCPHub in the sidebar and select "Tunnels" in the top bar.
     fields:
       tunnel_enabled:
         name: "Enable OpenAI Secure MCP Tunnel"
@@ -26,7 +28,9 @@ configuration:
           or /mcp/$smart.
   cloudflare:
     name: "Cloudflare Tunnel"
-    description: "Settings for Cloudflare Tunnel"
+    description: >-
+      Settings for Cloudflare Tunnel. Live status, start/stop, client key and
+      logs: open MCPHub in the sidebar and select "Tunnels" in the top bar.
     fields:
       cloudflare_tunnel_enabled:
         name: "Enable Cloudflare Tunnel"
@@ -43,7 +47,10 @@ configuration:
           /mcp/development.
   tailscale:
     name: "Tailscale Funnel"
-    description: "Use the existing Home Assistant Tailscale App. Funnel is configured in that App."
+    description: >-
+      Use the existing Home Assistant Tailscale App. Funnel is configured in that
+      App. Gateway status and client key: open MCPHub in the sidebar and select
+      "Tunnels" in the top bar.
     fields:
       tailscale_funnel_enabled:
         name: "Enable Tailscale MCP gateway"
@@ -114,3 +121,10 @@ configuration:
       tunnel_log_level:
         name: "OpenAI tunnel log level"
         description: "Verbosity of the OpenAI tunnel-client logs."
+network:
+  3001/tcp: >-
+    LAN MCP access: only /mcp endpoints with an MCPHub bearer key (create one
+    under Keys in MCPHub). No web interface. Leave blank to disable.
+  3002/tcp: >-
+    Optional Tailscale Funnel MCP gateway. Map only after enabling the
+    protected gateway in the configuration.

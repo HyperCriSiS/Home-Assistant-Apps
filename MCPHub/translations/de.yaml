@@ -2,7 +2,9 @@
 configuration:
   openai:
     name: "OpenAI Secure Tunnel"
-    description: "Einstellungen für OpenAI Secure Tunnel"
+    description: >-
+      Einstellungen für OpenAI Secure Tunnel. Live-Status, Start/Stopp und Logs:
+      MCPHub in der Seitenleiste öffnen und oben auf „Tunnels“ klicken.
     fields:
       tunnel_enabled:
         name: "OpenAI Secure MCP Tunnel aktivieren"
@@ -22,7 +24,9 @@ configuration:
         description: "MCPHub-Endpunkt für ChatGPT, zum Beispiel /mcp, /mcp/$smart oder /mcp/<gruppe>."
   cloudflare:
     name: "Cloudflare Tunnel"
-    description: "Einstellungen für Cloudflare Tunnel"
+    description: >-
+      Einstellungen für Cloudflare Tunnel. Live-Status, Start/Stopp, Client-Key
+      und Logs: MCPHub in der Seitenleiste öffnen und oben auf „Tunnels“ klicken.
     fields:
       cloudflare_tunnel_enabled:
         name: "Cloudflare Tunnel aktivieren"
@@ -36,7 +40,10 @@ configuration:
         description: "Die über Cloudflare bereitgestellte MCPHub-Route."
   tailscale:
     name: "Tailscale Funnel"
-    description: "Verwendet das vorhandene Home-Assistant-Tailscale-Add-on. Funnel wird dort eingerichtet."
+    description: >-
+      Verwendet das vorhandene Home-Assistant-Tailscale-Add-on. Funnel wird dort
+      eingerichtet. Gateway-Status und Client-Key: MCPHub in der Seitenleiste
+      öffnen und oben auf „Tunnels“ klicken.
     fields:
       tailscale_funnel_enabled:
         name: "Tailscale MCP-Gateway aktivieren"
@@ -108,3 +115,10 @@ configuration:
       tunnel_log_level:
         name: "OpenAI Tunnel-Log-Level"
         description: "Ausführlichkeit der OpenAI-tunnel-client-Logs."
+network:
+  3001/tcp: >-
+    MCP-Zugriff im LAN: nur /mcp-Endpunkte mit MCPHub-Bearer-Key (in MCPHub
+    unter Keys anlegen). Keine Weboberfläche. Leer lassen zum Deaktivieren.
+  3002/tcp: >-
+    Optionales Tailscale-Funnel-MCP-Gateway. Nur freigeben, nachdem das
+    geschützte Gateway in der Konfiguration aktiviert wurde.

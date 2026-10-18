@@ -1,5 +1,12 @@
 # Changelog
 
+## v2026.10.18
+
+- Restrict LAN port 3001 to MCP endpoints with an MCPHub bearer key; the web interface, login and management API are now available only through Home Assistant Ingress.
+- Forward only the normalized request path from the LAN, Cloudflare and Tailscale MCP gateways so raw dot-segment paths never reach MCPHub.
+- Restore a small Ingress-only **Tunnels** link in MCPHub's top bar and point the tunnel configuration sections to it.
+- Switch to hot backups so MCPHub keeps running during backups, and exclude re-downloadable package caches.
+
 ## v2026.10.17-1
 
 - Simplify LAN port configuration label; blank host port still disables direct LAN access.

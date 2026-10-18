@@ -95,9 +95,14 @@ COPY tunnel_manager.py /usr/local/bin/tunnel_manager.py
 COPY tunnel_control.py /usr/local/bin/tunnel_control.py
 COPY tunnel_diagnostics.py /usr/local/bin/tunnel_diagnostics.py
 COPY tailscale_gateway.py /usr/local/bin/tailscale_gateway.py
-# Standalone Ingress-only tunnel management console (no MCPHub SPA injection).
+# Ingress-only tunnel management console, linked from a small "Tunnels"
+# button in MCPHub's topbar. The button script only renders under Ingress.
 COPY tunnel_dashboard.html /usr/local/bin/tunnel_dashboard.html
 COPY tunnel_dashboard.js /usr/local/bin/tunnel_dashboard.js
+COPY ha_tunnel_nav.js /app/frontend/dist/mcphub-ha-nav.js
+COPY inject_tunnel_nav.py /usr/local/bin/inject_tunnel_nav.py
+RUN python3 /usr/local/bin/inject_tunnel_nav.py \
+    && rm /usr/local/bin/inject_tunnel_nav.py
 COPY run.sh /run.sh
 COPY .haos-source-revision /etc/mcphub-source-revision
 

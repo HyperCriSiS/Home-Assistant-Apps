@@ -24,14 +24,31 @@ def load(module_name, file):
 
 
 class NavigationTests(unittest.TestCase):
-    def test_mcphub_shell_is_not_modified_for_tunnel_controls(self):
+    def test_mcphub_topbar_gets_only_an_ingress_tunnel_link(self):
         dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
-        self.assertNotIn("inject_tunnel_nav.py", dockerfile)
-        self.assertNotIn("ha_tunnel_nav.js", dockerfile)
-        self.assertFalse((ROOT / "inject_tunnel_nav.py").exists())
-        self.assertFalse((ROOT / "ha_tunnel_nav.js").exists())
+        self.assertIn("COPY ha_tunnel_nav.js /app/frontend/dist/mcphub-ha-nav.js", dockerfile)
+        self.assertIn("RUN python3 /usr/local/bin/inject_tunnel_nav.py", dockerfile)
         self.assertIn("COPY tunnel_dashboard.html", dockerfile)
         self.assertIn("COPY tunnel_dashboard.js", dockerfile)
+
+        script = (ROOT / "ha_tunnel_nav.js").read_text(encoding="utf-8")
+        # The link is computed from the Ingress session path and nothing else.
+        self.assertIn(r"\/api\/hassio_ingress\/[^/]+", script)
+        self.assertIn("if (!match) return;", script)
+        self.assertIn('"/_mcphub_tunnels/"', script)
+        self.assertNotIn("innerHTML", script)
+        self.assertNotIn("fetch(", script)
+
+    def test_shell_injection_is_exact_and_idempotency_is_enforced(self):
+        module = load("mcphub_inject_nav", "inject_tunnel_nav.py")
+        html = "<html><body><div id=\"root\"></div></body></html>"
+        result = module.inject_shell(html)
+        self.assertEqual(result.count(module.TAG), 1)
+        self.assertLess(result.index(module.TAG), result.index("</body>"))
+        with self.assertRaises(ValueError):
+            module.inject_shell(result)
+        with self.assertRaises(ValueError):
+            module.inject_shell("<html><div></div></html>")
 
 
 class LiveLogsTests(unittest.TestCase):
