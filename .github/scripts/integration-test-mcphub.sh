@@ -150,28 +150,9 @@ for path in / /login /api/servers /api/better-auth/user /api/settings \
   fi
 done
 
-# The OpenAI tunnel supervisor must be reachable through Supervisor Ingress
-# without exposing a separate unauthenticated port or requiring a running tunnel.
-for _ in $(seq 1 15); do
-  if ingress_curl --fail --silent --show-error \
-      "http://${CONTAINER}:8099/_mcphub_tunnel/api/status" >/dev/null 2>&1; then
-    break
-  fi
-  sleep 1
-done
-
-manager_status="$(ingress_curl --fail --silent --show-error \
-  "http://${CONTAINER}:8099/_mcphub_tunnel/api/status")"
-python3 - "${manager_status}" <<'PYTEST'
-import json
-import sys
-status = json.loads(sys.argv[1])
-assert status['state'] == 'stopped', status
-assert not status['process_alive'], status
-assert 'openai_runtime_api_key' not in status, status
-PYTEST
-
-# The upgraded tunnel dashboard must be reachable only through HA Ingress.
+# The single tunnel controller (OpenAI, Cloudflare, Tailscale) and its
+# dashboard must be reachable only through HA Ingress, without exposing a
+# separate unauthenticated port or requiring a running tunnel.
 for _ in $(seq 1 20); do
   if ingress_curl --fail --silent \
     "http://${CONTAINER}:8099/_mcphub_tunnels/api/status" >/dev/null 2>&1; then
@@ -179,6 +160,28 @@ for _ in $(seq 1 20); do
   fi
   sleep 1
 done
+
+manager_status="$(ingress_curl --fail --silent --show-error \
+  "http://${CONTAINER}:8099/_mcphub_tunnels/api/status")"
+python3 - "${manager_status}" <<'PYTEST'
+import json
+import sys
+status = json.loads(sys.argv[1])
+openai = status['openai']
+assert openai['state'] == 'stopped', openai
+assert not openai['process_alive'], openai
+assert openai['configured'] is False, openai
+assert status['cloudflare']['state'] == 'stopped', status
+assert 'openai_runtime_api_key' not in json.dumps(status), status
+PYTEST
+
+# The legacy OpenAI-only control location is gone and must not reach any API.
+legacy_body="$(ingress_curl --silent --max-time 5 \
+  "http://${CONTAINER}:8099/_mcphub_tunnel/api/status" || true)"
+if grep -q '"process_alive"' <<<"${legacy_body}"; then
+  echo 'Legacy /_mcphub_tunnel/ control location is still served' >&2
+  exit 1
+fi
 
 dashboard_html="$(ingress_curl --fail --silent --show-error \
   "http://${CONTAINER}:8099/_mcphub_tunnels/")"
@@ -253,14 +256,14 @@ fi
 # Browser form-like cross-origin requests must not be able to mutate the tunnel.
 response_code="$(ingress_curl --silent --output /dev/null --write-out '%{http_code}' \
   --request POST --header 'Content-Type: application/json' --data '{}' \
-  "http://${CONTAINER}:8099/_mcphub_tunnel/api/start")"
+  "http://${CONTAINER}:8099/_mcphub_tunnels/api/control/openai/start")"
 [[ "${response_code}" == "403" ]] || { echo 'Tunnel control accepted unauthenticated POST' >&2; exit 1; }
 
 # Even a requested start with incomplete credentials must not shut down MCPHub.
 ingress_curl --fail --silent --show-error \
   --request POST --header 'Content-Type: application/json' \
   --header 'X-MCPHub-Tunnel-Control: 1' --data '{}' \
-  "http://${CONTAINER}:8099/_mcphub_tunnel/api/start" >/dev/null
+  "http://${CONTAINER}:8099/_mcphub_tunnels/api/control/openai/start" >/dev/null
 docker exec "${CONTAINER}" curl --fail --silent --max-time 3 \
   http://127.0.0.1:3000/health >/dev/null
 

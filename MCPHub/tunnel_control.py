@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Ingress-only tunnel control and local health for OpenAI and Cloudflare."""
+"""Ingress-only tunnel control and local health for OpenAI, Cloudflare and Tailscale.
+
+One loopback process supervises the optional OpenAI tunnel-client and
+cloudflared subprocesses, gates the Tailscale MCP origin, and serves the
+dashboard. Only the Nginx Home Assistant Ingress adapter proxies it.
+Credentials are never returned through its status, log or diagnostics API.
+"""
 from __future__ import annotations
 
 import json
@@ -20,9 +26,18 @@ from tailscale_gateway import TailscaleGateway
 
 OPTIONS = Path('/data/options.json')
 CF_SECRET = Path('/data/secrets/cloudflare_tunnel_token')
+CF_STATE = Path('/data/secrets/mcphub_cloudflare_tunnel_state')
+CF_CLIENT = '/usr/local/bin/cloudflared'
 CF_CLIENT_KEY = Path('/data/secrets/mcphub_cloudflare_client_key')
 TS_CLIENT_KEY = Path('/data/secrets/mcphub_tailscale_client_key')
+OPENAI_KEY_FILE = Path('/data/secrets/openai_runtime_api_key')
+OPENAI_AUTH_FILE = Path('/data/secrets/mcphub_tunnel_authorization')
+OPENAI_STATE = Path('/data/secrets/mcphub_openai_tunnel_state')
+OPENAI_CLIENT = '/usr/local/bin/tunnel-client'
+OPENAI_HEALTH = 'http://127.0.0.1:8080'
+TUNNEL_ID = re.compile(r'^tunnel_[0-9a-f]{32}$')
 PORT = ('127.0.0.1', 8093)
+CHECK_INTERVAL = 5
 PATH = re.compile(r'^/mcp(?:/[A-Za-z0-9._$-]+){0,2}$')
 CLIENT_KEY = re.compile(r'^[A-Za-z0-9_-]{32,256}$')
 LOG = logging.getLogger('tunnel-control')
@@ -55,7 +70,8 @@ def check(url, expected=200):
 
 
 def save_secret(path, value):
-    path.parent.mkdir(parents=True, exist_ok=True)
+    """Atomically write a 0600 file without ever creating a readable copy."""
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     os.chmod(path.parent, 0o700)
     temp = path.with_suffix('.tmp')
     fd = os.open(temp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
@@ -68,8 +84,39 @@ def save_secret(path, value):
         temp.unlink(missing_ok=True)
 
 
-class Cloudflare:
-    def __init__(self):
+def reap(proc):
+    """Terminate a detached tunnel process; callers never hold a tunnel lock."""
+    if proc is None:
+        return
+    if proc.poll() is None:
+        proc.terminate()
+        try:
+            proc.wait(timeout=8)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait(timeout=5)
+    else:
+        proc.wait()
+
+
+class TunnelProcess:
+    """Shared lifecycle for one supervised tunnel subprocess.
+
+    The Home Assistant option is the permission gate. Dashboard Start/Stop is
+    persisted separately so it survives App restarts. HTTP probes and process
+    termination always run outside the tunnel lock, so status stays responsive.
+    """
+    name = ''
+    label = ''
+    process_name = ''
+    enabled_option = ''
+    route_option = ''
+    startup_grace = 35
+    stable_after = 0
+
+    def __init__(self, state_file=None):
+        self.lock = threading.RLock()
+        self.state_file = state_file if state_file is not None else self.default_state_file()
         self.proc = None
         self.desired = False
         self.state = 'stopped'
@@ -78,212 +125,355 @@ class Cloudflare:
         self.retry_at = 0.0
         self.failed = 0
         self.started = 0.0
-        self.degraded_at = 0.0
         self.route = '/mcp'
         self.configured = False
-        self.logs = TunnelLog()
-        self.logs.add('Cloudflare Tunnelverwaltung gestartet')
-        self.reload()
+        self.logs = TunnelLog(self.name + '-tunnel')
+        self.logs.add(self.label + ' tunnel control started')
+        self.reset_health()
+        try:
+            self.read_config(options())
+        except (ValueError, OSError):
+            self.configured = False
+        self.desired = self.configured and self.load_persisted()
+        self.state = 'starting' if self.desired else 'stopped'
 
-    def stop_process(self):
+    # Subclass hooks -----------------------------------------------------
+    def default_state_file(self):
+        raise NotImplementedError
+
+    def launch(self, opts):
+        """Return (argv, env or None, secrets to redact); raise ValueError."""
+        raise NotImplementedError
+
+    def probe(self, route):
+        """Run local HTTP health probes; called without holding the lock."""
+        raise NotImplementedError
+
+    def assess(self, now, result):
+        """Apply probe results under the lock; return a process to reap."""
+        raise NotImplementedError
+
+    def reset_health(self):
+        pass
+
+    # Shared logic -------------------------------------------------------
+    def read_config(self, opts):
+        self.configured = opts.get(self.enabled_option) is True
+        self.route = str(opts.get(self.route_option) or '/mcp')
+
+    def load_persisted(self):
+        try:
+            return self.state_file.read_text(encoding='utf-8').strip() == 'running'
+        except FileNotFoundError:
+            # Nothing persisted yet: an enabled HA option starts the tunnel.
+            return self.configured
+        except OSError:
+            return False
+
+    def persist(self, running):
+        try:
+            save_secret(self.state_file, 'running' if running else 'stopped')
+        except OSError as error:
+            LOG.warning('%s: could not persist tunnel state: %s', self.label, error)
+
+    def _detach(self):
         proc, self.proc = self.proc, None
-        if proc:
-            if proc.poll() is None:
-                proc.terminate()
-                try:
-                    proc.wait(timeout=8)
-                except subprocess.TimeoutExpired:
-                    proc.kill()
-                    proc.wait(timeout=5)
-            else:
-                proc.wait()
+        return proc
 
-    def start_process(self, now):
+    def _start(self, now):
         try:
             opts = options()
-            self.configured = bool(opts.get('cloudflare_tunnel_enabled'))
-            self.route = str(opts.get('cloudflare_mcp_path') or '/mcp')
-            token = str(opts.get('cloudflare_tunnel_token') or '').strip()
-            key = CF_CLIENT_KEY.read_text(encoding='utf-8').strip() if CF_CLIENT_KEY.is_file() else ''
-            if not self.configured or not token or not valid_mcp_route(self.route) or not CLIENT_KEY.fullmatch(key):
-                raise ValueError('Cloudflare tunnel configuration is incomplete or disabled')
-            save_secret(CF_SECRET, token)
-            self.proc = subprocess.Popen([
-                '/usr/local/bin/cloudflared', 'tunnel', '--no-autoupdate',
-                '--metrics', '127.0.0.1:20091',
-                'run', '--token-file', str(CF_SECRET)
-            ], stdin=subprocess.DEVNULL,
-               stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-               text=True, errors='replace', bufsize=1)
-            self.logs.follow(self.proc, (token, key))
-            self.logs.add('Tunnelprozess gestartet')
+            self.read_config(opts)
+            if not self.configured:
+                raise ValueError('%s tunnel is disabled in the App configuration' % self.label)
+            argv, env, secrets_ = self.launch(opts)
+            self.proc = subprocess.Popen(
+                argv, env=env, stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                text=True, errors='replace', bufsize=1)
+            self.logs.follow(self.proc, secrets_)
+            self.logs.add('Tunnel process started')
             self.state = 'starting'
             self.started = now
-            self.degraded_at = 0.0
             self.error = ''
+            self.reset_health()
+            LOG.info('%s: started tunnel process (pid %s)', self.label, self.proc.pid)
         except (ValueError, OSError, subprocess.SubprocessError) as error:
-            self.stop_process()
+            # Invalid configuration requires a manual change/reload. Do not churn.
+            # The persisted Start state is kept so a fixed config resumes on restart.
+            self.proc = None
             self.desired = False
             self.state = 'error'
             self.error = str(error)
-            self.logs.add('Start fehlgeschlagen (Einstellungen prüfen)')
+            self.logs.add('Start failed (check the App configuration)')
+            LOG.warning('%s: tunnel not started: %s', self.label, error)
 
-    def reload(self):
-        self.stop_process()
-        self.failed = 0
-        self.retry_at = 0.0
-        self.checked = 0.0
-        try:
-            config = options()
-            self.configured = bool(config.get('cloudflare_tunnel_enabled'))
-            self.route = str(config.get('cloudflare_mcp_path') or '/mcp')
-        except (ValueError, OSError):
-            self.configured = False
-        self.desired = self.configured
-        self.state = 'starting' if self.desired else 'stopped'
-
-    def command(self, action):
-        self.logs.add('Aktion: ' + action)
-        if action == 'stop':
-            self.desired = False
-            self.stop_process()
-            self.state = 'stopped'
-            self.error = ''
-        elif action == 'reload':
-            self.reload()
-            if self.desired:
-                self.start_process(time.monotonic())
-        elif action == 'start':
-            self.desired = True
-            self.retry_at = self.failed = 0
-            if self.proc is None:
-                self.start_process(time.monotonic())
-        else:
-            raise ValueError('Invalid action')
-
-    def fail(self, message, now):
-        self.stop_process()
+    def _fail(self, message, now):
+        proc = self._detach()
         self.failed += 1
         delay = min(5 * 2 ** min(self.failed - 1, 6), 300)
         self.retry_at = now + delay
         self.error = message
-        self.logs.add('Fehler: ' + message)
         self.state = 'retrying'
-        self.degraded_at = 0.0
-        LOG.warning('Cloudflare: %s; retry in %s seconds', message, delay)
+        self.reset_health()
+        self.logs.add('Error: ' + message)
+        LOG.warning('%s: %s; retry in %s seconds', self.label, message, delay)
+        return proc
 
-    def tick(self, now):
-        if not self.desired:
+    def command(self, action):
+        if action not in ('start', 'stop', 'reload'):
+            raise ValueError('Unsupported action')
+        with self.lock:
+            self.logs.add('Action: ' + action)
+            old = None
+            if action in ('stop', 'reload'):
+                old = self._detach()
+                self.desired = False
+                self.state = 'stopped'
+                self.error = ''
+                self.retry_at = 0.0
+                self.checked = 0.0
+            if action == 'stop':
+                self.persist(False)
+        reap(old)
+        if action == 'stop':
+            return self.status()
+        with self.lock:
+            try:
+                self.read_config(options())
+            except (ValueError, OSError):
+                self.configured = False
+            if not self.configured:
+                if action == 'start':
+                    self.state = 'error'
+                    self.error = 'Enable the %s tunnel in the App configuration first' % self.label
+                return self.status()
+            self.persist(True)
+            self.desired = True
+            self.failed = 0
+            self.retry_at = 0.0
+            if self.proc is None:
+                self._start(time.monotonic())
+        return self.status()
+
+    def tick(self, now=None):
+        now = time.monotonic() if now is None else now
+        with self.lock:
+            if not self.desired:
+                return
+            if self.proc is None:
+                if now >= self.retry_at:
+                    self._start(now)
+                return
+            proc, route = self.proc, self.route
+            code = proc.poll()
+            dead = self._fail('%s exited (code %s)' % (self.process_name, code), now) \
+                if code is not None else None
+        if dead is not None:
+            reap(dead)
             return
-        if self.proc is None:
-            if now >= self.retry_at:
-                self.start_process(now)
-            return
-        rc = self.proc.poll()
-        if rc is not None:
-            self.fail('cloudflared exited (code %s)' % rc, now)
-            return
-        self.checked = now
-        connected = check('http://127.0.0.1:20091/ready')
-        origin = check('http://127.0.0.1:8098' + self.route, expected=401)
+        result = self.probe(route)
+        with self.lock:
+            if self.proc is not proc:
+                return  # stopped or restarted while probing
+            self.checked = now
+            dead = self.assess(now, result)
+        reap(dead)
+
+    def alive(self):
+        with self.lock:
+            return self.proc is not None and self.proc.poll() is None
+
+    def status(self, now=None):
+        now = time.monotonic() if now is None else now
+        with self.lock:
+            # A previously ready tunnel is never reported healthy if checks stopped.
+            fresh = bool(self.checked) and now - self.checked <= 20
+            state, error = self.state, self.error
+            if self.desired and state == 'ready' and not fresh:
+                state, error = 'stale', '%s health check is stale' % self.label
+            return {
+                'state': state, 'configured': self.configured, 'requested': self.desired,
+                'process_alive': self.proc is not None and self.proc.poll() is None,
+                'transport_ready': state == 'ready', 'last_error': error,
+                'route': self.route, 'failed_attempts': self.failed,
+                'health_checked': bool(self.checked),
+                'health_age_seconds': round(now - self.checked) if self.checked else None,
+                'retry_in_seconds': max(0, round(self.retry_at - now)) if state == 'retrying' else 0,
+                'control_type': 'process',
+            }
+
+    def shutdown(self):
+        with self.lock:
+            self.desired = False
+            proc = self._detach()
+        reap(proc)
+
+
+class OpenAITunnel(TunnelProcess):
+    name = 'openai'
+    label = 'OpenAI'
+    process_name = 'OpenAI tunnel'
+    enabled_option = 'tunnel_enabled'
+    route_option = 'tunnel_mcp_path'
+    startup_grace = 45
+    stable_after = 90
+    liveness_timeout = 60
+    readiness_timeout = 600
+
+    def default_state_file(self):
+        return OPENAI_STATE
+
+    def reset_health(self):
+        self.ready_since = self.not_live_since = self.not_ready_since = 0.0
+
+    def launch(self, opts):
+        key = str(opts.get('openai_runtime_api_key') or '').strip()
+        tunnel_id = str(opts.get('tunnel_id') or '').strip()
+        level = str(opts.get('tunnel_log_level') or 'info')
+        if not key or not tunnel_id:
+            raise ValueError('OpenAI Runtime API Key or Tunnel ID is missing')
+        if not TUNNEL_ID.fullmatch(tunnel_id):
+            raise ValueError('OpenAI Tunnel ID is invalid')
+        if not valid_mcp_route(self.route):
+            raise ValueError('OpenAI MCP route is invalid')
+        if level not in ('debug', 'info', 'warn'):
+            raise ValueError('OpenAI log level is invalid')
+        if not OPENAI_AUTH_FILE.is_file():
+            raise ValueError('MCPHub tunnel authorization file is missing')
+        save_secret(OPENAI_KEY_FILE, key)
+        env = os.environ.copy()
+        env.update({
+            'CONTROL_PLANE_TUNNEL_ID': tunnel_id,
+            'MCP_SERVER_URL': f'http://127.0.0.1:3000{self.route}',
+            'MCP_EXTRA_HEADERS': f'Authorization: file:{OPENAI_AUTH_FILE}',
+            'MCP_DISCOVERY_EXTRA_HEADERS': f'Authorization: file:{OPENAI_AUTH_FILE}',
+            'MCP_STARTUP_WAIT_TIMEOUT': '30s',
+            'MCP_MAX_CONCURRENT_REQUESTS': '20',
+            'HEALTH_LISTEN_ADDR': '127.0.0.1:8080',
+            'LOG_LEVEL': level,
+            'LOG_FORMAT': 'struct-text',
+            'LOG_HTTP_RAW_UNSAFE': 'false',
+        })
+        argv = [OPENAI_CLIENT, 'run', f'--control-plane.api-key=file:{OPENAI_KEY_FILE}']
+        return argv, env, (key, tunnel_id)
+
+    def probe(self, route):
+        live = check(OPENAI_HEALTH + '/healthz')
+        return live, check(OPENAI_HEALTH + '/readyz') if live else False
+
+    def assess(self, now, result):
+        live, ready = result
+        self.not_live_since = 0.0 if live else (self.not_live_since or now)
+        if ready:
+            self.ready_since = self.ready_since or now
+            self.not_ready_since = 0.0
+            self.state = 'ready'
+            self.error = ''
+            if now - self.ready_since >= self.stable_after:
+                self.failed = 0
+        else:
+            self.ready_since = 0.0
+            self.not_ready_since = self.not_ready_since or now
+            self.state = 'degraded' if live else 'starting'
+        if now - self.started < self.startup_grace:
+            return None
+        if not live and now - self.not_live_since >= self.liveness_timeout:
+            return self._fail('OpenAI tunnel health endpoint is not responding', now)
+        if live and not ready and now - self.not_ready_since >= self.readiness_timeout:
+            return self._fail('OpenAI tunnel readiness has been unavailable for 10 minutes', now)
+        return None
+
+
+class CloudflareTunnel(TunnelProcess):
+    name = 'cloudflare'
+    label = 'Cloudflare'
+    process_name = 'cloudflared'
+    enabled_option = 'cloudflare_tunnel_enabled'
+    route_option = 'cloudflare_mcp_path'
+    startup_grace = 35
+    degraded_timeout = 180
+
+    def default_state_file(self):
+        return CF_STATE
+
+    def reset_health(self):
+        self.degraded_at = 0.0
+
+    def launch(self, opts):
+        token = str(opts.get('cloudflare_tunnel_token') or '').strip()
+        key = CF_CLIENT_KEY.read_text(encoding='utf-8').strip() if CF_CLIENT_KEY.is_file() else ''
+        if not token or not valid_mcp_route(self.route) or not CLIENT_KEY.fullmatch(key):
+            raise ValueError('Cloudflare tunnel configuration is incomplete')
+        save_secret(CF_SECRET, token)
+        argv = [CF_CLIENT, 'tunnel', '--no-autoupdate', '--metrics', '127.0.0.1:20091',
+                'run', '--token-file', str(CF_SECRET)]
+        return argv, None, (token, key)
+
+    def probe(self, route):
+        return (check('http://127.0.0.1:20091/ready'),
+                check('http://127.0.0.1:8098' + route, expected=401))
+
+    def assess(self, now, result):
+        connected, origin = result
         if connected and origin:
             self.state = 'ready'
             self.degraded_at = 0.0
             self.failed = 0
             self.error = ''
-        else:
-            self.state = 'starting' if now - self.started < 35 else 'degraded'
-            self.error = 'Cloudflare connector unready' if not connected else 'MCP origin unready'
-            self.degraded_at = self.degraded_at or now
-            if now - self.started >= 35 and now - self.degraded_at > 180:
-                self.fail(self.error, now)
-
-    def status(self, now):
-        # A previously ready connector is never reported healthy if its checks stopped.
-        fresh = bool(self.checked) and now - self.checked <= 20
-        visible_state = 'stale' if self.desired and self.state == 'ready' and not fresh else self.state
-        return {
-            'state': visible_state, 'configured': self.configured, 'requested': self.desired,
-            'process_alive': self.proc is not None and self.proc.poll() is None,
-            'transport_ready': visible_state == 'ready', 'last_error': self.error,
-            'route': self.route, 'health_age_seconds': round(now - self.checked) if self.checked else None,
-            'retry_in_seconds': max(0, round(self.retry_at - now)) if self.state == 'retrying' else 0,
-            'control_type': 'process'
-        }
+            return None
+        self.state = 'starting' if now - self.started < self.startup_grace else 'degraded'
+        self.error = 'Cloudflare connector unready' if not connected else 'MCP origin unready'
+        self.degraded_at = self.degraded_at or now
+        if now - self.started >= self.startup_grace and now - self.degraded_at > self.degraded_timeout:
+            return self._fail(self.error, now)
+        return None
 
 
 class Controls:
     def __init__(self):
+        # Serializes client-key reads/rotation only; tunnel status, commands
+        # and probes use the per-tunnel locks and never wait on this one.
         self.lock = threading.RLock()
-        self.cloudflare = Cloudflare()
+        self.openai = OpenAITunnel()
+        self.cloudflare = CloudflareTunnel()
         self.tailscale = TailscaleGateway(options)
 
-    def openai(self, action=None):
-        headers = {'Cache-Control': 'no-store'}
-        if action:
-            headers.update({'Content-Type': 'application/json', 'X-MCPHub-Tunnel-Control': '1'})
-        request = Request(
-            'http://127.0.0.1:8096/api/' + (action or 'status'),
-            headers=headers,
-            data=b'{}' if action else None,
-            method='POST' if action else 'GET',
-        )
-        try:
-            with urlopen(request, timeout=3) as response:
-                return json.load(response)
-        except (HTTPError, URLError, ValueError, OSError, TimeoutError):
-            return {'state': 'unavailable', 'last_error': 'OpenAI control is unavailable'}
+    def processes(self):
+        return {'openai': self.openai, 'cloudflare': self.cloudflare}
 
     def snapshot(self):
-        with self.lock:
-            openai = self.openai()
-            age = openai.get('health_age_seconds')
-            if openai.get('state') == 'ready' and (age is None or age > 20):
-                openai['state'] = 'stale'
-                openai['last_error'] = 'OpenAI health check is stale'
-            openai['transport_ready'] = openai.get('state') == 'ready'
-            openai['control_type'] = 'process'
-            return {
-                'openai': openai,
-                'cloudflare': self.cloudflare.status(time.monotonic()),
-                'tailscale': self.tailscale.status(),
-            }
+        now = time.monotonic()
+        return {
+            'openai': self.openai.status(now),
+            'cloudflare': self.cloudflare.status(now),
+            'tailscale': self.tailscale.status(),
+        }
 
     def command(self, mode, action):
-        with self.lock:
-            if action not in ('start', 'stop', 'reload'):
-                raise ValueError('Unsupported action')
-            if mode == 'openai':
-                return self.openai(action)
-            if mode == 'cloudflare':
-                self.cloudflare.command(action)
-                return self.cloudflare.status(time.monotonic())
-            if mode == 'tailscale':
-                return self.tailscale.command(action)
-            raise ValueError('Unknown tunnel')
+        if action not in ('start', 'stop', 'reload'):
+            raise ValueError('Unsupported action')
+        if mode in self.processes():
+            return self.processes()[mode].command(action)
+        if mode == 'tailscale':
+            return self.tailscale.command(action)
+        raise ValueError('Unknown tunnel')
 
     def logs(self, mode):
         """Return separately buffered logs; never expose the HA App log globally."""
-        with self.lock:
-            if mode == 'cloudflare':
-                return self.cloudflare.logs.snapshot()
-            if mode == 'tailscale':
-                return {'lines': ['Tailscale-Daemon-Protokolle sind nur im Tailscale-Add-on abrufbar.'], 'limited': True}
-            if mode == 'openai':
-                try:
-                    with urlopen('http://127.0.0.1:8096/api/logs', timeout=3) as response:
-                        return json.loads(response.read(70000))
-                except (HTTPError, URLError, OSError, ValueError, TimeoutError):
-                    return {'lines': ['OpenAI-Protokoll aktuell nicht erreichbar'], 'limited': True}
-            raise ValueError('Unknown tunnel')
+        if mode in self.processes():
+            return self.processes()[mode].logs.snapshot()
+        if mode == 'tailscale':
+            return {'lines': ['Tailscale daemon logs are available only in the Tailscale App.'], 'limited': True}
+        raise ValueError('Unknown tunnel')
 
     def diagnostics(self, mode):
         """Bounded local component diagnostics; do not return raw configuration."""
         if mode == 'openai':
-            if not self.openai().get('process_alive'):
-                return {'note': 'OpenAI-Tunnelprozess ist nicht aktiv'}
+            if not self.openai.alive():
+                return {'note': 'OpenAI tunnel process is not running'}
             try:
-                with urlopen('http://127.0.0.1:8080/health?details=true', timeout=3) as response:
+                with urlopen(OPENAI_HEALTH + '/health?details=true', timeout=3) as response:
                     report = json.loads(response.read(65536))
                 components = {}
                 for name in ('mcp', 'control-plane', 'response-delivery', 'queue', 'proxy'):
@@ -299,16 +489,16 @@ class Controls:
                     'components': components,
                 }
             except (HTTPError, URLError, OSError, ValueError, TimeoutError):
-                return {'note': 'OpenAI-Komponentendiagnose nicht erreichbar'}
+                return {'note': 'OpenAI component diagnostics are unavailable'}
         if mode == 'tailscale':
-            return {'note': 'Tailscale Funnel wird vom separaten Tailscale-Add-on betrieben. Das MCP-Gateway hier steuert nur den lokalen, authentifizierten Zugriff.'}
+            return {'note': 'Tailscale Funnel is operated by the separate Tailscale App. The MCP gateway here controls only local, authenticated access.'}
         if mode == 'cloudflare':
-            if not self.cloudflare.proc or self.cloudflare.proc.poll() is not None:
-                return {'note': 'Cloudflare-Tunnelprozess ist nicht aktiv'}
+            if not self.cloudflare.alive():
+                return {'note': 'Cloudflare tunnel process is not running'}
             try:
                 with urlopen('http://127.0.0.1:20091/diag/precheck', timeout=3) as response:
                     if response.status == 204:
-                        return {'note': 'Precheck-Ergebnisse noch nicht verfügbar'}
+                        return {'note': 'Precheck results are not available yet'}
                     report = json.loads(response.read(32768))
                 results = []
                 for item in report.get('results', [])[:20]:
@@ -322,7 +512,7 @@ class Controls:
                         'suggested_protocol': redact(report.get('suggested_protocol', '')),
                         'prechecks': results}
             except (HTTPError, URLError, OSError, ValueError, TimeoutError):
-                return {'note': 'Cloudflare-Netzwerkdiagnose nicht verfügbar'}
+                return {'note': 'Cloudflare network diagnostics are unavailable'}
         raise ValueError('Unknown tunnel')
 
     def client_key(self):
@@ -398,8 +588,12 @@ class Controls:
             return {'rotated': True}
 
     def tick(self):
-        with self.lock:
-            self.cloudflare.tick(time.monotonic())
+        for tunnel in self.processes().values():
+            tunnel.tick()
+
+    def shutdown(self):
+        for tunnel in self.processes().values():
+            tunnel.shutdown()
 
 
 # The standalone management console is never injected into MCPHub's SPA.
@@ -532,14 +726,15 @@ def main():
     signal.signal(signal.SIGINT, stop)
     worker = threading.Thread(target=server.serve_forever, daemon=True)
     worker.start()
+    LOG.info('Tunnel control for OpenAI, Cloudflare and Tailscale is available on loopback only')
     try:
         while not stopped.is_set():
             manager.tick()
-            stopped.wait(5)
+            stopped.wait(CHECK_INTERVAL)
     finally:
         server.shutdown()
         server.server_close()
-        manager.cloudflare.stop_process()
+        manager.shutdown()
 
 
 if __name__ == '__main__':
