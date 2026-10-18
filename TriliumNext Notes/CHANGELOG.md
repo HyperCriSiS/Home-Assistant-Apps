@@ -1,5 +1,18 @@
 # Changelog
 
+## v2026.10.18
+
+### Added
+
+- Added English and German descriptions for the App configuration options.
+- Added status, version, architecture and license badges to the README.
+
+### Changed
+
+- Home Assistant backups now stop Trilium briefly (cold backup) so the SQLite database is always captured consistently.
+- The App store link now points to the Trilium Notes App directory.
+- Documented how to disable the optional direct port `8080`.
+
 ## v2026.10.11
 
 ### Changed

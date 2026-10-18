@@ -9,6 +9,7 @@ on:
       - ".github/scripts/upgrade-test.sh"
       - ".github/scripts/test_websocket.py"
       - ".github/scripts/validate_metadata.py"
+      - ".github/scripts/update_trilium.py"
       - ".github/tests/e2e/**"
       - ".github/workflows/**"
       - ".github/actionlint.yaml"
@@ -23,6 +24,7 @@ on:
       - ".github/scripts/upgrade-test.sh"
       - ".github/scripts/test_websocket.py"
       - ".github/scripts/validate_metadata.py"
+      - ".github/scripts/update_trilium.py"
       - ".github/tests/e2e/**"
       - ".github/workflows/**"
       - ".github/actionlint.yaml"
@@ -83,6 +85,18 @@ jobs:
       - name: Validate metadata consistency
         id: metadata
         run: python3 .github/scripts/validate_metadata.py
+
+      - name: Dry-run Trilium update automation
+        run: |
+          # The scheduled updater must keep producing metadata that passes validation.
+          scratch="$(mktemp -d)"
+          mkdir -p "${scratch}/.github"
+          cp -r .github/scripts "${scratch}/.github/"
+          cp -r "TriliumNext Notes" "${scratch}/"
+          python3 "${scratch}/.github/scripts/update_trilium.py" --upstream v999.0.0
+          python3 "${scratch}/.github/scripts/validate_metadata.py"
+          grep -q 'badge/Trilium-v999.0.0-' "${scratch}/TriliumNext Notes/README.md"
+          rm -rf "${scratch}"
 
       - name: Validate upstream image architectures
         env:
@@ -151,7 +165,7 @@ jobs:
       - name: Install browser test dependencies
         working-directory: .github/tests/e2e
         run: |
-          npm install --no-audit --no-fund
+          npm ci --no-audit --no-fund
           npx playwright install --with-deps chromium
 
       - name: Functional, Ingress, WebSocket and browser tests
