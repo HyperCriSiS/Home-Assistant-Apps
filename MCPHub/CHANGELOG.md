@@ -1,8 +1,9 @@
 # Changelog
 
-## v2026.10.18-dev.112
+## v2026.10.18-1-dev.113
 
 ### Commits in this Dev build
 
-- [`1338ddf`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/1338ddf800712434565bf264a79ef4e0e4413cef) Merge pull request #78 from HyperCriSiS/feat/mcphub-lan-mcp-gateway
-- [`f02c9c3`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/f02c9c310899309904fe09ea6f2b7838251ee3d1) feat(mcphub): MCP-only LAN gateway, Ingress tunnel link and hot backups
+- [`a9c5289`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/a9c5289418b73dd8e4de86ff7a293ed2df844060) Merge pull request #79 from HyperCriSiS/claude/mcphub-tunnel-control-merge
+- [`5750e3e`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/5750e3e085a1bdcae57e8177e28b962b58d26557) fix(ci): close legacy tunnel check with fi in MCPHub integration test
+- [`5725930`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/57259309a8d2e0e4c91adce023932df6415200b5) refactor(mcphub): merge tunnel manager into one tunnel controller

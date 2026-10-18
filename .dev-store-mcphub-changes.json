@@ -1,5 +1,25 @@
 [
   {
+    "revision": 113,
+    "version": "v2026.10.18-1-dev.113",
+    "source_sha": "a9c5289418b73dd8e4de86ff7a293ed2df844060",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "a9c5289418b73dd8e4de86ff7a293ed2df844060",
+        "subject": "Merge pull request #79 from HyperCriSiS/claude/mcphub-tunnel-control-merge"
+      },
+      {
+        "sha": "5750e3e085a1bdcae57e8177e28b962b58d26557",
+        "subject": "fix(ci): close legacy tunnel check with fi in MCPHub integration test"
+      },
+      {
+        "sha": "57259309a8d2e0e4c91adce023932df6415200b5",
+        "subject": "refactor(mcphub): merge tunnel manager into one tunnel controller"
+      }
+    ]
+  },
+  {
     "revision": 112,
     "version": "v2026.10.18-dev.112",
     "source_sha": "1338ddf800712434565bf264a79ef4e0e4413cef",

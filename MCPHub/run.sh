@@ -9,7 +9,6 @@ readonly HA_INGRESS_PROXY_SECRET_FILE="${SECRET_DIR}/mcphub_ha_ingress_proxy_sec
 
 mcphub_pid=""
 nginx_pid=""
-tunnel_manager_pid=""
 tunnel_control_pid=""
 
 log_info() {
@@ -34,7 +33,7 @@ path, key = sys.argv[1], sys.argv[2]
 with open(path, "r", encoding="utf-8") as handle:
     data = json.load(handle)
 
-for group in ("openai", "cloudflare", "home_assistant", "github", "logging"):
+for group in ("openai", "cloudflare", "tailscale", "home_assistant", "github", "logging"):
     nested = data.get(group)
     if isinstance(nested, dict):
         data.update(nested)
@@ -64,13 +63,13 @@ shutdown_processes() {
 
     trap - TERM INT EXIT
 
-    for pid in         "${tunnel_control_pid}"         "${tunnel_manager_pid}"         "${nginx_pid}"         "${mcphub_pid}"; do
+    for pid in "${tunnel_control_pid}" "${nginx_pid}" "${mcphub_pid}"; do
         if [[ -n "${pid}" ]] && kill -0 "${pid}" 2>/dev/null; then
             kill -TERM "${pid}" 2>/dev/null || true
         fi
     done
 
-    for pid in         "${tunnel_control_pid}"         "${tunnel_manager_pid}"         "${nginx_pid}"         "${mcphub_pid}"; do
+    for pid in "${tunnel_control_pid}" "${nginx_pid}" "${mcphub_pid}"; do
         if [[ -n "${pid}" ]]; then
             wait "${pid}" 2>/dev/null || true
         fi
@@ -164,11 +163,7 @@ log_info "MCPHub is ready. Starting the Home Assistant Ingress adapter on port 8
 nginx -g 'daemon off;' &
 nginx_pid="$!"
 
-log_info "Starting isolated OpenAI Tunnel health and control manager."
-/usr/local/bin/tunnel_manager.py &
-tunnel_manager_pid="$!"
-
-log_info "Starting isolated Cloudflare Tunnel controller and health dashboard."
+log_info "Starting the isolated tunnel controller (OpenAI, Cloudflare, Tailscale) and its dashboard."
 /usr/local/bin/tunnel_control.py &
 tunnel_control_pid="$!"
 
@@ -184,15 +179,9 @@ while true; do
         shutdown_processes 1
     fi
 
-    if [[ -n "${tunnel_manager_pid}" ]] && ! kill -0 "${tunnel_manager_pid}" 2>/dev/null; then
-        wait "${tunnel_manager_pid}" || true
-        log_warn "OpenAI Tunnel manager exited; restarting supervisor, MCPHub remains available."
-        /usr/local/bin/tunnel_manager.py &
-        tunnel_manager_pid="$!"
-    fi
     if [[ -n "${tunnel_control_pid}" ]] && ! kill -0 "${tunnel_control_pid}" 2>/dev/null; then
         wait "${tunnel_control_pid}" 2>/dev/null || true
-        log_warn "Cloudflare Tunnel controller exited; restarting independently."
+        log_warn "Tunnel controller exited; restarting it, MCPHub remains available."
         /usr/local/bin/tunnel_control.py &
         tunnel_control_pid="$!"
     fi

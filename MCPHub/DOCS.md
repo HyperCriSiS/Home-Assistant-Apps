@@ -198,16 +198,23 @@ to the App log.
 
 ### Live tunnel controls and automatic recovery
 
-The OpenAI tunnel is supervised separately from MCPHub. Open MCPHub from the
-Home Assistant sidebar and select **Tunnels** in its top bar. The tunnel dashboard
-provides **Start**, **Stop**, and **Reload** without restarting MCPHub itself.
-Access is restricted to the Home Assistant Ingress adapter.
+The OpenAI and Cloudflare tunnels are supervised by one tunnel controller that
+runs separately from MCPHub. Open MCPHub from the Home Assistant sidebar and
+select **Tunnels** in its top bar. The tunnel dashboard provides **Start**,
+**Stop**, and **Reload** without restarting MCPHub itself. Access is restricted
+to the Home Assistant Ingress adapter.
 
-- The App starts the tunnel automatically if `tunnel_enabled` is true.
-- **Stop** pauses it for the running App session; the configured setting remains
-  unchanged and takes effect after an App restart.
+- The App option (`tunnel_enabled`, `cloudflare_tunnel_enabled`) is the
+  permission gate: a disabled tunnel never starts, and **Start** reports an error.
+- On first start the tunnel runs automatically if its option is enabled.
+- **Start** and **Stop** are remembered across App restarts and updates
+  (stored as `0600` files in `/data/secrets`). After **Stop**, the tunnel stays
+  stopped until you press **Start** again, even if the option remains enabled.
 - **Reload** rereads the current App options, including the Runtime API Key,
   without exposing the credentials to the page.
+- Redacted output of `tunnel-client` and `cloudflared` appears in the Home
+  Assistant App log (prefixed `[openai-tunnel]` / `[cloudflare-tunnel]`) and
+  under **Show logs** on the dashboard.
 - The manager checks `/healthz` and `/readyz` every five seconds. A running
   but temporarily unready client is allowed to recover on its own. If its
   process exits, its liveness fails for one minute, or its readiness stays
@@ -219,7 +226,7 @@ Access is restricted to the Home Assistant Ingress adapter.
 - Changes to the MCP path may require an App restart to regenerate MCPHub's
   own bearer-key scope; live reload only changes the tunnel client itself.
 
-The tunnel manager binds `127.0.0.1:8096`. The OpenAI client's native health
+The tunnel controller binds `127.0.0.1:8093`. The OpenAI client's native health
 listener is `127.0.0.1:8080`. Neither address is exposed directly through the
 Home Assistant host or the Cloudflare tunnel. The control page and JSON API
 contain no API keys, Tunnel IDs, or user tokens.
