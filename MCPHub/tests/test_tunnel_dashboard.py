@@ -79,6 +79,24 @@ class LiveLogsTests(unittest.TestCase):
         self.assertIn("live log one", transcript)
         self.assertNotIn("sensitive-secret", transcript)
 
+    def test_subprocess_output_is_echoed_redacted_to_app_log(self):
+        module = load("mcphub_log_echo", "tunnel_diagnostics.py")
+        stream = StringIO()
+        logs = module.TunnelLog("cloudflare-tunnel", stream=stream)
+        logs.add("lifecycle only")
+        proc = Mock()
+        proc.stdout = StringIO("connected\ntoken=TOPSECRETXYZ value\nraw TOPSECRETXYZ\n")
+        logs.follow(proc, ("TOPSECRETXYZ",))
+        for _ in range(100):
+            if stream.getvalue().count("\n") >= 3:
+                break
+            time.sleep(0.01)
+        echoed = stream.getvalue()
+        self.assertIn("[cloudflare-tunnel] connected\n", echoed)
+        self.assertNotIn("TOPSECRETXYZ", echoed)
+        self.assertNotIn("lifecycle only", echoed)
+        self.assertEqual(echoed.count("[cloudflare-tunnel] "), 3)
+
 
 class DashboardTests(unittest.TestCase):
     def setUp(self):

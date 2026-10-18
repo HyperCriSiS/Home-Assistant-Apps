@@ -91,7 +91,6 @@ COPY ingress.conf /etc/nginx/mcphub.conf.template
 COPY prepare_config.py /usr/local/bin/prepare_mcphub_config.py
 COPY prepare_proxy_config.py /usr/local/bin/prepare_proxy_config.py
 COPY github_cli_mcp.sh /usr/local/bin/github_cli_mcp.sh
-COPY tunnel_manager.py /usr/local/bin/tunnel_manager.py
 COPY tunnel_control.py /usr/local/bin/tunnel_control.py
 COPY tunnel_diagnostics.py /usr/local/bin/tunnel_diagnostics.py
 COPY tailscale_gateway.py /usr/local/bin/tailscale_gateway.py
@@ -110,7 +109,6 @@ RUN chmod 0755 \
     /run.sh \
     /usr/local/bin/prepare_mcphub_config.py \
     /usr/local/bin/prepare_proxy_config.py \
-    /usr/local/bin/tunnel_manager.py \
     /usr/local/bin/tunnel_control.py \
     /usr/local/bin/github_cli_mcp.sh
 

@@ -140,46 +140,49 @@ class TailscaleGateway:
                 enabled, route, url = self._configured()
             except (ValueError, OSError, TypeError):
                 enabled, route, url = False, "/mcp", ""
-            valid_route = bool(MCP_ROUTE.fullmatch(route))
-            requested = self.running and enabled and valid_route
-            gateway_ready = bool(requested and is_origin_response(route))
-            if not enabled:
-                state = "stopped"
-                note = "MCP-Zugang in der App-Konfiguration deaktiviert."
-            elif not valid_route:
-                state = "error"
-                note = "Ungültige MCP-Route in der App-Konfiguration."
-            elif not self.running:
-                state = "stopped"
-                note = "Lokaler MCP-Zugang angehalten; Funnel selbst wird nicht gesteuert."
-            elif not gateway_ready:
-                state = "degraded"
-                note = "Lokaler Gateway-Port nicht bereit. Add-on- und Proxy-Konfiguration prüfen."
-            else:
-                state = "gateway_ready"
-                note = "MCP-Gateway im Container bereit. Host-Port und Funnel nicht bestätigt."
-            try:
-                validate_public_url(url, route)
-                url_valid = True
-            except ValueError:
-                url_valid = False
-            return {
-                "state": state,
-                "configured": enabled,
-                "requested": requested,
-                "gateway_ready": gateway_ready,
-                "transport_ready": False,
-                "route": route,
-                "gateway_target": ORIGIN,
-                "public_url": url if url_valid else "",
-                "public_url_invalid": bool(url and not url_valid),
-                "public_check": self.public_check,
-                "public_checked_age_seconds":
-                    round(time.monotonic() - self.public_checked) if self.public_checked else None,
-                "last_error": note,
-                "control_type": "local-gateway",
-                "funnel_control": "manual",
-            }
+            running = self.running
+            public_check, public_checked = self.public_check, self.public_checked
+        valid_route = bool(MCP_ROUTE.fullmatch(route))
+        requested = running and enabled and valid_route
+        # The local probe can take up to two seconds; never hold the lock for it.
+        gateway_ready = bool(requested and is_origin_response(route))
+        if not enabled:
+            state = "stopped"
+            note = "MCP access is disabled in the App configuration."
+        elif not valid_route:
+            state = "error"
+            note = "Invalid MCP route in the App configuration."
+        elif not running:
+            state = "stopped"
+            note = "Local MCP access is stopped; Funnel itself is not controlled here."
+        elif not gateway_ready:
+            state = "degraded"
+            note = "Local gateway port is not ready. Check the App and proxy configuration."
+        else:
+            state = "gateway_ready"
+            note = "MCP gateway is ready in the container. Host port and Funnel are not confirmed."
+        try:
+            validate_public_url(url, route)
+            url_valid = True
+        except ValueError:
+            url_valid = False
+        return {
+            "state": state,
+            "configured": enabled,
+            "requested": requested,
+            "gateway_ready": gateway_ready,
+            "transport_ready": False,
+            "route": route,
+            "gateway_target": ORIGIN,
+            "public_url": url if url_valid else "",
+            "public_url_invalid": bool(url and not url_valid),
+            "public_check": public_check,
+            "public_checked_age_seconds":
+                round(time.monotonic() - public_checked) if public_checked else None,
+            "last_error": note,
+            "control_type": "local-gateway",
+            "funnel_control": "manual",
+        }
 
     def check_https(self):
         with self.lock:

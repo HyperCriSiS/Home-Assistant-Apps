@@ -2,11 +2,14 @@
 """Bounded, redacted live logs for tunnel subprocesses.
 
 Data remains in memory, is never persisted, and is served only via HA Ingress.
+Subprocess output is additionally echoed, already redacted, to stdout so it
+appears in the Home Assistant App log.
 """
 from collections import deque
 from datetime import datetime, timezone
 import io
 import re
+import sys
 import threading
 
 MAX_LINES = 160
@@ -29,7 +32,9 @@ def redact(line, secrets=()):
 
 
 class TunnelLog:
-    def __init__(self):
+    def __init__(self, name=None, stream=None):
+        self.name = name
+        self.stream = stream
         self.lines = deque(maxlen=MAX_LINES)
         self.lock = threading.Lock()
 
@@ -38,6 +43,17 @@ class TunnelLog:
         stamp = datetime.now(timezone.utc).strftime("%H:%M:%S UTC")
         with self.lock:
             self.lines.append(stamp + "  " + clean)
+        return clean
+
+    def echo(self, clean):
+        if not self.name:
+            return
+        stream = self.stream or sys.stdout
+        try:
+            stream.write("[" + self.name + "] " + clean + "\n")
+            stream.flush()
+        except (OSError, ValueError):
+            pass
 
     def follow(self, proc, secrets=()):
         """Drain pipes independently so tunnel processes cannot block on stderr."""
@@ -48,9 +64,9 @@ class TunnelLog:
         def reader():
             try:
                 for line in pipe:
-                    self.add(line, secrets)
+                    self.echo(self.add(line.rstrip(), secrets))
             except (OSError, ValueError):
-                self.add("Prozessprotokoll nicht mehr verfügbar")
+                self.add("Process log is no longer available")
             finally:
                 try:
                     pipe.close()

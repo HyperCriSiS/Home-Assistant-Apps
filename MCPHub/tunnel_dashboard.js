@@ -43,11 +43,11 @@ function render(mode, state) {
   text(card.querySelector(".summary"), s.last_error || summary);
   if (mode === "tailscale") {
     text(card.querySelector('[data-field="gateway"]'),
-      s.gateway_ready ? "Im Add-on bereit" : s.configured ? "Not ready" : "Deaktiviert");
-    text(card.querySelector('[data-field="funnel"]'), "Externes Add-on · manuell");
+      s.gateway_ready ? "Ready in the App" : s.configured ? "Not ready" : "Disabled");
+    text(card.querySelector('[data-field="funnel"]'), "External App · manual");
     text(card.querySelector('[data-field="route"]'), s.route || "–");
     text(card.querySelector('[data-field="https"]'),
-      s.public_check === "gateway_answered" ? "Gateway antwortet" :
+      s.public_check === "gateway_answered" ? "Gateway answered" :
       s.public_check === "not_verified" ? "Not confirmed" : "Not checked");
     text(card.querySelector('[data-field="public-url"]'),
       s.public_url || (s.public_url_invalid ? "Invalid URL" : "Not configured"));

@@ -1,5 +1,14 @@
 # Changelog
 
+## v2026.10.18-1
+
+- Merge the OpenAI tunnel manager and the Cloudflare/Tailscale tunnel controller into one process with shared start, backoff and health logic; the legacy OpenAI-only page at `/_mcphub_tunnel/` is removed, use the **Tunnels** dashboard instead.
+- Write redacted `tunnel-client` and `cloudflared` output to the Home Assistant App log as well as to the dashboard's **Show logs** panel.
+- Remember dashboard **Start**/**Stop** for the OpenAI and Cloudflare tunnels across App restarts, like the Tailscale gateway; the App option remains the permission gate, also for the OpenAI **Start** button.
+- Keep the tunnel dashboard status responsive while health probes run.
+- Translate remaining German tunnel status, log and diagnostics messages to English.
+- Read Tailscale options grouped under `tailscale` in the startup script too.
+
 ## v2026.10.18
 
 - Restrict LAN port 3001 to MCP endpoints with an MCPHub bearer key; the web interface, login and management API are now available only through Home Assistant Ingress.
