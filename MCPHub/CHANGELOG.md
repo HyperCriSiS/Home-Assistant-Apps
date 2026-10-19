@@ -1,5 +1,11 @@
 # Changelog
 
+## v2026.10.19-1
+
+### Changed
+
+- Updated MCPHub from 1.1.5 to 1.1.6.
+
 ## v2026.10.19
 
 > **Breaking change:** Cloudflare and Tailscale now run in their own Home Assistant Apps. Reconfigure remote access as described in the documentation; the removed options are ignored.
