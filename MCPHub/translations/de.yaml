@@ -1,7 +1,8 @@
 ---
 # Home Assistant shows these texts as plain text: no Markdown, no clickable
-# links, and line breaks are collapsed into spaces. Keep them short; links and
-# longer explanations belong in DOCS.md or MCPHub's "Tunnels" tab.
+# links, and line breaks are collapsed into spaces. Keep them short. OpenAI
+# links stay here so they can be copied; the Cloudflared and Tailscale App
+# links live in MCPHub's "Tunnels" tab, where they are clickable.
 configuration:
   openai:
     name: "OpenAI Secure Tunnel"
@@ -14,11 +15,11 @@ configuration:
       openai_runtime_api_key:
         name: "OpenAI Runtime API Key"
         description: >-
-          Restricted-Key mit „Tunnels: Read + Use“. Erstellen unter
-          platform.openai.com → Settings → API keys.
+          Restricted-Key mit „Tunnels: Read + Use“ erstellen:
+          https://platform.openai.com/settings/organization/api-keys
       tunnel_id:
         name: "OpenAI Tunnel-ID"
-        description: "Beginnt mit tunnel_. Zu finden unter platform.openai.com → Settings → Tunnels."
+        description: "Beginnt mit tunnel_. Zu finden unter https://platform.openai.com/settings/organization/tunnels"
       tunnel_mcp_path:
         name: "OpenAI MCP-Route"
         description: "Zum Beispiel /mcp, /mcp/$smart oder /mcp/<gruppe>."
