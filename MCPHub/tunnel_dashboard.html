@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>MCPHub · Tunnels and remote access</title>
+  <title>MCPHub · Remote access</title>
   <style>
     :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark light}
     *{box-sizing:border-box}
@@ -14,11 +14,11 @@
     h1{font-size:clamp(1.65rem,3vw,2.2rem);line-height:1.2;margin:.35rem 0 .65rem}
     h2{font-size:1.25rem;margin:0}
     h3{font-size:1rem;margin:0 0 .6rem}
-    .intro{margin:0 0 1.6rem;color:var(--secondary-text-color,#94a3b8);max-width:730px}
+    .intro{margin:0 0 1.6rem;color:var(--secondary-text-color,#94a3b8);max-width:880px}
     a{color:var(--primary-color,#51b3f5)}
     .back{color:inherit;font-weight:600;text-decoration:none;border:1px solid var(--divider-color,#64748b88);border-radius:9px;padding:.48rem .78rem}
     .back:hover,.back:focus-visible{text-decoration:underline}
-    .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:16px}
+    .grid{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
     .card{border:1px solid var(--divider-color,#64748b88);border-radius:16px;padding:clamp(17px,2.5vw,26px);background:var(--card-background-color,Canvas)}
     .card-head{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px}
     .badge{display:inline-flex;align-items:center;gap:7px;border:1px solid currentColor;border-radius:99px;padding:4px 11px;font-weight:750;font-size:.82rem}
@@ -28,7 +28,7 @@
     .badge[data-tone="error"]{color:#f87171}
     .badge[data-tone="neutral"]{color:var(--secondary-text-color,#94a3b8)}
     .summary{margin:17px 0;min-height:46px;color:var(--secondary-text-color,#94a3b8)}
-    .metadata{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 20px}
+    .metadata{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin:0 0 20px}
     .metadata div{min-width:0;border-radius:9px;padding:9px 11px;background:var(--secondary-background-color,#64748b12)}
     dt{color:var(--secondary-text-color,#94a3b8);font-size:.78rem}
     dd{margin:3px 0 0;font-size:.93rem;overflow-wrap:anywhere;font-weight:600}
@@ -47,6 +47,7 @@
     .diag-lines li{border-radius:9px;background:var(--secondary-background-color,#64748b12);padding:9px 11px}
     .diag-lines b{display:block;font-size:.9rem}
     .diag-lines span{color:var(--secondary-text-color,#94a3b8);font-size:.83rem}
+    .diag-lines small{display:block;color:var(--secondary-text-color,#94a3b8);font-size:.74rem;opacity:.8}
     pre{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--secondary-background-color,#64748b12);padding:12px;border-radius:9px;max-height:245px;overflow:auto;font-size:.79rem}
     .help{color:var(--secondary-text-color,#94a3b8);font-size:.88rem}
     .footer{margin-top:22px;font-size:.85rem;color:var(--secondary-text-color,#94a3b8)}
@@ -54,8 +55,7 @@
     .copy-helper{font-size:.81rem;color:var(--secondary-text-color,#94a3b8)}
     .copy-fallback{width:100%;resize:vertical;min-height:65px;padding:9px;border-radius:9px;font:inherit}
     dd a{font-weight:500;margin-left:6px;white-space:nowrap}
-    @media(max-width:1020px){.grid{grid-template-columns:1fr}}
-    @media(max-width:700px){.grid{grid-template-columns:1fr}.metadata{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:700px){.metadata{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(prefers-reduced-motion:no-preference){button,.back{transition:filter .15s}}
   </style>
 </head>
@@ -65,13 +65,14 @@
       <div class="eyebrow">Home Assistant · MCPHub</div>
       <a class="back" href="../">Open MCPHub ↗</a>
     </div>
-    <h1>Tunnels and remote access</h1>
-    <p class="intro">Control the OpenAI tunnel and check remote access. Settings and credentials
-      remain under <strong>Home Assistant → Apps → MCPHub → Configuration</strong>.</p>
+    <h1>Remote access</h1>
+    <p class="intro">Control the OpenAI tunnel and check the Cloudflare and Tailscale Apps.
+      Settings and credentials remain under:<br>
+      <strong>Home Assistant → Apps → MCPHub → Configuration</strong></p>
     <main class="grid">
       <article class="card" id="t-openai" aria-labelledby="openai-title">
         <div class="card-head">
-          <h2 id="openai-title">OpenAI Secure Tunnel</h2>
+          <h2 id="openai-title">OpenAI Secure Tunnel – ChatGPT/OpenAI only</h2>
           <span class="badge" data-tone="neutral" role="status" aria-live="polite">Loading…</span>
         </div>
         <p class="summary">Checking tunnel status…</p>
@@ -81,6 +82,11 @@
           <div><dt>MCP route</dt><dd data-field="route">–</dd></div>
           <div><dt>Last check</dt><dd data-field="age">–</dd></div>
         </dl>
+        <p class="help">Credentials from the OpenAI platform:
+          <a href="https://platform.openai.com/settings/organization/api-keys" target="_blank" rel="noopener noreferrer">API keys ↗</a>
+          (restricted key with Tunnels: Read + Use) ·
+          <a href="https://platform.openai.com/settings/organization/tunnels" target="_blank" rel="noopener noreferrer">Tunnels ↗</a>
+          (tunnel ID)</p>
         <div class="actions" aria-label="Manage OpenAI">
           <button type="button" class="primary" data-mode="openai" data-action="start">Start</button>
           <button type="button" data-mode="openai" data-action="stop">Stop</button>
@@ -99,19 +105,19 @@
 
       <article class="card" id="t-remote" aria-labelledby="remote-title">
         <div class="card-head">
-          <h2 id="remote-title">Remote access</h2>
+          <h2 id="remote-title">Cloudflare / Tailscale – all MCP clients</h2>
           <span class="badge" data-tone="neutral" role="status" aria-live="polite">Loading…</span>
         </div>
         <p class="summary">Cloudflare and Tailscale run in their own Home Assistant Apps and forward
           to MCPHub's MCP gateway. This card shows their status and checks your external address.</p>
         <dl class="metadata">
-          <div><dt>External address</dt><dd data-field="external-url">–</dd></div>
-          <div><dt>Address check</dt><dd data-field="check">Not checked</dd></div>
-          <div><dt>MCP gateway</dt><dd data-field="gateway">–</dd></div>
           <div><dt>Cloudflared App</dt><dd><span data-field="cloudflared">–</span>
             <a data-link="cloudflared" href="#" target="_blank" rel="noopener noreferrer">Open App ↗</a></dd></div>
           <div><dt>Tailscale App</dt><dd><span data-field="tailscale">–</span>
             <a data-link="tailscale" href="#" target="_blank" rel="noopener noreferrer">Open App ↗</a></dd></div>
+          <div><dt>MCP gateway</dt><dd data-field="gateway">–</dd></div>
+          <div><dt>External address</dt><dd data-field="external-url">–</dd></div>
+          <div><dt>Address check</dt><dd data-field="check">Not checked</dd></div>
         </dl>
         <div class="actions" aria-label="Check remote access">
           <button type="button" id="remote-check">Check external address</button>

@@ -117,7 +117,7 @@ class TunnelControllerTests(unittest.TestCase):
         page, script = self.mod.PAGE, self.mod.SCRIPT
         dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
         self.assertIn('href="../"', page)
-        self.assertIn("Tunnels and remote access", page)
+        self.assertIn("<h1>Remote access</h1>", page)
         self.assertIn("Show diagnostics", page)
         self.assertIn("Show logs", page)
         self.assertIn('data-panel="diagnostics"', page)
