@@ -1,5 +1,17 @@
 [
   {
+    "revision": 118,
+    "version": "v2026.10.19-2-dev.118",
+    "source_sha": "61d0a3b7365ec3297c19756126620501b3390069",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "61d0a3b7365ec3297c19756126620501b3390069",
+        "subject": "feat(mcphub): rename the Tunnels button to Remote access (#87)"
+      }
+    ]
+  },
+  {
     "revision": 117,
     "version": "v2026.10.19-2-dev.117",
     "source_sha": "acf813fc295ef86eff987e0f7d3f4b0139f6f2b7",
