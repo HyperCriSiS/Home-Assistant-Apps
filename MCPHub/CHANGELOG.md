@@ -6,8 +6,8 @@
 
 - Shorten the App configuration texts. Home Assistant shows them as plain text without line breaks or clickable links, so long URLs were removed; install links stay in the **Tunnels** tab and the documentation.
 - Rename the `external_url` option label to "Base URL for MCP clients".
-- OpenAI options keep their full platform links; the **Tunnels** tab now also links the OpenAI API keys and Tunnels pages.
-- Tunnels tab: title **Remote access**, sections **OpenAI Secure Tunnel – ChatGPT/OpenAI only** and **Cloudflare / Tailscale – all MCP clients**, shown one below the other.
+- OpenAI options keep their full platform links; the **Remote access** tab (formerly **Tunnels**) now also links the OpenAI API keys and Tunnels pages.
+- Rename the **Tunnels** button in MCPHub's top bar and its page to **Remote access**, sections **OpenAI Secure Tunnel – ChatGPT/OpenAI only** and **Cloudflare / Tailscale – all MCP clients**, shown one below the other.
 - Remote access fields follow the connection path: Cloudflared App, Tailscale App, MCP gateway, external address, address check.
 - OpenAI diagnostics explain component states in plain language (for example "No request seen yet"); the raw tunnel-client codes stay visible below.
 

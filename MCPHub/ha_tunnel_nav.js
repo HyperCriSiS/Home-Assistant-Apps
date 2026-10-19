@@ -11,9 +11,9 @@
     const link = document.createElement("a");
     link.id = ID;
     link.href = destination;
-    link.textContent = "Tunnels";
-    link.title = "Open tunnel status and control";
-    link.setAttribute("aria-label", "Open tunnel status and control");
+    link.textContent = "Remote access";
+    link.title = "Open remote access status and control";
+    link.setAttribute("aria-label", "Open remote access status and control");
     return link;
   };
 

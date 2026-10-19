@@ -126,7 +126,7 @@ MCP APIs other than the built-in Assist API.
 
 ## Tunnel health and controls
 
-Open MCPHub from the Home Assistant sidebar and select **Tunnels** in its top bar.
+Open MCPHub from the Home Assistant sidebar and select **Remote access** in its top bar.
 The Ingress-only tunnel dashboard provides **Start**, **Stop**, **Reload** and local
 readiness monitoring for the OpenAI tunnel without restarting MCPHub, with local component
 diagnostics and bounded redacted live logs. Its **Cloudflare / Tailscale** card shows the state of the
