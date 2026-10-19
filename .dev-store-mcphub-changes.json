@@ -1,5 +1,21 @@
 [
   {
+    "revision": 117,
+    "version": "v2026.10.19-2-dev.117",
+    "source_sha": "acf813fc295ef86eff987e0f7d3f4b0139f6f2b7",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "acf813fc295ef86eff987e0f7d3f4b0139f6f2b7",
+        "subject": "fix(mcphub): shorten App configuration texts (#86)"
+      },
+      {
+        "sha": "00543bcc0c1c406d3de7fcd6fafcdb736850093e",
+        "subject": "chore(mcphub): update upstream to 1.1.6 (#85)"
+      }
+    ]
+  },
+  {
     "revision": 115,
     "version": "v2026.10.19-dev.115",
     "source_sha": "e868c6cd5d284744eb591e607c49aaceb2fe6e18",

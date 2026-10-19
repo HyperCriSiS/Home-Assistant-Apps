@@ -247,8 +247,8 @@ on port `3001` (see [LAN access](LAN_ACCESS.md)). The gateway accepts only
 `/mcp` routes, MCPHub checks the bearer key, and the web interface, login and
 management API are never reachable through it.
 
-- Cloudflared App: https://my.home-assistant.io/redirect/supervisor_addon/?addon=396f0234_cloudflared&repository_url=https%3A%2F%2Fgithub.com%2Fhomeassistant-apps%2Frepository
-- Tailscale App: https://my.home-assistant.io/redirect/supervisor_addon/?addon=a0d7b954_tailscale&repository_url=https%3A%2F%2Fgithub.com%2Fhassio-addons%2Frepository
+- [Cloudflared App](https://my.home-assistant.io/redirect/supervisor_addon/?addon=396f0234_cloudflared&repository_url=https%3A%2F%2Fgithub.com%2Fhomeassistant-apps%2Frepository)
+- [Tailscale App](https://my.home-assistant.io/redirect/supervisor_addon/?addon=a0d7b954_tailscale&repository_url=https%3A%2F%2Fgithub.com%2Fhassio-addons%2Frepository)
 
 ### `external_url`
 

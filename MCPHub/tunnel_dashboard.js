@@ -13,6 +13,15 @@ const stateNames = {
 const title = {mcp:"MCP endpoint", "control-plane":"Control plane",
   "response-delivery":"Response delivery", queue:"Queue",
   proxy:"Proxy"};
+// Plain-language text for tunnel-client component states; raw codes stay visible below.
+const componentText = {
+  not_observed: "No request seen yet. Filled in after the first request from ChatGPT.",
+  polling: "Connected to OpenAI and waiting for requests.",
+  available: "Ready to accept requests.",
+  direct: "Direct connection, no proxy configured."
+};
+const componentStatus = {ok:"OK", unknown:"Unknown", disabled:"Not used",
+  degraded:"Degraded", error:"Error", failed:"Failed"};
 let refreshing = false;
 const busy = new Set();
 
@@ -58,14 +67,24 @@ function render(mode, state) {
 function message(container, str) {
   container.replaceChildren(document.createTextNode(str));
 }
-function detailLine(name, detail, container) {
+function detailLine(name, detail, container, raw="") {
   const item = document.createElement("li");
   const strong = document.createElement("b");
   text(strong, name);
   const sub = document.createElement("span");
   text(sub, detail);
   item.append(strong, sub);
+  if (raw) {
+    const codes = document.createElement("small");
+    text(codes, raw);
+    item.append(codes);
+  }
   container.append(item);
+}
+function describeComponent(item) {
+  const status = componentStatus[item.status] || item.status || "";
+  const explanation = componentText[item.state] || componentText[item.reason_code] || "";
+  return [status, explanation].filter(Boolean).join(" · ") || "No details";
 }
 async function loadDetails(mode, kind) {
   const card = document.getElementById("t-" + mode);
@@ -85,8 +104,8 @@ async function loadDetails(mode, kind) {
     list.className = "diag-lines";
     for (const [name, item] of Object.entries(report.components || {})) {
       if (!item || typeof item !== "object") continue;
-      const status = [item.status, item.state, item.reason_code].filter(Boolean).join(" · ");
-      detailLine(title[name] || name, status || "No details", list);
+      const raw = [item.status, item.state, item.reason_code].filter(Boolean).join(" · ");
+      detailLine(title[name] || name, describeComponent(item), list, raw);
     }
     if (!list.children.length) {
       message(target, "No component data available yet.");

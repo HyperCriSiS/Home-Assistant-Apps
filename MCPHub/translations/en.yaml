@@ -1,105 +1,82 @@
 ---
+# Home Assistant shows these texts as plain text: no Markdown, no clickable
+# links, and line breaks are collapsed into spaces. Keep them short. OpenAI
+# links stay here so they can be copied; the Cloudflared and Tailscale App
+# links live in MCPHub's "Tunnels" tab, where they are clickable.
 configuration:
   openai:
     name: "OpenAI Secure Tunnel"
     description: >-
-      Settings for OpenAI Secure Tunnel. Live status, start/stop and logs:
-      open MCPHub in the sidebar and select "Tunnels" in the top bar.
+      Connects MCPHub to ChatGPT. Status, start/stop and logs: open MCPHub → "Tunnels".
     fields:
       tunnel_enabled:
-        name: "Enable OpenAI Secure MCP Tunnel"
-        description: >-
-          Connect the selected MCPHub endpoint to ChatGPT and other supported
-          OpenAI clients.
+        name: "Enable OpenAI Secure Tunnel"
+        description: "Makes the selected MCP route reachable for ChatGPT and other OpenAI clients."
       openai_runtime_api_key:
         name: "OpenAI Runtime API Key"
         description: >-
-          Runtime key for OpenAI Secure MCP Tunnel. Create a Restricted key
-          with Tunnels Read + Use: https://platform.openai.com/settings/organization/api-keys
+          Create a restricted key with "Tunnels: Read + Use":
+          https://platform.openai.com/settings/organization/api-keys
       tunnel_id:
         name: "OpenAI Tunnel ID"
-        description: >-
-          Tunnel ID starts with tunnel_. Find it in OpenAI Tunnel settings:
-          https://platform.openai.com/settings/organization/tunnels
+        description: "Starts with tunnel_. Found at https://platform.openai.com/settings/organization/tunnels"
       tunnel_mcp_path:
         name: "OpenAI MCP route"
-        description: >-
-          MCPHub route exposed to OpenAI, for example /mcp, /mcp/development,
-          or /mcp/$smart.
+        description: "For example /mcp, /mcp/$smart or /mcp/<group>."
   remote_access:
     name: "Remote access (Cloudflare, Tailscale)"
     description: >-
-      Remote access runs through the separate Cloudflared or Tailscale App, which
-      forward to MCPHub's MCP gateway on port 3001. Status, address check and setup
-      text: open MCPHub in the sidebar and select "Tunnels" in the top bar.
-      Cloudflared App:
-      https://my.home-assistant.io/redirect/supervisor_addon/?addon=396f0234_cloudflared&repository_url=https%3A%2F%2Fgithub.com%2Fhomeassistant-apps%2Frepository
-      Tailscale App:
-      https://my.home-assistant.io/redirect/supervisor_addon/?addon=a0d7b954_tailscale&repository_url=https%3A%2F%2Fgithub.com%2Fhassio-addons%2Frepository
+      Through the separate Cloudflared or Tailscale App (forwards to port 3001).
+      Install links, status and setup guide: open MCPHub → "Tunnels".
     fields:
       external_url:
-        name: "External MCPHub address (optional)"
+        name: "Base URL for MCP clients (optional)"
         description: >-
-          Address your MCP clients use, without a path, for example
-          https://mcp.example.com or http://192.168.1.10:3001. MCPHub uses it for
-          "Copy client config", and the tunnel dashboard can check it.
+          Without a path, e.g. https://mcp.example.com or http://192.168.1.10:3001.
+          Used for "Copy client config" and the address check under "Tunnels".
   home_assistant:
     name: "Home Assistant MCP"
-    description: "Settings for Home Assistant MCP"
+    description: "Adds Home Assistant's MCP server to MCPHub."
     fields:
       home_assistant_mcp_enabled:
-        name: "Enable managed Home Assistant MCP"
+        name: "Enable Home Assistant MCP"
         description: >-
-          Adds Home Assistant's MCP Server to MCPHub through a loopback-only bridge.
-          The Home Assistant MCP Server integration must already be configured.
+          Requires the "Model Context Protocol Server" integration to be set up.
       home_assistant_mcp_server_name:
-        name: "Home Assistant MCP server name"
-        description: >-
-          Name used for the automatically registered MCPHub server (default: ha-home-assistant).
-          Must be unique. Renaming may affect existing MCPHub groups.
+        name: "Server name in MCPHub"
+        description: "Must be unique. Renaming may affect existing MCPHub groups."
       home_assistant_mcp_auth_mode:
-        name: "Home Assistant MCP authentication"
+        name: "Authentication"
         description: >-
-          restricted_user uses a dedicated Home Assistant user's token. supervisor
-          uses the automatic Supervisor token and requires no manually created token.
+          restricted_user: token of a dedicated, limited user (recommended).
+          supervisor: automatic Supervisor token.
       home_assistant_mcp_user_token:
-        name: "Dedicated Home Assistant user token"
-        description: >-
-          Long-Lived Access Token created while signed in as the dedicated Home
-          Assistant user. Used only when authentication is restricted_user.
+        name: "Token of the limited user"
+        description: "Long-lived access token of that user. Only for restricted_user."
       home_assistant_mcp_url:
         name: "Home Assistant MCP URL"
-        description: >-
-          Direct Home Assistant MCP endpoint used with restricted_user authentication.
-          Supports reachable LAN IPs, IPv6, local DNS names, custom ports, and HTTPS.
+        description: "Only for restricted_user. LAN IP, IPv6, DNS name, custom port and HTTPS supported."
       home_assistant_mcp_ca_file:
-        name: "Home Assistant HTTPS CA file (optional)"
-        description: >-
-          Only for HTTPS with a private CA: trusted PEM file path under /ssl,
-          e.g. /ssl/home-assistant-ca.pem. Leave empty for HTTP or public HTTPS.
+        name: "HTTPS CA file (optional)"
+        description: "Only for a private CA, e.g. /ssl/home-assistant-ca.pem. Otherwise leave empty."
   github:
-    name: "GitHub CLI MCP Server"
-    description: "Settings for GitHub CLI MCP Server"
+    name: "GitHub CLI MCP"
+    description: "Provides GitHub commands (gh) as an MCP server in MCPHub."
     fields:
       github_cli_mcp_enabled:
         name: "Enable GitHub CLI MCP"
-        description: >-
-          Persistently installs GitHub CLI on demand and automatically adds the
-          universal gh-cli-mcp-server to MCPHub.
+        description: "Installs GitHub CLI on demand and adds the gh-cli-mcp-server."
       github_token:
-        name: "GitHub token"
-        description: >-
-          Optional GitHub Personal Access Token for authenticated gh commands.
-          Required for private repositories and write operations.
+        name: "GitHub token (optional)"
+        description: "Personal access token. Required for private repositories and write access."
   logging:
     name: "Logging"
-    description: "Settings for Logging"
+    description: "Log output of the App."
     fields:
       tunnel_log_level:
         name: "OpenAI tunnel log level"
-        description: "Verbosity of the OpenAI tunnel-client logs."
+        description: "Verbosity of the tunnel-client logs."
 network:
   3001/tcp: >-
-    MCP gateway: only /mcp endpoints with an MCPHub bearer key (create one under
-    Keys in MCPHub), no web interface. Used by LAN clients and by the Cloudflared
-    and Tailscale Apps. Leave blank to disable.
+    MCP gateway: only /mcp with an MCPHub bearer key, no web interface.
+    For LAN clients and the Cloudflared/Tailscale App. Blank = disabled.
