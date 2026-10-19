@@ -1,5 +1,12 @@
 # Changelog
 
+## v2026.10.19-2
+
+### Changed
+
+- Shorten the App configuration texts. Home Assistant shows them as plain text without line breaks or clickable links, so long URLs were removed; install links stay in the **Tunnels** tab and the documentation.
+- Rename the `external_url` option label to "Base URL for MCP clients".
+
 ## v2026.10.19-1
 
 ### Changed
