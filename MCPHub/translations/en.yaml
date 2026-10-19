@@ -2,12 +2,12 @@
 # Home Assistant shows these texts as plain text: no Markdown, no clickable
 # links, and line breaks are collapsed into spaces. Keep them short. OpenAI
 # links stay here so they can be copied; the Cloudflared and Tailscale App
-# links live in MCPHub's "Tunnels" tab, where they are clickable.
+# links live in MCPHub's "Remote access" tab, where they are clickable.
 configuration:
   openai:
     name: "OpenAI Secure Tunnel"
     description: >-
-      Connects MCPHub to ChatGPT. Status, start/stop and logs: open MCPHub → "Tunnels".
+      Connects MCPHub to ChatGPT. Status, start/stop and logs: open MCPHub → "Remote access".
     fields:
       tunnel_enabled:
         name: "Enable OpenAI Secure Tunnel"
@@ -27,13 +27,13 @@ configuration:
     name: "Remote access (Cloudflare, Tailscale)"
     description: >-
       Through the separate Cloudflared or Tailscale App (forwards to port 3001).
-      Install links, status and setup guide: open MCPHub → "Tunnels".
+      Install links, status and setup guide: open MCPHub → "Remote access".
     fields:
       external_url:
         name: "Base URL for MCP clients (optional)"
         description: >-
           Without a path, e.g. https://mcp.example.com or http://192.168.1.10:3001.
-          Used for "Copy client config" and the address check under "Tunnels".
+          Used for "Copy client config" and the address check under "Remote access".
   home_assistant:
     name: "Home Assistant MCP"
     description: "Adds Home Assistant's MCP server to MCPHub."

@@ -203,7 +203,7 @@ to the App log.
 
 The OpenAI tunnel is supervised by a tunnel controller that runs separately
 from MCPHub. Open MCPHub from the Home Assistant sidebar and
-select **Tunnels** in its top bar. The tunnel dashboard provides **Start**,
+select **Remote access** in its top bar. The tunnel dashboard provides **Start**,
 **Stop**, and **Reload** without restarting MCPHub itself. Access is restricted
 to the Home Assistant Ingress adapter.
 
@@ -308,7 +308,7 @@ docker exec addon_a0d7b954_tailscale /opt/tailscale funnel status
 
 ### Tunnel dashboard
 
-Open MCPHub from the Home Assistant sidebar and select **Tunnels** in its top bar.
+Open MCPHub from the Home Assistant sidebar and select **Remote access** in its top bar.
 The dashboard is a separate page served only through authenticated Home Assistant
 Ingress; **Open MCPHub** returns to the MCPHub interface. It has two cards:
 
@@ -323,7 +323,7 @@ Ingress; **Open MCPHub** returns to the MCPHub interface. It has two cards:
 The App adds only this one link to MCPHub's top bar. The link is rendered solely
 inside a Home Assistant Ingress session; the MCP gateway never serves the
 MCPHub interface. Home Assistant's App configuration page cannot show buttons or
-session-specific Ingress links, so its sections point to the **Tunnels** button.
+session-specific Ingress links, so its sections point to the **Remote access** button.
 
 ## Dashboard and local proxy architecture
 
