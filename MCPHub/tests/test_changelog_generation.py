@@ -92,19 +92,36 @@ class ChangelogGenerationTests(unittest.TestCase):
         self.generate("dev")
         self.assertEqual(latest, (self.root / "MCPHub/CHANGELOG.md").read_text())
 
-    def test_stable_gate_rejects_missing_or_tampered_notes(self):
+
+    def test_stable_notes_are_consolidated_without_commits(self):
         self.command("git", "switch", "-q", "dev-mcphub")
+        self.write("MCPHub/CHANGELOG.md", (
+            "# Changelog\n\n## v2026.10.12-1\n\n### Fixed\n\n- Curated fix notes.\n\n"
+            "## v2026.10.12\n\n> **Breaking change:** Old tunnel removed.\n\n"
+            "### Added\n\n- New bridge\n  with a wrapped line.\n\n### Fixed\n\n- Curated fix notes.\n\n"
+            "## v2026.10.07-4\n\n- Existing stable notes.\n"
+        ))
         self.assertNotEqual(self.generate("stable", "--check", ok=False).returncode, 0)
         self.generate("stable")
-        expected = (self.root / "MCPHub/CHANGELOG.md").read_text()
-        self.assertIn("Complete changes since stable v2026.10.07-4", expected)
-        self.assertIn("feat(mcphub): first dev feature", expected)
-        self.assertNotIn("#### Changed files", expected)
-        self.assertIn("Curated fix notes.", expected)
+        drafted = (self.root / "MCPHub/CHANGELOG.md").read_text()
+        self.assertTrue(drafted.startswith(
+            "# Changelog\n\n## v2026.10.12-1\n\n### Breaking changes\n\n- Old tunnel removed."))
+        self.assertIn("### Added\n\n- New bridge with a wrapped line.", drafted)
+        self.assertEqual(drafted.count("Curated fix notes."), 1)
+        self.assertNotIn("## v2026.10.12\n", drafted)
+        self.assertIn("## v2026.10.07-4\n\n- Existing stable notes.\n", drafted)
+        self.assertNotIn("feat(mcphub): first dev feature", drafted)
         self.generate("stable", "--check")
         self.generate("stable")
-        self.assertEqual(expected, (self.root / "MCPHub/CHANGELOG.md").read_text())
-        self.write("MCPHub/CHANGELOG.md", expected.replace("first dev feature", "hidden"))
+        self.assertEqual(drafted, (self.root / "MCPHub/CHANGELOG.md").read_text())
+
+    def test_stable_gate_rejects_commit_lists(self):
+        self.command("git", "switch", "-q", "dev-mcphub")
+        self.generate("stable", "--check")
+        notes = (self.root / "MCPHub/CHANGELOG.md").read_text()
+        commit = "- [`0123abc`](https://github.com/o/r/commit/0123abc) fix(mcphub): something\n"
+        self.write("MCPHub/CHANGELOG.md", notes.replace(
+            "- Curated fix notes.\n", "- Curated fix notes.\n" + commit))
         self.assertNotEqual(self.generate("stable", "--check", ok=False).returncode, 0)
 
 

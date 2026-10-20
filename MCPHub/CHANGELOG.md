@@ -1,115 +1,47 @@
 # Changelog
 
-## v2026.10.19-2
+## v2026.10.20
 
-### Changed
+All changes since the previous stable release v2026.10.07-4.
 
-- Shorten the App configuration texts. Home Assistant shows them as plain text without line breaks or clickable links, so long URLs were removed; install links stay in the **Tunnels** tab and the documentation.
-- Rename the `external_url` option label to "Base URL for MCP clients".
-- OpenAI options keep their full platform links; the **Remote access** tab (formerly **Tunnels**) now also links the OpenAI API keys and Tunnels pages.
-- Rename the **Tunnels** button in MCPHub's top bar and its page to **Remote access**, sections **OpenAI Secure Tunnel – ChatGPT/OpenAI only** and **Cloudflare / Tailscale – all MCP clients**, shown one below the other.
-- Remote access fields follow the connection path: Cloudflared App, Tailscale App, MCP gateway, external address, address check.
-- OpenAI diagnostics explain component states in plain language (for example "No request seen yet"); the raw tunnel-client codes stay visible below.
+### Breaking changes
 
-## v2026.10.19-1
-
-### Changed
-
-- Updated MCPHub from 1.1.5 to 1.1.6.
-
-## v2026.10.19
-
-> **Breaking change:** Cloudflare and Tailscale now run in their own Home Assistant Apps. Reconfigure remote access as described in the documentation; the removed options are ignored.
-
-- Remove the bundled `cloudflared` connector and the Tailscale MCP gateway with host port `3002`, their options, and their generated client keys. On start the App deletes the old credentials and removes their MCPHub system keys so they no longer grant access.
-- Use the MCP-only gateway on port `3001` as the single entry point for LAN clients and for the separate Cloudflared and Tailscale Apps; remote clients use normal MCPHub bearer keys.
-- Add the optional `external_url` setting. MCPHub uses it as its base URL, so **Copy client config** produces configurations that work from outside Home Assistant.
-- Replace the Cloudflare and Tailscale dashboard cards with a **Remote access** card: Cloudflared and Tailscale App state through read-only Supervisor info calls, links to open or install them, ready-to-copy setup text, and an end-to-end check of the external address.
-- Link the Cloudflared and Tailscale Apps from the configuration page and documentation.
-
-## v2026.10.18-1
-
-- Merge the OpenAI tunnel manager and the Cloudflare/Tailscale tunnel controller into one process with shared start, backoff and health logic; the legacy OpenAI-only page at `/_mcphub_tunnel/` is removed, use the **Tunnels** dashboard instead.
-- Write redacted `tunnel-client` and `cloudflared` output to the Home Assistant App log as well as to the dashboard's **Show logs** panel.
-- Remember dashboard **Start**/**Stop** for the OpenAI and Cloudflare tunnels across App restarts, like the Tailscale gateway; the App option remains the permission gate, also for the OpenAI **Start** button.
-- Keep the tunnel dashboard status responsive while health probes run.
-- Translate remaining German tunnel status, log and diagnostics messages to English.
-- Read Tailscale options grouped under `tailscale` in the startup script too.
-
-## v2026.10.18
-
-- Restrict LAN port 3001 to MCP endpoints with an MCPHub bearer key; the web interface, login and management API are now available only through Home Assistant Ingress.
-- Forward only the normalized request path from the LAN, Cloudflare and Tailscale MCP gateways so raw dot-segment paths never reach MCPHub.
-- Restore a small Ingress-only **Tunnels** link in MCPHub's top bar and point the tunnel configuration sections to it.
-- Switch to hot backups so MCPHub keeps running during backups, and exclude re-downloadable package caches.
-
-## v2026.10.17-1
-
-- Simplify LAN port configuration label; blank host port still disables direct LAN access.
-- Automatically generate and persist Cloudflare remote MCP client key, migrating existing keys.
-- Add copy and confirmed rotation to protected Ingress tunnel management; retain independent tunnel lifecycle and health.
-- Update cloudflared to 2026.10.1, OpenAI tunnel client to v0.0.16; keep MCPHub upstream 1.1.5.
-- Prepare a separate, Ingress-only tunnel dashboard with one card each for OpenAI, Cloudflare, and Tailscale Funnel; remove the injected control from upstream MCPHub's header.
-- Add optional Tailscale MCP-only gateway (host port off by default), independent scoped keys, local gateway Start/Stop and rotation; the existing Tailscale Add-on continues to own Funnel.
-- Reject unsafe dot-segment MCP routes across all tunnel gateways and preserve the original Dev Store title and README.
-
-
-## v2026.10.16
-
-### Changed
-
-- Updated MCPHub from 1.1.3 to 1.1.5.
-
-## v2026.10.12-1
+- The bundled Cloudflare tunnel is removed. Cloudflare and Tailscale now run in their own Home Assistant Apps ([Cloudflared](https://my.home-assistant.io/redirect/supervisor_addon/?addon=396f0234_cloudflared&repository_url=https%3A%2F%2Fgithub.com%2Fhomeassistant-apps%2Frepository), [Tailscale](https://my.home-assistant.io/redirect/supervisor_addon/?addon=a0d7b954_tailscale&repository_url=https%3A%2F%2Fgithub.com%2Fhassio-addons%2Frepository)) and forward to MCPHub's MCP gateway on port `3001`. The options `cloudflare_tunnel_enabled`, `cloudflare_tunnel_token`, `cloudflare_mcp_path` and `cloudflare_access_token` are ignored, and the old Cloudflare credentials are deleted on start. Remote clients use a normal MCPHub bearer key. See **Remote access** in the documentation.
+- App settings are grouped into sections (OpenAI, Remote access, Home Assistant MCP, GitHub CLI, Logging). Existing values are still read and saved credentials are kept, but Home Assistant may show the new fields empty. Check the settings after updating.
 
 ### Added
 
-- Grouped Home Assistant App settings into OpenAI, Cloudflare, Home Assistant MCP, GitHub CLI, and logging sections, with updated English and German translations.
-- Linked directly to OpenAI Runtime API key and Tunnel ID setup from the configuration guidance.
-- Added a supervisor for the OpenAI Secure MCP Tunnel with liveness and readiness checks, automatic restart after prolonged failures, and backoff between retries.
-- Added an Ingress-only OpenAI tunnel control page with connection status and Start, Stop, and Reload actions, without restarting MCPHub.
-- Added configurable names for the managed Home Assistant MCP server, including safe rename and name-collision handling.
+- **Remote access page:** a new **Remote access** button in MCPHub's top bar (Home Assistant Ingress only) opens a page to start, stop and reload the OpenAI Secure Tunnel without restarting MCPHub, with status, plain-language diagnostics and redacted live logs. It also shows the state of the Cloudflared and Tailscale Apps, links to install or open them, provides ready-to-copy setup text and checks your external address end to end.
+- **MCP gateway on port 3001:** LAN clients and the Cloudflared and Tailscale Apps reach MCPHub's `/mcp` endpoints with an MCPHub bearer key. The web interface, login and management API are never reachable through it. Leave the host port blank to disable it.
+- **Base URL for MCP clients** (`external_url`): MCPHub uses this address for **Copy client config**, so copied configurations work from outside Home Assistant.
+- **Home Assistant MCP:** optional bridge that adds Home Assistant's MCP Server to MCPHub, with Supervisor-token or dedicated-user authentication, a configurable server name, and support for LAN IPs, IPv6, custom ports, HTTPS and private CA files.
+- The OpenAI Secure Tunnel is supervised with liveness and readiness checks, automatic restarts with backoff, and remembers **Start**/**Stop** across App restarts. The App option remains the permission gate.
+- Home Assistant watchdog for MCPHub's health endpoint.
 
 ### Changed
 
-- Updated MCPHub from 1.1.1 to 1.1.3.
-- Showed the bundled MCPHub upstream version in the Home Assistant App description.
-- Allowed reachable LAN IPv4/IPv6 addresses, custom ports, and HTTPS hostnames with SNI for the managed Home Assistant MCP bridge.
-- Updated the MCPHub SVG wordmark and README logo positioning for consistent centering across browsers.
+- Updated MCPHub from 1.1.1 to 1.1.6 and the OpenAI tunnel client from v0.0.15 to v0.0.16.
+- The App description shows the bundled MCPHub version.
+- Shorter configuration texts in English and German, with direct links to the OpenAI API key and Tunnels pages.
+- Hot backups: MCPHub keeps running during backups, and re-downloadable package caches are skipped.
+- OpenAI tunnel output is also written, redacted, to the Home Assistant App log.
 
 ### Fixed
 
-- Generated a separate development changelog from Git commits and retained previous Dev entries and human-written notes.
-- Prepared comprehensive Stable notes from every MCPHub change since the previous `main` release and added a pre-merge completeness check.
-
-- Verify Home Assistant MCP HTTPS certificates and hostnames, retaining certificate-free LAN HTTP and supporting trusted private CA files.
-- Isolate invalid or disabled OpenAI and Cloudflare tunnel settings so MCPHub and Ingress remain available.
-- Execute URL security assertions in CI and rebuild and verify the exact tested HAOS image revision.
-
-- Prevented optional OpenAI and Cloudflare tunnel failures, and an invalid OpenAI Tunnel ID, from shutting down MCPHub and Home Assistant Ingress.
-- Preserved an existing GitHub CLI token when its option is empty or the managed integration is disabled.
-- Kept runtime option readers compatible with both legacy flat and new grouped settings.
+- Invalid or failing OpenAI tunnel settings, including an invalid Tunnel ID, no longer stop MCPHub or Home Assistant Ingress.
+- An existing GitHub CLI token is kept when its option is empty or the integration is disabled.
 
 ### Security
 
-- Restricted OpenAI tunnel controls to the local Ingress adapter; tunnel credentials are not exposed by its status endpoint.
+- Home Assistant MCP connections verify HTTPS certificates and hostnames; plain HTTP on the LAN still works.
+- The Home Assistant MCP bridge listens on loopback only and never exposes the Home Assistant token in MCPHub.
+- Tunnel controls are available only through Home Assistant Ingress, and their status never contains credentials.
+- MCP gateways forward only normalized request paths and reject unsafe dot-segment routes.
 
 ### Upgrade notes
 
-- Home Assistant may not migrate saved App options when the option structure changes to groups. Check the OpenAI, Cloudflare, Home Assistant, and GitHub settings after upgrading; re-enter missing values before enabling affected integrations.
-
-## v2026.10.12
-
-### Added
-
-- Added an optional managed Home Assistant MCP Server bridge.
-- Added selectable Home Assistant MCP authentication using either the automatic Supervisor token or a dedicated Home Assistant user token.
-- Added a Home Assistant Supervisor watchdog for the MCPHub Ingress health endpoint.
-
-### Security
-
-- The managed Home Assistant MCP bridge is loopback-only and never exposes the Home Assistant token through MCPHub settings.
-- Dedicated-user mode can use a non-admin Home Assistant account for a narrower runtime identity.
+- If you used the bundled Cloudflare tunnel: install the Cloudflared App, point the hostname to `http://<Home Assistant IP>:3001`, set **Base URL for MCP clients**, and give your clients an MCPHub bearer key. The **Remote access** page shows the exact entry to copy.
+- After updating, open **Settings → Apps → MCPHub → Configuration** once and check the OpenAI, Home Assistant MCP and GitHub sections.
 
 ## v2026.10.07-4
 

@@ -79,7 +79,7 @@ jobs:
       - name: Test managed Home Assistant MCP server lifecycle
         run: python3 -m unittest discover -s MCPHub/tests -p 'test_*.py' -v
 
-      - name: Require complete MCPHub release notes for main
+      - name: Require consolidated MCPHub release notes for main
         if: github.event_name == 'pull_request' && github.base_ref == 'main'
         run: |
           git fetch origin main dev-mcphub
