@@ -1,9 +1,7 @@
-ARG OPENAI_TUNNEL_VERSION=v0.0.15
-ARG CLOUDFLARED_VERSION=2026.9.3
-ARG BUILD_FROM=samanhappy/mcphub:1.1.1
+ARG OPENAI_TUNNEL_VERSION=v0.0.16
+ARG BUILD_FROM=samanhappy/mcphub:1.1.6
 
 FROM ghcr.io/openai/tunnel-client:${OPENAI_TUNNEL_VERSION} AS openai_tunnel
-FROM cloudflare/cloudflared:${CLOUDFLARED_VERSION} AS cloudflare_tunnel
 FROM ${BUILD_FROM}
 
 ARG BUILD_VERSION
@@ -17,12 +15,12 @@ LABEL \
     io.hass.type="app" \
     io.hass.arch="${BUILD_ARCH}" \
     org.opencontainers.image.source="https://github.com/HyperCriSiS/Home-Assistant-Apps" \
-    org.opencontainers.image.description="MCPHub with optional OpenAI and Cloudflare remote access for Home Assistant"
+    org.opencontainers.image.description="MCPHub with optional OpenAI tunnel and remote access for Home Assistant"
 
 USER root
 
-# Nginx provides the Home Assistant Ingress adapter and the restricted local
-# origin used by Cloudflare Tunnel.
+# Nginx provides the Home Assistant Ingress adapter and the MCP-only gateway
+# used by LAN clients and the Cloudflared and Tailscale Apps.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl nginx \
     && rm -rf /var/lib/apt/lists/* \
@@ -63,7 +61,7 @@ RUN set -eux; \
     /opt/gh-cli-mcp/bin/python -c \
         'from gh_cli_mcp_server.server import mcp; import importlib.metadata as md; assert md.version("mcp") == "1.30.0"; assert md.version("gh-cli-mcp-server") == "0.3.0"'
 
-# MCPHub 1.1.1 listens on all interfaces upstream. The pinned release is patched
+# MCPHub 1.1.6 listens on all interfaces upstream. The pinned release is patched
 # to bind its main server to loopback so only local adapters can reach it.
 RUN python3 - <<'PY'
 from pathlib import Path
@@ -81,7 +79,6 @@ path.write_text(text.replace(old, new), encoding="utf-8")
 PY
 
 COPY --from=openai_tunnel /usr/bin/tunnel-client /usr/local/bin/tunnel-client
-COPY --from=cloudflare_tunnel /usr/local/bin/cloudflared /usr/local/bin/cloudflared
 
 COPY patch_home_assistant_auth.py /usr/local/bin/patch_home_assistant_auth.py
 RUN python3 /usr/local/bin/patch_home_assistant_auth.py \
@@ -91,12 +88,25 @@ COPY ingress.conf /etc/nginx/mcphub.conf.template
 COPY prepare_config.py /usr/local/bin/prepare_mcphub_config.py
 COPY prepare_proxy_config.py /usr/local/bin/prepare_proxy_config.py
 COPY github_cli_mcp.sh /usr/local/bin/github_cli_mcp.sh
+COPY tunnel_control.py /usr/local/bin/tunnel_control.py
+COPY tunnel_diagnostics.py /usr/local/bin/tunnel_diagnostics.py
+COPY remote_access.py /usr/local/bin/remote_access.py
+# Ingress-only tunnel management console, linked from a small "Tunnels"
+# button in MCPHub's topbar. The button script only renders under Ingress.
+COPY tunnel_dashboard.html /usr/local/bin/tunnel_dashboard.html
+COPY tunnel_dashboard.js /usr/local/bin/tunnel_dashboard.js
+COPY ha_tunnel_nav.js /app/frontend/dist/mcphub-ha-nav.js
+COPY inject_tunnel_nav.py /usr/local/bin/inject_tunnel_nav.py
+RUN python3 /usr/local/bin/inject_tunnel_nav.py \
+    && rm /usr/local/bin/inject_tunnel_nav.py
 COPY run.sh /run.sh
+COPY .haos-source-revision /etc/mcphub-source-revision
 
 RUN chmod 0755 \
     /run.sh \
     /usr/local/bin/prepare_mcphub_config.py \
     /usr/local/bin/prepare_proxy_config.py \
+    /usr/local/bin/tunnel_control.py \
     /usr/local/bin/github_cli_mcp.sh
 
 ENTRYPOINT ["/run.sh"]
