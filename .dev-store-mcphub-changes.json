@@ -1,5 +1,21 @@
 [
   {
+    "revision": 120,
+    "version": "v2026.10.20-1-dev.120",
+    "source_sha": "8f4077dce2b29d880b7677f932922bdb031d2551",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "8f4077dce2b29d880b7677f932922bdb031d2551",
+        "subject": "chore(mcphub): update upstream to 1.1.7 (#91)"
+      },
+      {
+        "sha": "be4644b0c00d7da22fd879106735471ba8cdd6f7",
+        "subject": "release(mcphub): promote validated candidate (#89)"
+      }
+    ]
+  },
+  {
     "revision": 119,
     "version": "v2026.10.20-dev.119",
     "source_sha": "292436b825b1576844158f6aa50f2e1ae17da5c5",
