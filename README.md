@@ -43,10 +43,12 @@ Highlights:
 - Home Assistant Ingress with single sign-on
 - Persistent MCPHub configuration and package caches
 - Optional OpenAI Secure MCP Tunnel for ChatGPT
-- Optional Cloudflare Tunnel for Claude, Cursor, VS Code, and other remote MCP clients
+- Remote access for Claude, Cursor, VS Code, and other MCP clients through the Cloudflared or Tailscale App
 - Optional managed GitHub CLI MCP server
-- Cold-backup support
-- No public MCPHub port, Docker socket, privileged mode, host networking, Supervisor API permission, or Home Assistant API permission required
+- Optional managed Home Assistant MCP server
+- MCP-only LAN gateway on port 3001 (bearer key required, no web interface)
+- Hot backups that keep MCPHub running
+- No Docker socket, privileged mode or host networking; Supervisor API access is read-only (App status for remote access)
 
 See [MCPHub/README.md](MCPHub/README.md) for installation and [MCPHub/DOCS.md](MCPHub/DOCS.md) for configuration, remote access, security, and troubleshooting.
 

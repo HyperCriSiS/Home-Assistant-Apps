@@ -1,8 +1,10 @@
 ---
 name: "MCPHub"
-version: "v2026.10.07-4"
+version: "v2026.10.20"
 slug: mcphub
-description: "Central MCP server management with optional OpenAI and Cloudflare remote access"
+description: >-
+  MCPHub 1.1.6 - central MCP server management with optional Home Assistant,
+  OpenAI and remote access integrations
 url: "https://github.com/HyperCriSiS/Home-Assistant-Apps/tree/main/MCPHub"
 startup: application
 boot: auto
@@ -17,28 +19,63 @@ ingress_stream: true
 panel_icon: mdi:hub
 panel_title: MCPHub
 panel_admin: true
-backup: cold
+watchdog: "http://[HOST]:[PORT:8099]/health"
+homeassistant_api: true
+# Read-only Supervisor info calls: Cloudflared/Tailscale App status, host address.
+hassio_api: true
+# MCPHub keeps running during backups; re-downloadable package caches are skipped.
+backup: hot
+backup_exclude:
+  - "cache/*"
+# MCP gateway (only /mcp endpoints with a bearer key) on host port 3001, used
+# by LAN clients and by the Cloudflared and Tailscale Apps for remote access.
+# Leave the host port blank to disable it or choose another free port.
+ports:
+  3001/tcp: 3001
+ports_description:
+  3001/tcp: >-
+    LAN MCP access (only /mcp with an MCPHub bearer key, no web interface):
+    default port 3001. Choose another free port if needed. Leave blank to disable.
+map:
+  - type: ssl
+    read_only: true
 options:
-  tunnel_enabled: false
-  openai_runtime_api_key: ""
-  tunnel_id: ""
-  tunnel_mcp_path: "/mcp"
-  cloudflare_tunnel_enabled: false
-  cloudflare_tunnel_token: ""
-  cloudflare_mcp_path: "/mcp"
-  cloudflare_access_token: ""
-  github_cli_mcp_enabled: false
-  github_token: ""
-  tunnel_log_level: "info"
+  openai:
+    tunnel_enabled: false
+    openai_runtime_api_key: ""
+    tunnel_id: ""
+    tunnel_mcp_path: "/mcp"
+  remote_access:
+    external_url: ""
+  home_assistant:
+    home_assistant_mcp_enabled: false
+    home_assistant_mcp_server_name: "ha-home-assistant"
+    home_assistant_mcp_auth_mode: "restricted_user"
+    home_assistant_mcp_user_token: ""
+    home_assistant_mcp_url: "http://homeassistant:8123/api/mcp"
+    home_assistant_mcp_ca_file: ""
+  github:
+    github_cli_mcp_enabled: false
+    github_token: ""
+  logging:
+    tunnel_log_level: "info"
 schema:
-  tunnel_enabled: bool
-  openai_runtime_api_key: password
-  tunnel_id: str
-  tunnel_mcp_path: str
-  cloudflare_tunnel_enabled: bool
-  cloudflare_tunnel_token: password
-  cloudflare_mcp_path: str
-  cloudflare_access_token: password
-  github_cli_mcp_enabled: bool
-  github_token: password
-  tunnel_log_level: "list(debug|info|warn)"
+  openai:
+    tunnel_enabled: bool
+    openai_runtime_api_key: password
+    tunnel_id: str
+    tunnel_mcp_path: str
+  remote_access:
+    external_url: str?
+  home_assistant:
+    home_assistant_mcp_enabled: bool
+    home_assistant_mcp_server_name: str
+    home_assistant_mcp_auth_mode: "list(supervisor|restricted_user)"
+    home_assistant_mcp_user_token: password
+    home_assistant_mcp_url: str
+    home_assistant_mcp_ca_file: str?
+  github:
+    github_cli_mcp_enabled: bool
+    github_token: password
+  logging:
+    tunnel_log_level: "list(debug|info|warn)"
