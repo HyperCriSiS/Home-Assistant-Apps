@@ -236,11 +236,14 @@ jobs:
             exit 0
           fi
 
+          body="Promotes the reviewed MCPHub candidate. The changelog has one section with all"
+          body+=" changes since the last stable release and no commit list; edit the drafted"
+          body+=" section before merging. Manual merge only."
           if ! gh pr create \
             --repo "${GITHUB_REPOSITORY}" \
             --base main \
             --head release/mcphub-candidate \
             --title "release(mcphub): validated candidate" \
-            --body "Promotes the reviewed MCPHub candidate. The changelog has one section with all changes since the last stable release and no commit list; edit the drafted section before merging. Manual merge only."; then
+            --body "${body}"; then
             echo "Unable to open stable release PR; manual promotion remains available." >&2
           fi
