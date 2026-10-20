@@ -41,6 +41,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
 
       - name: Install validation tools
         run: |
@@ -73,6 +74,18 @@ jobs:
           python3 -m py_compile "MCPHub/prepare_proxy_config.py"
           python3 -m py_compile "MCPHub/patch_home_assistant_auth.py"
           python3 -m py_compile ".github/scripts/update-mcphub-upstream.py"
+          python3 -m py_compile ".github/scripts/generate-mcphub-changelog.py"
+
+      - name: Test managed Home Assistant MCP server lifecycle
+        run: python3 -m unittest discover -s MCPHub/tests -p 'test_*.py' -v
+
+      - name: Require consolidated MCPHub release notes for main
+        if: github.event_name == 'pull_request' && github.base_ref == 'main'
+        run: |
+          git fetch origin main dev-mcphub
+          if ! git diff --quiet origin/main HEAD -- MCPHub; then
+            python3 .github/scripts/generate-mcphub-changelog.py stable --check
+          fi
 
       - name: Test trusted tunnel-client update and merge guards
         run: >-
@@ -112,6 +125,8 @@ jobs:
           assert config["ingress"] is True
           assert config["ingress_port"] == 8099
           assert config["panel_admin"] is True
+          assert config["homeassistant_api"] is True
+          assert config["watchdog"] == "http://[HOST]:[PORT:8099]/health"
 
           version = config["version"]
           match = re.fullmatch(r"(v\d{4}\.\d{2}\.\d{2})(?:-([1-9]\d*))?", version)
@@ -121,11 +136,31 @@ jobs:
           datetime.strptime(match.group(1), "v%Y.%m.%d")
           assert changelog.startswith(f"# Changelog\n\n## {version}\n")
 
-          assert config["options"]["tunnel_enabled"] is False
-          assert config["options"]["cloudflare_tunnel_enabled"] is False
-          assert config["options"]["cloudflare_mcp_path"] == "/mcp"
-          assert list(config["options"])[-1] == "tunnel_log_level"
-          assert list(config["schema"])[-1] == "tunnel_log_level"
+          groups = ["openai", "remote_access", "home_assistant", "github", "logging"]
+          assert list(config["options"]) == groups
+          assert list(config["schema"]) == groups
+          for group in groups:
+              assert isinstance(config["options"][group], dict)
+              assert list(config["options"][group]) == list(config["schema"][group])
+
+          home_assistant = config["options"]["home_assistant"]
+          assert home_assistant["home_assistant_mcp_enabled"] is False
+          assert home_assistant["home_assistant_mcp_server_name"] == "ha-home-assistant"
+          assert (
+              config["schema"]["home_assistant"]["home_assistant_mcp_auth_mode"]
+              == "list(supervisor|restricted_user)"
+          )
+          assert home_assistant["home_assistant_mcp_auth_mode"] == "restricted_user"
+          assert home_assistant["home_assistant_mcp_url"] == "http://homeassistant:8123/api/mcp"
+          assert config["options"]["openai"]["tunnel_enabled"] is False
+          assert config["options"]["remote_access"] == {"external_url": ""}
+          assert config["schema"]["remote_access"] == {"external_url": "str?"}
+          # Cloudflare and Tailscale run in their own Apps against port 3001.
+          assert config["ports"] == {"3001/tcp": 3001}
+          assert config["hassio_api"] is True
+          assert "hassio_role" not in config
+          assert list(config["options"]["logging"])[-1] == "tunnel_log_level"
+          assert list(config["schema"]["logging"])[-1] == "tunnel_log_level"
 
           build_images = set(build["build_from"].values())
           assert len(build_images) == 1, (
@@ -141,6 +176,11 @@ jobs:
           )
           upstream_version = upstream_match.group(1)
 
+          assert config["description"] == (
+              f"MCPHub {upstream_version} - central MCP server management "
+              "with optional Home Assistant, OpenAI and remote access integrations"
+          ), "MCPHub description must match the packaged upstream image version"
+
           import os
           with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env_file:
               print(f"MCPHUB_VERSION={version}", file=env_file)
@@ -152,8 +192,23 @@ jobs:
           docker manifest inspect \
             "docker.io/samanhappy/mcphub:${MCPHUB_UPSTREAM_VERSION}" \
             > /tmp/mcphub-manifest.json
-          docker manifest inspect "ghcr.io/openai/tunnel-client:v0.0.15" > /tmp/tunnel-manifest.json
-          docker manifest inspect "docker.io/cloudflare/cloudflared:2026.9.3" > /tmp/cloudflared-manifest.json
+          # Read the exact tested image tags from the same Dockerfile that
+          # Buildx uses. Hardcoded versions silently test the wrong releases.
+          eval "$(python3 - <<'PY'
+          import re
+          from pathlib import Path
+          text = Path("MCPHub/Dockerfile").read_text(encoding="utf-8")
+          for name, pattern in (
+              ("OPENAI_TUNNEL_VERSION", r"v[0-9]+[.][0-9]+[.][0-9]+"),
+          ):
+              match = re.search(rf"^ARG {name}=({pattern})$", text, re.M)
+              if not match:
+                  raise SystemExit(f"Unexpected or missing {name} pin")
+              print(f"{name}={match.group(1)}")
+          PY
+          )"
+          docker manifest inspect \
+            "ghcr.io/openai/tunnel-client:${OPENAI_TUNNEL_VERSION}" > /tmp/tunnel-manifest.json
 
           python3 - <<'PY'
           import json
@@ -163,7 +218,6 @@ jobs:
           for name, path in (
               ("MCPHub", "/tmp/mcphub-manifest.json"),
               ("OpenAI tunnel-client", "/tmp/tunnel-manifest.json"),
-              ("Cloudflare cloudflared", "/tmp/cloudflared-manifest.json"),
           ):
               with open(path, encoding="utf-8") as handle:
                   manifest = json.load(handle)
@@ -215,7 +269,12 @@ jobs:
 
       - name: Verify bundled clients
         run: |
-          docker run --rm --entrypoint /usr/local/bin/cloudflared mcphub-addon:test version
+          # Cloudflare runs in the separate Cloudflared App; no bundled connector.
+          if docker run --rm --entrypoint /bin/sh mcphub-addon:test \
+              -c 'command -v cloudflared'; then
+            echo "cloudflared must no longer be bundled" >&2
+            exit 1
+          fi
           docker run --rm --entrypoint /usr/local/bin/tunnel-client mcphub-addon:test --version
           docker run --rm --entrypoint /usr/local/bin/gh mcphub-addon:test --version \
             | grep -q 'gh version 2.101.0'
@@ -265,15 +324,111 @@ jobs:
               raise SystemExit(f"Unexpected GitHub CLI MCP stderr:\n{stderr}")
           PY
 
-      - name: Validate restricted Cloudflare proxy
+      - name: Validate Home Assistant MCP bridge modes
         run: |
           data_dir="$(mktemp -d)"
           mkdir -p "${data_dir}/secrets" "${data_dir}/mcphub"
+          printf 'ingress-test-secret\n' > "${data_dir}/secrets/mcphub_ha_ingress_proxy_secret"
+
           cat > "${data_dir}/options.json" <<'EOF'
           {
-            "cloudflare_tunnel_enabled": true,
-            "cloudflare_mcp_path": "/mcp/$smart/development",
-            "cloudflare_access_token": "test_client_key_0123456789abcdefghijklmnop"
+            "home_assistant_mcp_enabled": true,
+            "home_assistant_mcp_auth_mode": "restricted_user",
+            "home_assistant_mcp_user_token": "eyJtest_restricted_user_token_0123456789",
+            "home_assistant_mcp_url": "http://127.0.0.1:8123/api/mcp"
+          }
+          EOF
+
+          docker run --rm \
+            --entrypoint /bin/bash \
+            --volume "${data_dir}:/data" \
+            mcphub-addon:test \
+            -c '/usr/local/bin/prepare_mcphub_config.py &&
+                /usr/local/bin/prepare_proxy_config.py &&
+                grep -q "listen 127.0.0.1:8097" /etc/nginx/conf.d/mcphub.conf &&
+                grep -q "proxy_pass http://127.0.0.1:8123/api/mcp" /etc/nginx/conf.d/mcphub.conf &&
+                grep -q "ha-home-assistant" /data/mcphub/mcp_settings.json'
+
+          cat > "${data_dir}/options.json" <<'EOF'
+          {
+            "home_assistant_mcp_enabled": true,
+            "home_assistant_mcp_auth_mode": "supervisor"
+          }
+          EOF
+
+          docker run --rm \
+            --env SUPERVISOR_TOKEN="eyJtest_supervisor_token_0123456789" \
+            --entrypoint /bin/bash \
+            --volume "${data_dir}:/data" \
+            mcphub-addon:test \
+            -c '/usr/local/bin/prepare_mcphub_config.py &&
+                /usr/local/bin/prepare_proxy_config.py &&
+                grep -q "proxy_pass http://supervisor/core/api/mcp" /etc/nginx/conf.d/mcphub.conf'
+
+
+          docker run --rm -i --entrypoint /usr/bin/python3 mcphub-addon:test - <<'PY'
+          import importlib.util
+          from pathlib import Path
+
+          path = Path("/usr/local/bin/prepare_proxy_config.py")
+          spec = importlib.util.spec_from_file_location("proxy_config", path)
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+
+          cases = {
+              "http://192.168.1.20:8123/api/mcp":
+                  "http://192.168.1.20:8123/api/mcp",
+              "http://10.20.30.40:8123/api/mcp/custom":
+                  "http://10.20.30.40:8123/api/mcp/custom",
+              "http://172.20.1.20:8123/api/mcp":
+                  "http://172.20.1.20:8123/api/mcp",
+              "http://[fd00::1234]:8123/api/mcp":
+                  "http://[fd00::1234]:8123/api/mcp",
+              "https://ha.internal.example/api/mcp":
+                  "https://ha.internal.example/api/mcp",
+          }
+          for value, expected in cases.items():
+              actual = module.validate_home_assistant_mcp_url(value)
+              assert actual == expected, (value, actual, expected)
+
+          rejected = (
+              "ftp://192.168.1.20/api/mcp",
+              "http://user:pass@192.168.1.20:8123/api/mcp",
+              "http://192.168.1.20:8123/api/mcp?token=x",
+              "http://192.168.1.20:8123/not-mcp",
+          )
+          for value in rejected:
+              try:
+                  module.validate_home_assistant_mcp_url(value)
+              except ValueError:
+                  pass
+              else:
+                  raise AssertionError(
+                      f"Unsafe Home Assistant MCP URL accepted: {value}"
+                  )
+          PY
+
+          # Negative control: ensure heredoc assertions do execute in Docker.
+          if docker run --rm -i --entrypoint /usr/bin/python3 mcphub-addon:test - <<'PY'
+          raise AssertionError("Container stdin test must fail")
+          PY
+          then
+            echo "Docker container ignored Python stdin" >&2
+            exit 1
+          fi
+
+          grep -q 'allow 172.30.32.2;' "MCPHub/ingress.conf"
+
+      - name: Validate external address and removed remote origins
+        run: |
+          data_dir="$(mktemp -d)"
+          mkdir -p "${data_dir}/secrets" "${data_dir}/mcphub"
+          printf 'old-secret\n' > "${data_dir}/secrets/mcphub_cloudflare_client_key"
+          cat > "${data_dir}/options.json" <<'EOF'
+          {
+            "remote_access": {"external_url": "https://mcp.example.com/"},
+            "cloudflare": {"cloudflare_tunnel_enabled": true},
+            "tailscale": {"tailscale_funnel_enabled": true}
           }
           EOF
 
@@ -284,7 +439,10 @@ jobs:
             -c '/usr/local/bin/prepare_mcphub_config.py &&
                 /usr/local/bin/prepare_proxy_config.py &&
                 nginx -t &&
-                grep -q "listen 127.0.0.1:8098" /etc/nginx/conf.d/mcphub.conf'
+                ! grep -q "8098" /etc/nginx/conf.d/mcphub.conf &&
+                ! grep -q "listen 3002" /etc/nginx/conf.d/mcphub.conf &&
+                test ! -e /data/secrets/mcphub_cloudflare_client_key &&
+                grep -q "\"baseUrl\": \"https://mcp.example.com\"" /data/mcphub/mcp_settings.json'
 
       - name: MCPHub container integration test
         run: bash .github/scripts/integration-test-mcphub.sh mcphub-addon:test
