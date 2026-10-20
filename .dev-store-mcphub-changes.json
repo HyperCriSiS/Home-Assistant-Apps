@@ -1,5 +1,17 @@
 [
   {
+    "revision": 119,
+    "version": "v2026.10.20-dev.119",
+    "source_sha": "292436b825b1576844158f6aa50f2e1ae17da5c5",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "292436b825b1576844158f6aa50f2e1ae17da5c5",
+        "subject": "feat(mcphub): consolidated stable changelog for v2026.10.20 (#88)"
+      }
+    ]
+  },
+  {
     "revision": 118,
     "version": "v2026.10.19-2-dev.118",
     "source_sha": "61d0a3b7365ec3297c19756126620501b3390069",
