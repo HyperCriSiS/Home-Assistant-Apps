@@ -1,6 +1,12 @@
 # Changelog
 
-## v2026.10.20-1-dev.120
+## v2026.10.20-1
+
+### Changed
+
+- Updated MCPHub from 1.1.6 to 1.1.7.
+
+## v2026.10.20
 
 ### Commits in this Dev build
 
