@@ -45,4 +45,16 @@ MCPHub work  -> dev-mcphub  -> dev-store -> HA test -> main
 
 A Trilium release PR is always `dev-trilium -> main`. An MCPHub release PR is always `dev-mcphub -> main`. This prevents one App's unreleased work from being published with the other App.
 
+### Automatic MCPHub update releases
+
+`auto-promote-mcphub.yml` merges `dev-mcphub` into `main` without manual review only when every gate in `.github/scripts/auto_promote_mcphub.py` passes:
+
+- `dev-mcphub` contains nothing but GitHub-signed squash merges of bot PRs titled `chore(mcphub): update upstream to …` or `chore(mcphub): update OpenAI tunnel client`, plus clean, unedited merges of `main`.
+- The diff to `main` is only those version bumps and their generated changelog lines. Major version updates stay manual.
+- The new MCPHub and tunnel-client releases are stable and at least 48 hours old. The newest update has been on `dev-mcphub` for at least 48 hours. The previous stable MCPHub release is at least 24 hours old.
+- `validate-mcphub.yml` and the Home Assistant OS test (`haos-mcphub.yml`) both passed for that exact commit. With `HAOS_E2E_ENABLED` unset, nothing is promoted.
+- The release candidate is validated again and merged only if `main`, `dev-mcphub` and the candidate commit are unchanged. If stable validation fails after the merge, a revert PR and an issue are opened; the revert is never merged automatically.
+
+Any other change on `dev-mcphub` keeps the manual release PR. Enable with the repository variable `MCPHUB_AUTO_PROMOTE=true`; pause by setting it to `false` or by labelling the release PR `hold`.
+
 Use short-lived `feature/*`, `fix/*`, `refactor/*`, `test/*`, `docs/*`, `chore/*`, and `hotfix/*` branches where useful, targeting the corresponding App development branch.

@@ -1,0 +1,137 @@
+---
+name: Auto-promote MCPHub updates
+
+# Promotes dev-mcphub to main only when it contains nothing but automated
+# MCPHub upstream / OpenAI tunnel-client version bumps that passed every gate
+# in .github/scripts/auto_promote_mcphub.py. Everything else stays manual.
+# Pause at any time: set the repository variable MCPHUB_AUTO_PROMOTE=false
+# or label the MCPHub release pull request "hold".
+
+on:
+  schedule:
+    - cron: "43 */3 * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: promote-app-development-main
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    name: Gate, validate and merge bot-only MCPHub release
+    if: vars.MCPHUB_AUTO_PROMOTE == 'true' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    env:
+      GH_TOKEN: ${{ secrets.AUTOMATION_TOKEN || github.token }}
+
+    steps:
+      - name: Check out trusted gates from main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Test promotion gates
+        run: python3 -m unittest discover -s .github/tests -p 'test_auto_promote_mcphub.py' -v
+
+      - name: Check release gates
+        id: gate
+        env:
+          HAOS_E2E_ENABLED: ${{ vars.HAOS_E2E_ENABLED }}
+        run: python3 .github/scripts/auto_promote_mcphub.py gate
+
+      - name: Request validation of the current dev-mcphub commit
+        if: steps.gate.outputs.action == 'validate'
+        run: gh workflow run validate-mcphub.yml --repo "$GITHUB_REPOSITORY" --ref dev-mcphub
+
+      - name: Request Home Assistant OS test of the exact commit
+        if: steps.gate.outputs.action == 'haos'
+        env:
+          DEV_SHA: ${{ steps.gate.outputs.dev_sha }}
+        run: gh workflow run haos-mcphub.yml --repo "$GITHUB_REPOSITORY" --ref main -f sha="$DEV_SHA"
+
+      - name: Prepare release candidate
+        id: candidate
+        if: steps.gate.outputs.action == 'promote'
+        env:
+          DEV_SHA: ${{ steps.gate.outputs.dev_sha }}
+        run: |
+          set -euo pipefail
+          gates="$PWD/.github/scripts"
+          git worktree add --detach /tmp/release "$DEV_SHA"
+          cd /tmp/release
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python3 "$gates/generate-mcphub-changelog.py" stable
+          python3 "$gates/generate-mcphub-changelog.py" stable --check
+          git add MCPHub/CHANGELOG.md
+          git diff --cached --quiet || git commit -m "docs(mcphub): consolidate changes since last stable"
+          candidate="$(git rev-parse HEAD)"
+
+          python3 "$gates/auto_promote_mcphub.py" check-candidate \
+            --dev-sha "$DEV_SHA" --candidate-sha "$candidate"
+          title="release(mcphub): automated update release"
+          existing="$(gh pr list --repo "$GITHUB_REPOSITORY" --base main \
+            --head release/mcphub-candidate --state open --json title --jq '.[0].title // empty')"
+          if [[ -n "$existing" && "$existing" != "$title" ]]; then
+            # A manually opened release PR may be curated by hand: never overwrite it.
+            echo "A manual MCPHub release PR is open; leaving the release to it."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git push --force \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            "$candidate:refs/heads/release/mcphub-candidate"
+          if [[ -z "$existing" ]]; then
+            gh pr create --repo "$GITHUB_REPOSITORY" \
+              --base main --head release/mcphub-candidate --title "$title" \
+              --body "Bot-only MCPHub update release, merged automatically once all gates pass. Label: hold stops it."
+          fi
+          {
+            echo "ready=true"
+            echo "sha=$candidate"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Request validation of the release candidate
+        if: steps.candidate.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run validate-mcphub.yml --repo "$GITHUB_REPOSITORY" --ref release/mcphub-candidate
+
+      - name: Re-check and merge the exact validated candidate
+        id: merge
+        if: steps.candidate.outputs.ready == 'true'
+        env:
+          MAIN_SHA: ${{ steps.gate.outputs.main_sha }}
+          DEV_SHA: ${{ steps.gate.outputs.dev_sha }}
+          CANDIDATE_SHA: ${{ steps.candidate.outputs.sha }}
+        run: |
+          python3 .github/scripts/auto_promote_mcphub.py merge \
+            --main-sha "$MAIN_SHA" --dev-sha "$DEV_SHA" --candidate-sha "$CANDIDATE_SHA"
+
+      # GITHUB_TOKEN merges do not start push workflows; request them explicitly.
+      - name: Start post-release workflows
+        if: steps.merge.outputs.merge_sha != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run validate-mcphub.yml --repo "$GITHUB_REPOSITORY" --ref main
+          gh workflow run sync-dev-bases.yml --repo "$GITHUB_REPOSITORY" --ref main
+
+      - name: Watch stable validation and prepare a revert on failure
+        if: steps.merge.outputs.merge_sha != ''
+        env:
+          MERGE_SHA: ${{ steps.merge.outputs.merge_sha }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --no-tags origin main
+          python3 .github/scripts/auto_promote_mcphub.py watch --merge-sha "$MERGE_SHA"
