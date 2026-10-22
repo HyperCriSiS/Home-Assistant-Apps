@@ -1,8 +1,7 @@
 # Changelog
 
-## v2026.10.20-1-dev.120
+## v2026.10.22-dev.121
 
 ### Commits in this Dev build
 
-- [`8f4077d`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/8f4077dce2b29d880b7677f932922bdb031d2551) chore(mcphub): update upstream to 1.1.7 (#91)
-- [`be4644b`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/be4644b0c00d7da22fd879106735471ba8cdd6f7) release(mcphub): promote validated candidate (#89)
+- [`1516940`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/1516940029b2eeaef6fc5d44daa33756b34e3f3f) chore(mcphub): update upstream to 1.1.8 (#93)
