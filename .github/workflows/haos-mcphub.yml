@@ -1,5 +1,10 @@
 ---
 name: HAOS MCPHub integration
+# The automatic promotion gate matches this title to the exact tested commit.
+run-name: >-
+  HAOS MCPHub integration ${{ inputs.sha ||
+  (github.event_name == 'workflow_run' && github.event.workflow_run.head_sha) ||
+  'dev-mcphub' }}
 
 on:
   workflow_run:
@@ -8,6 +13,11 @@ on:
     types:
       - completed
   workflow_dispatch:
+    inputs:
+      sha:
+        description: "Exact dev-mcphub commit to test (default: branch head)"
+        type: string
+        required: false
 
 permissions:
   contents: read
@@ -40,12 +50,17 @@ jobs:
       - name: Check out validated MCPHub commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
-          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || 'dev-mcphub' }}
+          ref: >-
+            ${{ inputs.sha ||
+            (github.event_name == 'workflow_run' && github.event.workflow_run.head_sha) ||
+            'dev-mcphub' }}
           persist-credentials: false
 
       - name: Run Home Assistant OS MCPHub test harness
         env:
-          HAOS_EXPECTED_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || '' }}
+          HAOS_EXPECTED_SHA: >-
+            ${{ inputs.sha ||
+            (github.event_name == 'workflow_run' && github.event.workflow_run.head_sha) || '' }}
           HAOS_ADDONS_DIR: ${{ vars.HAOS_ADDONS_DIR }}
           HAOS_BASE_URL: ${{ vars.HAOS_BASE_URL }}
           HAOS_TOKEN: ${{ secrets.HAOS_TOKEN }}
