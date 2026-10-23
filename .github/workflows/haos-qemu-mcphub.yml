@@ -84,7 +84,7 @@ jobs:
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           sudo apt-get update -qq
-          sudo apt-get install -y -qq qemu-system-x86 qemu-utils ovmf rsync
+          sudo apt-get install -y -qq qemu-system-x86 qemu-utils ovmf rsync socat
           df -h /
           ls -l /dev/kvm
 

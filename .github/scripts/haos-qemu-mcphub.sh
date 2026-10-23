@@ -41,7 +41,16 @@ diagnose() {
     curl -sS --max-time 30 -H "Authorization: Bearer ${TOKEN}" \
       "${HA}/api/hassio/supervisor/logs" | tail -n 120 || true
   fi
-  sudo tail -n 80 "${WORK}/serial.log" 2>/dev/null || true
+  # The serial console logs in to the HA CLI; "login" opens a root shell.
+  if [[ -S "${WORK}/serial.sock" ]]; then
+    for command in root login "docker ps -a" "docker logs --tail 120 hassio_supervisor" \
+      "ip -4 addr" "curl -s -o /dev/null -w 'core=%{http_code}\n' http://127.0.0.1:8123/"; do
+      printf '%s\n' "${command}" | sudo socat -t 2 - "UNIX-CONNECT:${WORK}/serial.sock" >/dev/null || true
+      sleep 5
+    done
+    sleep 10
+  fi
+  sudo tail -n 250 "${WORK}/serial.log" 2>/dev/null || true
 }
 trap 'diagnose' ERR
 
@@ -101,9 +110,11 @@ sudo qemu-system-x86_64 \
   -enable-kvm -cpu host -smp 4 -m 6144 -machine q35 \
   -bios "${firmware}" \
   -drive "file=${IMAGE},if=virtio,format=qcow2" \
-  -netdev "user,id=net0,hostfwd=tcp:127.0.0.1:8123-:8123,hostfwd=tcp:127.0.0.1:3001-:3001" \
+  -netdev "user,id=net0,hostfwd=tcp:127.0.0.1:8123-:8123,hostfwd=tcp:127.0.0.1:3001-:3001,hostfwd=tcp:127.0.0.1:4357-:4357" \
   -device virtio-net-pci,netdev=net0 \
-  -display none -serial "file:${WORK}/serial.log" \
+  -display none \
+  -chardev "socket,id=console,path=${WORK}/serial.sock,server=on,wait=off,logfile=${WORK}/serial.log" \
+  -serial chardev:console \
   -daemonize -pidfile "${WORK}/qemu.pid"
 
 log "Wait for Home Assistant onboarding (first boot downloads Core)"
@@ -112,6 +123,11 @@ for attempt in $(seq 1 180); do
     break
   fi
   [[ "${attempt}" -lt 180 ]] || { echo "Home Assistant never became ready" >&2; false; }
+  if (( attempt % 6 == 0 )); then
+    core="$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "${HA}/" || true)"
+    observer="$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 http://127.0.0.1:4357/ || true)"
+    echo "$((attempt / 6)) min: Core HTTP ${core}, Observer HTTP ${observer}"
+  fi
   sleep 10
 done
 
