@@ -15,13 +15,22 @@ import os
 import re
 import subprocess
 import time
+from datetime import date
 from pathlib import Path
 from urllib.parse import quote
 
 OPENAI = re.compile(r"v[0-9]+[.][0-9]+[.][0-9]+")
 BRANCH = re.compile(r"automation/mcphub-tunnel-clients-(v[0-9]+_[0-9]+_[0-9]+)")
 TITLE = "chore(mcphub): update OpenAI tunnel client"
-ALLOWED_FILES = {"MCPHub/Dockerfile", "MCPHub/CHANGELOG.md"}
+ALLOWED_FILES = {
+    "MCPHub/Dockerfile",
+    "MCPHub/CHANGELOG.md",
+    "MCPHub/NOTICE.md",
+    "MCPHub/config.yaml",
+}
+WRAPPER_VERSION = re.compile(
+    r'^version: "(v([0-9]{4})[.]([0-9]{2})[.]([0-9]{2})(?:-([1-9][0-9]*))?)"$', re.M
+)
 
 
 def gh(*arguments: str) -> str:
@@ -49,33 +58,73 @@ def branch_for(openai: str) -> str:
     return "automation/mcphub-tunnel-clients-" + openai.replace(".", "_")
 
 
-def prepare(dockerfile: str, changelog: str, openai: str) -> tuple[str, str, bool]:
+def replace_once(text: str, old: str, new: str, label: str) -> str:
+    if text.count(old) != 1:
+        raise ValueError(f"Expected exactly one {label}")
+    return text.replace(old, new, 1)
+
+
+def bump_version(config: str, today: date) -> tuple[str, str]:
+    """Same scheme as the upstream updater: a new date, or -N on the same day."""
+    matches = list(WRAPPER_VERSION.finditer(config))
+    if len(matches) != 1:
+        raise ValueError("Missing or invalid MCPHub App version")
+    match = matches[0]
+    current = date(int(match[2]), int(match[3]), int(match[4]))
+    if today > current:
+        version = f"v{today:%Y.%m.%d}"
+    else:
+        version = f"v{current:%Y.%m.%d}-{int(match[5] or 0) + 1}"
+    return config[:match.start(1)] + version + config[match.end(1):], version
+
+
+def prepare(files: dict[str, str], openai: str, today: date) -> tuple[dict[str, str], bool]:
+    """Bump the tunnel pin, its notice and the App version; add a changelog section.
+
+    The App version must change, otherwise Home Assistant never offers the
+    rebuilt image as an update.
+    """
     if not OPENAI.fullmatch(openai):
         raise ValueError("Rejecting unrecognized, prerelease or floating tunnel image tags")
-    current_openai = pin(dockerfile)
+    current_openai = pin(files["MCPHub/Dockerfile"])
     if as_tuple(openai) < as_tuple(current_openai):
         raise ValueError("Refusing tunnel-client version downgrade")
     if openai == current_openai:
-        return dockerfile, changelog, False
+        return files, False
 
-    updated = dockerfile.replace(
-        f"ARG OPENAI_TUNNEL_VERSION={current_openai}",
-        f"ARG OPENAI_TUNNEL_VERSION={openai}",
-        1,
-    )
+    changelog = files["MCPHub/CHANGELOG.md"]
+    header = "# Changelog\n\n"
     if not re.match(r"^# Changelog\n\n## v[0-9]{4}[.][0-9]{2}[.][0-9]{2}(?:-[1-9][0-9]*)?\n", changelog):
         raise ValueError("Unexpected MCPHub source changelog header")
-    first_break = changelog.find("\n", len("# Changelog\n\n"))
-    note = f"- Updated bundled OpenAI tunnel-client {current_openai} to {openai}.\n"
-    new_changelog = changelog[:first_break + 1] + "\n" + note + changelog[first_break + 1:]
-    return updated, new_changelog, True
+    config, version = bump_version(files["MCPHub/config.yaml"], today)
+    entry = (
+        f"## {version}\n\n### Changed\n\n"
+        f"- Updated bundled OpenAI tunnel-client {current_openai} to {openai}.\n\n"
+    )
+    updated = {
+        "MCPHub/Dockerfile": replace_once(
+            files["MCPHub/Dockerfile"],
+            f"ARG OPENAI_TUNNEL_VERSION={current_openai}\n",
+            f"ARG OPENAI_TUNNEL_VERSION={openai}\n",
+            "tunnel-client Dockerfile pin",
+        ),
+        "MCPHub/NOTICE.md": replace_once(
+            files["MCPHub/NOTICE.md"],
+            f"- Version currently packaged: {current_openai}\n",
+            f"- Version currently packaged: {openai}\n",
+            "tunnel-client NOTICE version",
+        ),
+        "MCPHub/config.yaml": config,
+        "MCPHub/CHANGELOG.md": header + entry + changelog[len(header):],
+    }
+    return updated, True
 
 
 def api(endpoint: str):
     return json.loads(gh("api", endpoint))
 
 
-def verify_candidate(repository: str, branch: str, sha: str, openai: str) -> int:
+def verify_candidate(repository: str, branch: str, sha: str, openai: str, today: date) -> int:
     if branch != branch_for(openai):
         raise ValueError("Automation branch/tag mismatch")
     if not re.fullmatch(r"[a-f0-9]{40}", sha):
@@ -108,14 +157,11 @@ def verify_candidate(repository: str, branch: str, sha: str, openai: str) -> int
     # Verify every byte of the generated update against the current dev base.
     # A successful build alone is not permission to merge unrelated code.
     git("fetch", "--no-tags", "origin", "dev-mcphub", branch)
-    current_docker = git("show", "origin/dev-mcphub:MCPHub/Dockerfile")
-    current_notes = git("show", "origin/dev-mcphub:MCPHub/CHANGELOG.md")
-    desired_docker, desired_notes, changed = prepare(current_docker, current_notes, openai)
+    current = {path: git("show", f"origin/dev-mcphub:{path}") for path in ALLOWED_FILES}
+    desired, changed = prepare(current, openai, today)
     if not changed:
         raise ValueError("Tunnel update is already on dev-mcphub")
-    candidate_docker = git("show", f"{sha}:MCPHub/Dockerfile")
-    candidate_notes = git("show", f"{sha}:MCPHub/CHANGELOG.md")
-    if candidate_docker != desired_docker or candidate_notes != desired_notes:
+    if any(git("show", f"{sha}:{path}") != desired[path] for path in ALLOWED_FILES):
         raise ValueError("Candidate content differs from trusted version updater")
     git("merge-base", "--is-ancestor", "origin/dev-mcphub", sha)
     return number
@@ -149,11 +195,11 @@ def wait_for_ci(repository: str, branch: str, sha: str, attempts: int = 168) -> 
     raise TimeoutError("No successful same-SHA validation of tunnel update")
 
 
-def verify_and_merge(repository: str, branch: str, sha: str, openai: str):
-    number = verify_candidate(repository, branch, sha, openai)
+def verify_and_merge(repository: str, branch: str, sha: str, openai: str, today: date):
+    number = verify_candidate(repository, branch, sha, openai, today)
     wait_for_ci(repository, branch, sha)
     # Recheck base, candidate contents and SHA immediately before merging.
-    if verify_candidate(repository, branch, sha, openai) != number:
+    if verify_candidate(repository, branch, sha, openai, today) != number:
         raise ValueError("Update PR changed during validation")
     gh("pr", "merge", str(number), "--repo", repository, "--squash",
        "--delete-branch", "--match-head-commit", sha)
@@ -166,22 +212,22 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("mode", choices=("prepare", "merge"))
     parser.add_argument("--openai", required=True)
+    parser.add_argument("--date", required=True, type=date.fromisoformat,
+                        help="UTC date of the prepare run; merge must reuse it")
     parser.add_argument("--branch")
     parser.add_argument("--sha")
     args = parser.parse_args()
     if args.mode == "prepare":
-        docker_path, notes_path = Path("MCPHub/Dockerfile"), Path("MCPHub/CHANGELOG.md")
-        docker, notes, updated = prepare(
-            docker_path.read_text(encoding="utf-8"),
-            notes_path.read_text(encoding="utf-8"),
-            args.openai,
-        )
+        current = {path: Path(path).read_text(encoding="utf-8") for path in ALLOWED_FILES}
+        files, updated = prepare(current, args.openai, args.date)
         if updated:
-            docker_path.write_text(docker, encoding="utf-8")
-            notes_path.write_text(notes, encoding="utf-8")
+            for path, text in files.items():
+                Path(path).write_text(text, encoding="utf-8")
         print("update=true" if updated else "update=false")
     else:
-        verify_and_merge(os.environ["GITHUB_REPOSITORY"], args.branch, args.sha, args.openai)
+        verify_and_merge(
+            os.environ["GITHUB_REPOSITORY"], args.branch, args.sha, args.openai, args.date
+        )
 
 
 if __name__ == "__main__":
