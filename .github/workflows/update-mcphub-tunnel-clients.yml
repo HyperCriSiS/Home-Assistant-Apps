@@ -26,6 +26,7 @@ jobs:
       branch: ${{ steps.prepare.outputs.branch }}
       sha: ${{ steps.prepare.outputs.sha }}
       openai: ${{ steps.releases.outputs.openai }}
+      date: ${{ steps.prepare.outputs.date }}
     steps:
       - name: Check out trusted updater from main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -46,19 +47,23 @@ jobs:
           cp .github/scripts/update-mcphub-tunnel-clients.py /tmp/update-mcphub-tunnel-clients.py
           git fetch --no-tags origin dev-mcphub
           openai="$(gh api repos/openai/tunnel-client/releases/latest --jq '.tag_name')"
-          echo "openai=$openai" >> "$GITHUB_OUTPUT"
+          {
+            echo "openai=$openai"
+            echo "date=$(date -u +%F)"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Open or reuse versioned bot PR
         id: prepare
         env:
           OPENAI: ${{ steps.releases.outputs.openai }}
+          DATE: ${{ steps.releases.outputs.date }}
           GH_TOKEN: ${{ secrets.AUTOMATION_TOKEN || github.token }}
         run: |
           set -euo pipefail
           # Use the main-branch updater, never code from a candidate PR.
           git switch -C mcphub-dev-work origin/dev-mcphub
           result="$(python3 /tmp/update-mcphub-tunnel-clients.py prepare \
-            --openai "$OPENAI")"
+            --openai "$OPENAI" --date "$DATE")"
           if [[ "$result" == "update=false" ]]; then
             echo "No newer tunnel binaries available."
             echo "changed=false" >> "$GITHUB_OUTPUT"
@@ -79,18 +84,21 @@ jobs:
             sha="$(gh pr list \
               --repo "$GITHUB_REPOSITORY" --base dev-mcphub --head "$branch" \
               --state open --json headRefOid --jq '.[0].headRefOid // empty')"
+            # The merge gate re-derives the App version from the day the PR was made.
+            git fetch --no-tags origin "$branch"
+            DATE="$(date -u -d "@$(git show -s --format=%ct "$sha")" +%F)"
           else
             git switch -c "$branch"
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add MCPHub/Dockerfile MCPHub/CHANGELOG.md
+            git add MCPHub/Dockerfile MCPHub/CHANGELOG.md MCPHub/NOTICE.md MCPHub/config.yaml
             git commit -m "chore(mcphub): update OpenAI tunnel client"
             sha="$(git rev-parse HEAD)"
             git push "https://x-access-token:$GH_TOKEN@github.com/$GITHUB_REPOSITORY.git" "HEAD:refs/heads/$branch"
             gh pr create --repo "$GITHUB_REPOSITORY" \
               --head "$branch" --base dev-mcphub \
               --title "chore(mcphub): update OpenAI tunnel client" \
-              --body "Automated stable OpenAI tunnel-client update: pin and changelog only. Exact-SHA CI required."
+              --body "Automated stable OpenAI tunnel-client update (pin, notice, version, changelog). Exact-SHA CI."
           fi
           [[ "$sha" =~ ^[a-f0-9]{40}$ ]] || {
             echo "Cannot verify exact PR head SHA" >&2
@@ -100,6 +108,7 @@ jobs:
             echo "changed=true"
             echo "branch=$branch"
             echo "sha=$sha"
+            echo "date=$DATE"
           } >> "$GITHUB_OUTPUT"
 
       - name: Dispatch full, read-only candidate validation
@@ -118,6 +127,7 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.AUTOMATION_TOKEN || github.token }}
       OPENAI: ${{ needs.check.outputs.openai }}
+      DATE: ${{ needs.check.outputs.date }}
       BRANCH: ${{ needs.check.outputs.branch }}
       SHA: ${{ needs.check.outputs.sha }}
     steps:
@@ -134,5 +144,5 @@ jobs:
       - name: Validate commit, contents, full CI and merge to dev-mcphub
         run: |
           python3 .github/scripts/update-mcphub-tunnel-clients.py merge \
-            --openai "$OPENAI" \
+            --openai "$OPENAI" --date "$DATE" \
             --branch "$BRANCH" --sha "$SHA"
