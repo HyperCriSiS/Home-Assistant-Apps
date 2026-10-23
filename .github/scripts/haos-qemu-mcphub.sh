@@ -41,16 +41,23 @@ diagnose() {
     curl -sS --max-time 30 -H "Authorization: Bearer ${TOKEN}" \
       "${HA}/api/hassio/supervisor/logs" | tail -n 120 || true
   fi
-  # The serial console logs in to the HA CLI; "login" opens a root shell.
-  if [[ -S "${WORK}/serial.sock" ]]; then
-    for command in root login "docker ps -a" "docker logs --tail 120 hassio_supervisor" \
-      "ip -4 addr" "curl -s -o /dev/null -w 'core=%{http_code}\n' http://127.0.0.1:8123/"; do
-      printf '%s\n' "${command}" | sudo socat -t 2 - "UNIX-CONNECT:${WORK}/serial.sock" >/dev/null || true
-      sleep 5
-    done
-    sleep 10
-  fi
-  sudo tail -n 250 "${WORK}/serial.log" 2>/dev/null || true
+  console "docker logs --tail 120 hassio_supervisor"
+}
+
+console() {
+  # Run shell commands in the VM through its serial console (root login has
+  # no password on HAOS) and print what the console shows.
+  [[ -S "${WORK}/serial.sock" ]] || return 0
+  local before
+  before="$(sudo wc -c < "${WORK}/serial.log")"
+  for command in "" root "$@"; do
+    printf '%s\n' "${command}" | sudo socat -t 2 - "UNIX-CONNECT:${WORK}/serial.sock" >/dev/null || true
+    sleep 4
+  done
+  sleep 6
+  echo "---- VM console"
+  sudo tail -c "+$((before + 1))" "${WORK}/serial.log" | grep -v "audit:" || true
+  echo "----"
 }
 trap 'diagnose' ERR
 
@@ -126,7 +133,11 @@ for attempt in $(seq 1 180); do
   if (( attempt % 6 == 0 )); then
     core="$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "${HA}/" || true)"
     observer="$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 http://127.0.0.1:4357/ || true)"
-    echo "$((attempt / 6)) min: Core HTTP ${core}, Observer HTTP ${observer}"
+    onboarding="$(curl -s --max-time 5 -w ' HTTP %{http_code}' "${HA}/api/onboarding" | head -c 200 || true)"
+    echo "$((attempt / 6)) min: Core HTTP ${core}, Observer HTTP ${observer}, onboarding: ${onboarding}"
+  fi
+  if (( attempt == 60 )); then
+    console "ha core info" "ha jobs info" "docker ps -a" "docker logs --tail 40 homeassistant"
   fi
   sleep 10
 done
