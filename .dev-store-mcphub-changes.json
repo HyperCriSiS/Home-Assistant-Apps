@@ -1,5 +1,17 @@
 [
   {
+    "revision": 123,
+    "version": "v2026.10.23-dev.123",
+    "source_sha": "185caf9218c30c86c4b619d708a47fe70d2fa485",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "185caf9218c30c86c4b619d708a47fe70d2fa485",
+        "subject": "chore(mcphub): update upstream to 1.1.9 (#97)"
+      }
+    ]
+  },
+  {
     "revision": 122,
     "version": "v2026.10.22-dev.122",
     "source_sha": "19adeac840cd4369256c893f4d0d1ef019b25fac",
