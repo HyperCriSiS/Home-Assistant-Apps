@@ -35,13 +35,7 @@ trap cleanup EXIT
 
 diagnose() {
   log "Diagnostics"
-  if [[ -n "${TOKEN}" ]]; then
-    curl -sS --max-time 30 -H "Authorization: Bearer ${TOKEN}" \
-      "${HA}/api/hassio/addons/${SLUG}/logs" | tail -n 200 || true
-    curl -sS --max-time 30 -H "Authorization: Bearer ${TOKEN}" \
-      "${HA}/api/hassio/supervisor/logs" | tail -n 120 || true
-  fi
-  console "docker logs --tail 120 hassio_supervisor"
+  console "for c in \$(docker ps -a --format '{{.Names}}' | grep mcphub); do docker logs --tail 150 \$c 2>&1; done"     "docker logs --tail 80 hassio_supervisor 2>&1"
 }
 
 console() {
@@ -62,9 +56,29 @@ console() {
 trap 'diagnose' ERR
 
 supervisor() {
-  # supervisor METHOD PATH [TIMEOUT]: Supervisor API through the Core proxy.
-  curl -sS --fail-with-body --max-time "${3:-120}" -X "$1" \
-    -H "Authorization: Bearer ${TOKEN}" "${HA}/api/hassio/$2"
+  # supervisor METHOD PATH [TIMEOUT]: Supervisor API through Core's
+  # "supervisor/api" WebSocket command, as the HA frontend calls it. The REST
+  # proxy under /api/hassio only allows a few endpoints.
+  TOKEN="${TOKEN}" python3 - "$1" "$2" "${3:-120}" <<'PY'
+import json, os, sys
+from websockets.sync.client import connect
+
+method, path, timeout = sys.argv[1].lower(), "/" + sys.argv[2], int(sys.argv[3])
+with connect("ws://127.0.0.1:8123/api/websocket", open_timeout=30, max_size=None) as ws:
+    ws.recv()
+    ws.send(json.dumps({"type": "auth", "access_token": os.environ["TOKEN"]}))
+    if json.loads(ws.recv()).get("type") != "auth_ok":
+        sys.exit("WebSocket authentication failed")
+    ws.send(json.dumps({"id": 1, "type": "supervisor/api", "endpoint": path,
+                        "method": method, "timeout": timeout}))
+    while True:
+        message = json.loads(ws.recv(timeout=timeout + 60))
+        if message.get("id") == 1:
+            break
+if not message.get("success"):
+    sys.exit(f"{method.upper()} {path} failed: {json.dumps(message.get('error'))}")
+print(json.dumps({"data": message.get("result")}))
+PY
 }
 
 field() {
