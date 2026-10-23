@@ -1,0 +1,95 @@
+---
+name: HAOS QEMU MCPHub test
+# The automatic promotion gate matches this title to the exact tested commit.
+run-name: >-
+  HAOS QEMU MCPHub test ${{ inputs.sha ||
+  (github.event_name == 'workflow_run' && github.event.workflow_run.head_sha) ||
+  github.sha }}
+
+on:
+  workflow_run:
+    workflows:
+      - Validate MCPHub
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: "Exact dev-mcphub commit to test (default: main)"
+        type: string
+        required: false
+  pull_request:
+    paths:
+      - ".github/workflows/haos-qemu-mcphub.yml"
+      - ".github/scripts/haos-qemu-mcphub.sh"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: >-
+    haos-qemu-mcphub-${{ inputs.sha ||
+    (github.event_name == 'workflow_run' && github.event.workflow_run.head_sha) ||
+    github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  haos:
+    name: Test MCPHub in a disposable Home Assistant OS VM
+    if: >-
+      ${{
+        github.event_name != 'workflow_run' ||
+        (
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.head_branch == 'dev-mcphub'
+        )
+      }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    env:
+      TEST_SHA: >-
+        ${{ inputs.sha ||
+        (github.event_name == 'workflow_run' && github.event.workflow_run.head_sha) || '' }}
+
+    steps:
+      # The harness always comes from the triggering ref; only MCPHub/ is
+      # taken from the tested commit. The job has no secrets and read access.
+      - name: Check out test harness
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Extract the tested MCPHub source
+        id: source
+        run: |
+          set -euo pipefail
+          sha="${TEST_SHA:-$(git rev-parse HEAD)}"
+          [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || { echo "Invalid commit SHA" >&2; exit 1; }
+          git cat-file -e "${sha}^{commit}" || git fetch --no-tags origin "$sha"
+          mkdir -p "$RUNNER_TEMP/source"
+          git archive "$sha" MCPHub | tar -x -C "$RUNNER_TEMP/source"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Find latest stable Home Assistant OS
+        id: haos
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="$(gh api repos/home-assistant/operating-system/releases/latest --jq '.tag_name')"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+$ ]] || { echo "Unexpected HAOS release $version" >&2; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Free disk space and install QEMU
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq qemu-system-x86 qemu-utils ovmf rsync
+          df -h /
+          ls -l /dev/kvm
+
+      - name: Boot Home Assistant OS and test MCPHub
+        env:
+          HAOS_VERSION: ${{ steps.haos.outputs.version }}
+          SHA: ${{ steps.source.outputs.sha }}
+        run: bash .github/scripts/haos-qemu-mcphub.sh "$RUNNER_TEMP/source/MCPHub" "$SHA"

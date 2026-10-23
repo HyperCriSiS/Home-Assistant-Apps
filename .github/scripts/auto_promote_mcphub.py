@@ -231,7 +231,7 @@ def validated(sha: str, branch: str):
 
 
 def haos_title(sha: str) -> str:
-    return f"HAOS MCPHub integration {sha}"
+    return f"HAOS QEMU MCPHub test {sha}"
 
 
 def gate(repository: str, now: float) -> dict[str, str]:
@@ -278,9 +278,9 @@ def gate(repository: str, now: float) -> dict[str, str]:
     if validation != "success":
         result["action"] = "validate" if validation == "missing" else "wait"
         return result
-    if os.environ.get("HAOS_E2E_ENABLED") != "true":
-        raise Skip("The Home Assistant OS test is disabled (HAOS_E2E_ENABLED)")
-    haos = ci_state(repository, "haos-mcphub.yml", lambda r: r.get("display_title") == haos_title(dev_sha))
+    haos = ci_state(
+        repository, "haos-qemu-mcphub.yml", lambda r: r.get("display_title") == haos_title(dev_sha)
+    )
     if haos == "failed":
         raise ValueError(f"Home Assistant OS test failed for {dev_sha}")
     if haos != "success":

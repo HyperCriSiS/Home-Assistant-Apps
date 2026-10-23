@@ -245,21 +245,27 @@ class GitHistoryTests(unittest.TestCase):
 
 class GateTests(unittest.TestCase):
     def test_haos_test_is_mandatory(self):
+        states = {"validate-mcphub.yml": "success", "haos-qemu-mcphub.yml": "missing"}
         with patch.object(mod, "git", return_value=""), \
              patch.object(mod, "api", return_value=[]), \
              patch.object(mod, "check_history", return_value=NOW - 50 * 3600), \
              patch.object(mod, "show", side_effect=lambda sha, name: (STABLE if sha == "m" else bumped())[name]), \
              patch.object(mod, "check_release"), \
-             patch.object(mod, "ci_state", return_value="success"), \
-             patch.dict(os.environ, {"HAOS_E2E_ENABLED": ""}):
+             patch.object(mod, "ci_state", side_effect=lambda repo, workflow, _: states[workflow]):
             mod.git.side_effect = lambda *a: {
                 ("rev-parse", "origin/main"): "m", ("rev-parse", "origin/dev-mcphub"): "d",
                 ("diff", "--name-only", "m", "d"): "\n".join(mod.ALLOWED_FILES),
             }.get(a, str(NOW - 30 * 3600) if a[0] == "log" else "")
-            with self.assertRaisesRegex(mod.Skip, "HAOS"):
+            self.assertEqual(mod.gate(REPO, NOW)["action"], "haos")
+            states["haos-qemu-mcphub.yml"] = "running"
+            self.assertEqual(mod.gate(REPO, NOW)["action"], "wait")
+            states["haos-qemu-mcphub.yml"] = "failed"
+            with self.assertRaisesRegex(ValueError, "Home Assistant OS"):
                 mod.gate(REPO, NOW)
-            with patch.dict(os.environ, {"HAOS_E2E_ENABLED": "true"}):
-                self.assertEqual(mod.gate(REPO, NOW)["action"], "promote")
+            states["haos-qemu-mcphub.yml"] = "success"
+            self.assertEqual(mod.gate(REPO, NOW)["action"], "promote")
+            states["validate-mcphub.yml"] = "missing"
+            self.assertEqual(mod.gate(REPO, NOW)["action"], "validate")
 
     def test_hold_label_stops_everything(self):
         pr = {"head": {"ref": mod.RELEASE}, "labels": [{"name": "hold"}]}

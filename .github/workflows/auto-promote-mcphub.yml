@@ -44,8 +44,6 @@ jobs:
 
       - name: Check release gates
         id: gate
-        env:
-          HAOS_E2E_ENABLED: ${{ vars.HAOS_E2E_ENABLED }}
         run: python3 .github/scripts/auto_promote_mcphub.py gate
 
       - name: Request validation of the current dev-mcphub commit
@@ -56,7 +54,7 @@ jobs:
         if: steps.gate.outputs.action == 'haos'
         env:
           DEV_SHA: ${{ steps.gate.outputs.dev_sha }}
-        run: gh workflow run haos-mcphub.yml --repo "$GITHUB_REPOSITORY" --ref main -f sha="$DEV_SHA"
+        run: gh workflow run haos-qemu-mcphub.yml --repo "$GITHUB_REPOSITORY" --ref main -f sha="$DEV_SHA"
 
       - name: Prepare release candidate
         id: candidate
