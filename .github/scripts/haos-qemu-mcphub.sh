@@ -162,12 +162,18 @@ TOKEN="$(curl -sS --fail-with-body -X POST "${HA}/auth/token" \
 echo "::add-mask::${TOKEN}"
 
 log "Wait for Supervisor and the local MCPHub App"
-for attempt in $(seq 1 60); do
-  if supervisor POST addons/reload 300 >/dev/null 2>&1 \
-    && supervisor GET "addons/${SLUG}/info" >/dev/null 2>&1; then
-    break
+for attempt in $(seq 1 30); do
+  reload="$(supervisor POST addons/reload 300 2>&1 || true)"
+  info="$(supervisor GET "addons/${SLUG}/info" 2>&1)" && break
+  if (( attempt == 3 )); then
+    echo "reload: ${reload}"
+    echo "info: ${info}"
+    supervisor GET store/repositories | head -c 1500 || true
+    echo
+    console "ls -la /mnt/data/supervisor /mnt/data/supervisor/apps /mnt/data/supervisor/apps/local /mnt/data/supervisor/addons" \
+      "docker logs hassio_supervisor 2>&1 | grep -i -E 'local|migrat|mcphub|invalid|error|warn' | head -40"
   fi
-  [[ "${attempt}" -lt 60 ]] || { echo "Supervisor did not discover ${SLUG}" >&2; false; }
+  [[ "${attempt}" -lt 30 ]] || { echo "Supervisor did not discover ${SLUG}" >&2; false; }
   sleep 10
 done
 
