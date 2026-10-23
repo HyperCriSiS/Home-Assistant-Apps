@@ -117,7 +117,7 @@ sudo qemu-system-x86_64 \
   -enable-kvm -cpu host -smp 4 -m 6144 -machine q35 \
   -bios "${firmware}" \
   -drive "file=${IMAGE},if=virtio,format=qcow2" \
-  -netdev "user,id=net0,hostfwd=tcp:127.0.0.1:8123-:8123,hostfwd=tcp:127.0.0.1:3001-:3001,hostfwd=tcp:127.0.0.1:4357-:4357" \
+  -netdev "user,id=net0,hostfwd=tcp:127.0.0.1:8123-:80,hostfwd=tcp:127.0.0.1:3001-:3001,hostfwd=tcp:127.0.0.1:4357-:4357" \
   -device virtio-net-pci,netdev=net0 \
   -display none \
   -chardev "socket,id=console,path=${WORK}/serial.sock,server=on,wait=off,logfile=${WORK}/serial.log" \
@@ -157,7 +157,7 @@ echo "::add-mask::${TOKEN}"
 
 log "Wait for Supervisor and the local MCPHub App"
 for attempt in $(seq 1 60); do
-  if supervisor POST store/reload 300 >/dev/null 2>&1 \
+  if supervisor POST addons/reload 300 >/dev/null 2>&1 \
     && supervisor GET "addons/${SLUG}/info" >/dev/null 2>&1; then
     break
   fi
