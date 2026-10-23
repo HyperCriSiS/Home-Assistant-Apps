@@ -1,5 +1,21 @@
 [
   {
+    "revision": 124,
+    "version": "v2026.10.23-dev.124",
+    "source_sha": "7451568533ffe121a8bc4790e26876b56741aa6a",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "7451568533ffe121a8bc4790e26876b56741aa6a",
+        "subject": "Merge pull request #96 from HyperCriSiS/fix/mcphub-notice-tunnel-version"
+      },
+      {
+        "sha": "4ac954b4ce6fc6556015246a37e442bb8ad6265c",
+        "subject": "fix(mcphub): list packaged OpenAI tunnel-client v0.0.17 in NOTICE"
+      }
+    ]
+  },
+  {
     "revision": 123,
     "version": "v2026.10.23-dev.123",
     "source_sha": "185caf9218c30c86c4b619d708a47fe70d2fa485",
