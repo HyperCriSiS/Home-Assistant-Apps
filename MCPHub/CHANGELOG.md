@@ -1,8 +1,8 @@
 # Changelog
 
-## v2026.10.23-dev.124
+## v2026.10.23-dev.125
 
 ### Commits in this Dev build
 
-- [`7451568`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/7451568533ffe121a8bc4790e26876b56741aa6a) Merge pull request #96 from HyperCriSiS/fix/mcphub-notice-tunnel-version
-- [`4ac954b`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/4ac954b4ce6fc6556015246a37e442bb8ad6265c) fix(mcphub): list packaged OpenAI tunnel-client v0.0.17 in NOTICE
+- [`7c2025d`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/7c2025d46f07765e0d8df327a9c68d1cd9e657d0) Merge remote-tracking branch 'origin/main' into dev-mcphub
+- [`9be31e0`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/9be31e02be3cf01b1fd19de92cdec369cd535c64) feat(ci): auto-promote bot-only MCPHub updates to main (#95)

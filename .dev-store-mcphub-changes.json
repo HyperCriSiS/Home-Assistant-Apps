@@ -1,5 +1,21 @@
 [
   {
+    "revision": 125,
+    "version": "v2026.10.23-dev.125",
+    "source_sha": "7c2025d46f07765e0d8df327a9c68d1cd9e657d0",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "7c2025d46f07765e0d8df327a9c68d1cd9e657d0",
+        "subject": "Merge remote-tracking branch 'origin/main' into dev-mcphub"
+      },
+      {
+        "sha": "9be31e02be3cf01b1fd19de92cdec369cd535c64",
+        "subject": "feat(ci): auto-promote bot-only MCPHub updates to main (#95)"
+      }
+    ]
+  },
+  {
     "revision": 124,
     "version": "v2026.10.23-dev.124",
     "source_sha": "7451568533ffe121a8bc4790e26876b56741aa6a",
