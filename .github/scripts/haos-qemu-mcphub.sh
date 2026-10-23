@@ -100,7 +100,13 @@ for partition in /dev/nbd0p*; do
 done
 [[ -n "${data_partition}" ]] || { sudo blkid /dev/nbd0p* || true; echo "No hassos-data partition" >&2; exit 1; }
 sudo mount "${data_partition}" "${WORK}/data"
-target="${WORK}/data/supervisor/addons/local/mcphub_ci"
+# Supervisor 2026.10+ keeps local Apps in apps/local (older: addons/local).
+sudo ls -la "${WORK}/data/supervisor" "${WORK}/data/supervisor/apps" 2>/dev/null || true
+local_apps="${WORK}/data/supervisor/addons/local"
+if sudo test -d "${WORK}/data/supervisor/apps"; then
+  local_apps="${WORK}/data/supervisor/apps/local"
+fi
+target="${local_apps}/mcphub_ci"
 sudo mkdir -p "${target}"
 sudo rsync -a --delete "${SOURCE_DIR%/}/" "${target}/"
 printf '%s\n' "${SOURCE_SHA}" | sudo tee "${target}/.haos-source-revision" >/dev/null
