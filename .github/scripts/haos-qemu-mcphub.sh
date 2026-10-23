@@ -49,7 +49,7 @@ console() {
   # no password on HAOS) and print what the console shows.
   [[ -S "${WORK}/serial.sock" ]] || return 0
   local before
-  before="$(sudo wc -c < "${WORK}/serial.log")"
+  before="$(sudo stat -c %s "${WORK}/serial.log")"
   for command in "" root "$@"; do
     printf '%s\n' "${command}" | sudo socat -t 2 - "UNIX-CONNECT:${WORK}/serial.sock" >/dev/null || true
     sleep 4
@@ -133,7 +133,7 @@ for attempt in $(seq 1 180); do
   if (( attempt % 6 == 0 )); then
     core="$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "${HA}/" || true)"
     observer="$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 http://127.0.0.1:4357/ || true)"
-    onboarding="$(curl -s --max-time 5 -w ' HTTP %{http_code}' "${HA}/api/onboarding" | head -c 200 || true)"
+    onboarding="$(curl -s -o /dev/null --max-time 5 -w 'HTTP %{http_code} -> %{redirect_url}' "${HA}/api/onboarding" || true)"
     echo "$((attempt / 6)) min: Core HTTP ${core}, Observer HTTP ${observer}, onboarding: ${onboarding}"
   fi
   if (( attempt == 60 )); then
