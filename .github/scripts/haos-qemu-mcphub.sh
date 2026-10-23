@@ -224,5 +224,6 @@ done
 code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 -X POST \
   -H "Content-Type: application/json" -d '{}' "http://127.0.0.1:3001/mcp" || true)"
 [[ "${code}" =~ ^[234][0-9][0-9]$ ]] || { echo "LAN MCP port answered ${code}" >&2; false; }
+echo "Installed ${installed}, state started after restart, Ingress HTTP 200, LAN /mcp HTTP ${code}"
 
 log "MCPHub ${expected} (${SOURCE_SHA}) works on Home Assistant OS ${HAOS_VERSION}"
