@@ -1,4 +1,4 @@
 ---
 build_from:
-  aarch64: "samanhappy/mcphub:1.1.9"
-  amd64: "samanhappy/mcphub:1.1.9"
+  aarch64: "samanhappy/mcphub:1.1.10"
+  amd64: "samanhappy/mcphub:1.1.10"
