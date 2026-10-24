@@ -1,9 +1,9 @@
 ---
 name: "Trilium Notes"
-version: "v2026.10.18"
+version: "v2026.10.24"
 slug: trilium
 description: >-
-  Trilium v0.106.0 - hierarchical note-taking and personal knowledge base.
+  Trilium v0.106.1 - hierarchical note-taking and personal knowledge base.
 url: "https://github.com/HyperCriSiS/Home-Assistant-Apps/tree/main/TriliumNext%20Notes"
 ingress: true
 ingress_port: 8080
