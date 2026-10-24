@@ -200,6 +200,40 @@ class GitHistoryTests(unittest.TestCase):
         self.git("merge", "-q", "--no-ff", "-m", mod.SYNC_SUBJECT, "main")
         self.assertGreater(self.history(self.git("rev-parse", "HEAD")), 0)
 
+    def test_squash_released_history_is_ignored(self):
+        # A manual change released to main as a squash commit never becomes an
+        # ancestor of main; the clean sync afterwards marks it as released.
+        self.git("switch", "-q", "-c", "dev")
+        Path("MCPHub/server.js").write_text("manual\n", encoding="utf-8")
+        self.commit("feat(mcphub): manual change")
+        released = self.git("rev-parse", "HEAD^{tree}")
+        self.git("switch", "-q", "main")
+        self.git("read-tree", "-u", "--reset", released)
+        self.main = self.commit("release(mcphub): manual release (#90)")
+        self.git("switch", "-q", "dev")
+        self.git("merge", "-q", "--no-ff", "-m", mod.SYNC_SUBJECT, "main")
+        self.assertEqual(mod.release_baseline(self.main, self.git("rev-parse", "HEAD")),
+                         self.git("rev-parse", "HEAD"))
+        with self.assertRaises(mod.Skip):
+            self.history(self.git("rev-parse", "HEAD"))  # nothing new to release yet
+        self.write(bumped())
+        dev = self.commit("chore(mcphub): update upstream to 1.1.8 (#93)")
+        self.assertGreater(self.history(dev), 0)
+
+    def test_unreleased_manual_change_stays_manual(self):
+        self.git("switch", "-q", "-c", "dev")
+        Path("MCPHub/server.js").write_text("manual\n", encoding="utf-8")
+        self.commit("feat(mcphub): manual change")
+        self.git("switch", "-q", "main")
+        Path("README.md").write_text("docs\n", encoding="utf-8")
+        self.main = self.commit("docs: readme")
+        self.git("switch", "-q", "dev")
+        self.git("merge", "-q", "--no-ff", "-m", mod.SYNC_SUBJECT, "main")
+        self.write(bumped())
+        dev = self.commit("chore(mcphub): update upstream to 1.1.8 (#93)")
+        with self.assertRaisesRegex(mod.Skip, "outside"):
+            self.history(dev)
+
     def test_edited_merge_is_rejected(self):
         self.git("switch", "-q", "-c", "dev")
         self.write(bumped())

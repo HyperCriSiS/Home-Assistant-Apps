@@ -148,10 +148,11 @@ def check_release(release: dict, now: float, label: str) -> None:
         raise Skip(f"{label} was published less than {RELEASE_AGE // HOUR} hours ago")
 
 
-def check_squash(commit: dict, pr: dict, repository: str, sha: str, subject: str) -> None:
-    """A dev-mcphub commit must be GitHub's own squash merge of a bot update PR."""
+def check_squash(commit: dict, pr: dict, repository: str, sha: str, subject: str,
+                 titles=UPDATE_TITLES, dev: str = DEV) -> None:
+    """A development commit must be GitHub's own squash merge of a bot update PR."""
     match = SQUASH_SUBJECT.fullmatch(subject)
-    if not match or not any(t.fullmatch(match["title"]) for t in UPDATE_TITLES):
+    if not match or not any(t.fullmatch(match["title"]) for t in titles):
         raise Skip(f"{sha[:7]} is not an automated update: {subject}")
     if not (
         commit.get("commit", {}).get("verification", {}).get("verified") is True
@@ -164,23 +165,47 @@ def check_squash(commit: dict, pr: dict, repository: str, sha: str, subject: str
         and pr.get("merge_commit_sha") == sha
         and pr.get("title") == match["title"]
         and pr.get("user", {}).get("login") == BOT
-        and pr.get("base", {}).get("ref") == DEV
+        and pr.get("base", {}).get("ref") == dev
         and pr.get("head", {}).get("repo", {}).get("full_name") == repository
     ):
         raise ValueError(f"{sha[:7]} does not belong to a merged bot update PR")
 
 
-def check_history(repository: str, main_sha: str, dev_sha: str) -> float:
-    """Validate every dev-only commit; return the newest update's commit time."""
+def release_baseline(main_sha: str, dev_sha: str, sync_subject: str = SYNC_SUBJECT) -> str:
+    """Newest development commit at which everything on it was already released.
+
+    Releases are squash-merged into main, so released development commits never
+    become ancestors of main. A clean sync merge whose tree equals the main
+    commit it merged proves that nothing older is still unreleased.
+    """
+    log = git("log", "--first-parent", "--format=%H%x1f%P%x1f%s", f"{main_sha}..{dev_sha}")
+    for line in filter(None, log.splitlines()):
+        sha, parents, subject = line.split("\x1f", 2)
+        parents = parents.split()
+        if (
+            len(parents) == 2
+            and subject == sync_subject
+            and git("rev-parse", f"{sha}^{{tree}}") == git("rev-parse", f"{parents[1]}^{{tree}}")
+            and run("git", "merge-base", "--is-ancestor", parents[1], main_sha, check=False).returncode == 0
+        ):
+            return sha
+    return main_sha
+
+
+def check_history(repository: str, main_sha: str, dev_sha: str, *,
+                  sync_subject: str = SYNC_SUBJECT, allowed=ALLOWED_FILES,
+                  titles=UPDATE_TITLES, dev: str = DEV) -> float:
+    """Validate every unreleased dev-only commit; return the newest update's commit time."""
     git("merge-base", "--is-ancestor", main_sha, dev_sha)
-    log = git("log", "--format=%H%x1f%P%x1f%ct%x1f%s", f"{main_sha}..{dev_sha}")
+    baseline = release_baseline(main_sha, dev_sha, sync_subject)
+    log = git("log", "--format=%H%x1f%P%x1f%ct%x1f%s", dev_sha, f"^{baseline}", f"^{main_sha}")
     newest = None
     for line in filter(None, log.splitlines()):
         sha, parents, committed, subject = line.split("\x1f", 3)
         parents = parents.split()
         if len(parents) == 2:
             # Only clean, unedited merges of stable main are allowed.
-            if subject != SYNC_SUBJECT:
+            if subject != sync_subject:
                 raise Skip(f"{sha[:7]} is not an automatic main sync: {subject}")
             git("merge-base", "--is-ancestor", parents[1], main_sha)
             merged = run("git", "merge-tree", "--write-tree", *parents, check=False)
@@ -190,15 +215,16 @@ def check_history(repository: str, main_sha: str, dev_sha: str) -> float:
         if len(parents) != 1:
             raise ValueError(f"{sha[:7]} has an unexpected parent count")
         changed = set(git("diff-tree", "--no-commit-id", "--name-only", "-r", sha).splitlines())
-        if not changed <= ALLOWED_FILES:
+        if not changed <= allowed:
             raise Skip(f"{sha[:7]} changes files outside the update set")
         match = SQUASH_SUBJECT.fullmatch(subject)
         number = match["number"] if match else "0"
         pr = api(f"repos/{repository}/pulls/{number}") if match else {}
-        check_squash(api(f"repos/{repository}/commits/{sha}"), pr, repository, sha, subject)
+        check_squash(api(f"repos/{repository}/commits/{sha}"), pr, repository, sha, subject,
+                     titles, dev)
         newest = max(newest or 0, float(committed))
     if newest is None:
-        raise Skip("No automated MCPHub update is waiting on dev-mcphub")
+        raise Skip(f"No automated update is waiting on {dev}")
     return newest
 
 
@@ -335,7 +361,8 @@ def merge(repository: str, main_sha: str, dev_sha: str, candidate_sha: str) -> s
     if git("rev-parse", f"origin/{MAIN}") != main_sha or git("rev-parse", f"origin/{DEV}") != dev_sha:
         raise Skip("main or dev-mcphub moved during validation; the next run re-checks")
     number = release_pr(repository, candidate_sha)
-    gh("pr", "merge", str(number), "--repo", repository, "--merge", "--match-head-commit", candidate_sha)
+    # main only accepts squash merges; release_baseline() relies on that.
+    gh("pr", "merge", str(number), "--repo", repository, "--squash", "--match-head-commit", candidate_sha)
     merged = api(f"repos/{repository}/pulls/{number}")
     if merged.get("merged") is not True:
         raise ValueError("Release pull request was not merged")
@@ -351,7 +378,7 @@ def watch(repository: str, merge_sha: str) -> None:
         reason = str(error)
     branch = f"revert/mcphub-{merge_sha[:12]}"
     git("switch", "-c", branch, merge_sha)
-    git("revert", "--no-edit", "-m", "1", merge_sha)
+    git("revert", "--no-edit", merge_sha)
     git("push", f"https://x-access-token:{os.environ['GH_TOKEN']}@github.com/{repository}.git",
         f"HEAD:refs/heads/{branch}")
     body = (f"Automatic MCPHub promotion {merge_sha} failed post-merge validation: {reason}.\n\n"

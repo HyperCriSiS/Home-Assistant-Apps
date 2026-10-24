@@ -1,0 +1,48 @@
+---
+name: Merge due App updates
+
+# Merges automated MCPHub and Trilium update pull requests into dev-mcphub /
+# dev-trilium once they have been open for 12 hours, their content matches the
+# trusted updater on main byte for byte and the full App validation passed for
+# the exact HEAD commit. See .github/scripts/merge_due_updates.py.
+# Label a pull request "hold" to stop it.
+
+on:
+  schedule:
+    - cron: "23 * * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: merge-due-app-updates
+  cancel-in-progress: false
+
+jobs:
+  merge:
+    name: Merge CI-green update PRs open for 12 hours
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      # Always the workflow token: validation runs must be dispatched by
+      # github-actions[bot] to count as trusted (see validation_state()).
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Check out trusted automation code from main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Test merge gates
+        run: python3 -m unittest discover -s .github/tests -p 'test_merge_due_updates.py' -v
+
+      - name: Merge due update pull requests
+        run: python3 .github/scripts/merge_due_updates.py

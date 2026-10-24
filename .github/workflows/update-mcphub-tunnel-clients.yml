@@ -21,12 +21,6 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    outputs:
-      changed: ${{ steps.prepare.outputs.changed }}
-      branch: ${{ steps.prepare.outputs.branch }}
-      sha: ${{ steps.prepare.outputs.sha }}
-      openai: ${{ steps.releases.outputs.openai }}
-      date: ${{ steps.prepare.outputs.date }}
     steps:
       - name: Check out trusted updater from main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -111,38 +105,11 @@ jobs:
             echo "date=$DATE"
           } >> "$GITHUB_OUTPUT"
 
+      # Merge into dev-mcphub happens in merge-due-updates.yml once the PR has
+      # been open for 12 hours and this exact commit passed validation.
       - name: Dispatch full, read-only candidate validation
         if: steps.prepare.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           BRANCH: ${{ steps.prepare.outputs.branch }}
         run: gh workflow run validate-mcphub.yml --repo "$GITHUB_REPOSITORY" --ref "$BRANCH"
-
-  merge:
-    name: Merge only the exact CI-green tunnel update
-    if: needs.check.outputs.changed == 'true' && github.ref == 'refs/heads/main'
-    needs: check
-    runs-on: ubuntu-24.04
-    timeout-minutes: 50
-    env:
-      GH_TOKEN: ${{ secrets.AUTOMATION_TOKEN || github.token }}
-      OPENAI: ${{ needs.check.outputs.openai }}
-      DATE: ${{ needs.check.outputs.date }}
-      BRANCH: ${{ needs.check.outputs.branch }}
-      SHA: ${{ needs.check.outputs.sha }}
-    steps:
-      - name: Check out trusted merge guard from main
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-        with:
-          ref: main
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Test merge safety gates
-        run: python3 -m unittest discover -s .github/tests -p 'test_update_mcphub_tunnel_clients.py' -v
-
-      - name: Validate commit, contents, full CI and merge to dev-mcphub
-        run: |
-          python3 .github/scripts/update-mcphub-tunnel-clients.py merge \
-            --openai "$OPENAI" --date "$DATE" \
-            --branch "$BRANCH" --sha "$SHA"
