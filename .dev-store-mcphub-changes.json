@@ -1,5 +1,25 @@
 [
   {
+    "revision": 131,
+    "version": "v2026.10.24-1-dev.131",
+    "source_sha": "c7f99f1bb312a802a2dfcdae11e307a37fb3aa4d",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "c7f99f1bb312a802a2dfcdae11e307a37fb3aa4d",
+        "subject": "Merge remote-tracking branch 'origin/main' into dev-mcphub"
+      },
+      {
+        "sha": "be46057df3d082f1bd9106bde433c147de176166",
+        "subject": "release(mcphub): publish store artwork and stable designation (#109)"
+      },
+      {
+        "sha": "00fb9e4606ca9ea3875c460d5869de6a8ea1666e",
+        "subject": "release(mcphub): validated candidate (#102)"
+      }
+    ]
+  },
+  {
     "revision": 130,
     "version": "v2026.10.24-1-dev.130",
     "source_sha": "d67d8b00390204bf79f17309c2b24fe7473b080f",
