@@ -1,3 +1,9 @@
+# 0.1.2
+
+- Use a compact navigation bar with Bibliothek first.
+- Open the library by default; make the initial page configurable with start_page.
+- Hide the administrator-only Shelfmark setup wizard for reader sessions.
+
 # 0.1.1
 
 - Fix first boot: wait for HA storage and ingress preparation before CWA init.

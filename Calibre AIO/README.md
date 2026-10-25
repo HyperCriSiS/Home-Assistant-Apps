@@ -2,7 +2,9 @@
 
 Find books with **Shelfmark** and manage/read them with **Calibre-Web Automated**
 in one Home Assistant App. A shared navigation bar switches between
-**Entdecken** (discovery/downloads) and **Bibliothek** (your library).
+**Bibliothek** (your library) and **Entdecken** (discovery/downloads). The compact
+bar opens Bibliothek first by default; choose `start_page: shelfmark` in the
+App options to start with Entdecken instead.
 
 - Automatic Home Assistant ingress sign-in, without copying user IDs
 - HA administrators manage both applications; normal HA users have their own

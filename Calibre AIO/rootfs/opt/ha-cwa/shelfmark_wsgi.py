@@ -31,8 +31,10 @@ sys.path.insert(0, '/app/shelfmark')
 import shelfmark.main as upstream
 from shelfmark_gateway import IngressIdentity
 from shelfmark_socket_auth import install_socket_auth
+from shelfmark_ui import install_reader_ui
 
 app = upstream.app
 install_socket_auth(upstream)
+install_reader_ui(app)
 app.config['SESSION_COOKIE_PATH'] = prefix + '/shelfmark/'
 app.wsgi_app = IngressIdentity(app.wsgi_app, options)

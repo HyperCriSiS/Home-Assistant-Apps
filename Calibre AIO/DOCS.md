@@ -17,6 +17,7 @@ the selected CWA admin account. Shelfmark keeps separate HA identities.
 ## App options
 
 ```yaml
+start_page: library
 library_dir: calibre-aio/library
 ingest_dir: calibre-aio/ingest
 network_share_mode: false
@@ -28,6 +29,9 @@ sso:
   auto_create_users: true
 ```
 
+- `start_page`: initial view, `library` (Bibliothek, default) or `shelfmark`
+  (Entdecken). The compact navigation always lists Bibliothek first. Restart
+  the app after changing this option, then reopen its web interface.
 - `library_dir`: library path relative to `/share`.
 - `ingest_dir`: completed-book handoff path relative to `/share`. Do not use
   the same path for the library or another app's active download directory.

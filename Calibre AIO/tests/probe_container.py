@@ -52,6 +52,8 @@ status, body, _ = get('/shelfmark/api/onboarding', ADMIN)
 assert status == 200, ('onboarding', status, body)
 assert isinstance(json.loads(body)['steps'], list)
 assert get('/shelfmark/api/onboarding', READER)[0] == 403
+status, body, _ = get('/shelfmark/api/config', READER)
+assert status == 200 and json.loads(body)['onboarding_complete'] is True
 status, body, _ = get('/shelfmark/api/auth/check', READER)
 assert status == 200 and json.loads(body)['is_admin'] is False
 assert get('/shelfmark/socket.io/?EIO=4&transport=polling', ADMIN)[0] == 200
