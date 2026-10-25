@@ -29,7 +29,7 @@ https://github.com/HyperCriSiS/Home-Assistant-Apps
 
 | App | Purpose | Status | Documentation |
 | --- | --- | --- | --- |
-| **MCPHub** | Central management for local and remote Model Context Protocol servers | Experimental | [README](MCPHub/README.md) · [Documentation](MCPHub/DOCS.md) |
+| **MCPHub** | Central management for local and remote Model Context Protocol servers | Stable | [README](MCPHub/README.md) · [Documentation](MCPHub/DOCS.md) |
 | **Trilium Notes** | Self-hosted hierarchical notes and personal knowledge base | Stable | [README](TriliumNext%20Notes/README.md) |
 
 ### MCPHub
