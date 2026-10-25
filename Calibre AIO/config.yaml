@@ -1,6 +1,6 @@
 name: "Calibre AIO"
 description: "Shelfmark book discovery and Calibre library management in one interface"
-version: "0.1.1"
+version: "0.1.2"
 stage: experimental
 slug: "calibre-aio"
 init: false
@@ -19,6 +19,7 @@ ports: {}
 map:
   - share:rw
 options:
+  start_page: "library"
   library_dir: "calibre-aio/library"
   ingest_dir: "calibre-aio/ingest"
   network_share_mode: false
@@ -26,9 +27,11 @@ options:
     external_bypass_url: ""
   sso:
     enabled: true
+    admin_username: ""
     admin_account: "admin"
     auto_create_users: true
 schema:
+  start_page: "list(library|shelfmark)"
   library_dir: "str"
   ingest_dir: "str"
   network_share_mode: "bool"
@@ -36,5 +39,6 @@ schema:
     external_bypass_url: "str?"
   sso:
     enabled: "bool"
+    admin_username: "str"
     admin_account: "str"
     auto_create_users: "bool"

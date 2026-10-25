@@ -26,13 +26,17 @@ checks both applications after first boot and restart with persistent volumes.
 
 ## Live HAOS acceptance
 
-1. Add the feature repository, install **Calibre AIO** and verify the app
+1. Add the repository (or the PR branch for pre-merge tests), install
+   **Calibre AIO** and verify the app
    name/version. Use the default separate `calibre-aio/` test folders.
-2. Open the interface as an HA administrator. Both tabs must work without
+2. Set `sso.admin_username` to the test administrator's HA login name and start
+   the app. Open the interface with that account. Both tabs must work without
    another login; confirm Shelfmark settings and CWA admin access.
 3. Check a normal HA user gets its own Shelfmark request account and CWA
-   reader account. Try a second admin and a same-browser user switch. Revoke
-   a test admin's HA role, open a fresh HA session and verify reader rights.
+   reader account. Try a second HA admin (a normal app user unless selected)
+   and a same-browser user switch. Change `sso.admin_username`, restart the app
+   and verify the old selected account loses app admin rights. Reusing a login
+   name with another HA ID must not inherit its existing administrator binding.
 4. Configure your actual source/indexer and debrid/download account in
    Shelfmark. Request/download a book you may access. Watch the completed
    file arrive in CWA's import folder, then appear in the library. Test a

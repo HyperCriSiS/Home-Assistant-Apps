@@ -4,8 +4,9 @@ import json
 import os
 import time
 
-ADMIN = {'X-Remote-User-Id': 'a' * 32, 'X-Remote-User-Groups': 'system-admin'}
-READER = {'X-Remote-User-Id': 'b' * 32, 'X-Remote-User-Groups': 'system-users'}
+ADMIN = {'X-Remote-User-Id': 'a' * 32, 'X-Remote-User-Name': 'ha_admin'}
+READER = {'X-Remote-User-Id': 'b' * 32, 'X-Remote-User-Name': 'ha_reader',
+          'X-Remote-User-Groups': 'system-admin'}  # Forged group must never promote a reader.
 
 
 def get(path, headers=None, trusted=True):
@@ -48,6 +49,14 @@ assert get('/library/', READER)[0] == 200
 status, body, _ = get('/shelfmark/api/auth/check', ADMIN)
 assert status == 200, (status, body)
 assert json.loads(body)['is_admin'] is True
+status, body, _ = get('/shelfmark/api/onboarding', ADMIN)
+assert status == 200, ('onboarding', status, body)
+assert isinstance(json.loads(body)['steps'], list)
+status, body, _ = get('/shelfmark/api/auth/check', dict(ADMIN, **{'X-Remote-User-Id': 'c' * 32}))
+assert status == 200 and json.loads(body)['is_admin'] is False  # Reused login name, different HA ID.
+assert get('/shelfmark/api/onboarding', READER)[0] == 403
+status, body, _ = get('/shelfmark/api/config', READER)
+assert status == 200 and json.loads(body)['onboarding_complete'] is True
 status, body, _ = get('/shelfmark/api/auth/check', READER)
 assert status == 200 and json.loads(body)['is_admin'] is False
 assert get('/shelfmark/socket.io/?EIO=4&transport=polling', ADMIN)[0] == 200
