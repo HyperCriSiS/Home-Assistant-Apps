@@ -23,7 +23,7 @@ jobs:
           python3 'Calibre AIO/scripts/upstreams.py' update
           python3 'Calibre AIO/scripts/upstreams.py' check
       - name: Propose version and checksum updates
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676
         with:
           branch: chore/calibre-aio-upstreams
           commit-message: 'chore(calibre-aio): update pinned upstream sources'
