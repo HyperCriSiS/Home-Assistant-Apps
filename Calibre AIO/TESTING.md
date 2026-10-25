@@ -26,7 +26,8 @@ checks both applications after first boot and restart with persistent volumes.
 
 ## Live HAOS acceptance
 
-1. Add the feature repository, install **Calibre AIO** and verify the app
+1. Add the repository (or the PR branch for pre-merge tests), install
+   **Calibre AIO** and verify the app
    name/version. Use the default separate `calibre-aio/` test folders.
 2. Set `sso.admin_username` to the test administrator's HA login name and start
    the app. Open the interface with that account. Both tabs must work without

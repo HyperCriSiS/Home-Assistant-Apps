@@ -109,8 +109,9 @@ SSO. Standalone external reader sync is outside the initial AIO scope.
 
 ## Troubleshooting
 
-Check App logs after a restart. The CWA launcher identifies whether automatic
-HA roles or an explicit selection is active. Shelfmark startup is separate;
+Check App logs after a restart. The CWA launcher confirms the configured
+HA login-name policy. A missing `sso.admin_username` stops startup; enter the
+HA login name and start again. Shelfmark startup is separate;
 one backend can be unavailable while the other is restarting. A 403 means the
 request lacks a trusted HA identity/permission; a 502 normally means that the
 target backend has not started yet. Send only relevant log excerpts; avoid

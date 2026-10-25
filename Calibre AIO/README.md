@@ -17,20 +17,23 @@ App options to start with Entdecken instead.
 This is a new experimental app. Its private state is independent of the
 previous CWA test app. Installation does not migrate or delete existing data.
 
-## Install the development build
+## Install
 
 Add this repository to the HA App store:
 
 ```text
-https://github.com/HyperCriSiS/Home-Assistant-Apps#feature/calibre-aio
+https://github.com/HyperCriSiS/Home-Assistant-Apps
 ```
 
-Install **Calibre AIO**, start it and open its web interface as an HA
-user. Before starting, set `sso.admin_username` to your HA login name (not your
-display name or user ID). Configure search sources and your download service in the
+Install **Calibre AIO**. Before starting, set `sso.admin_username` to your HA
+login name (not your display name or user ID). Then start the app and open its
+web interface with that account. Configure search sources and your download service in the
 Shelfmark settings under **Entdecken**. Use **Bibliothek** for CWA settings.
 The administrator assignment is managed by this option; changes to HA roles do
 not automatically change it. No additional HA API permission is required.
+
+When upgrading from 0.1.1, fill in the new administrator login option before
+restarting. Existing settings, accounts and library data are retained.
 
 The initial image contains Shelfmark's core download stack. Browser-challenge
 sources may require a separate compatible bypass service, configured through
