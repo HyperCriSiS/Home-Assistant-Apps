@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import re
 from pathlib import Path
 import sys
 import tempfile
@@ -35,7 +36,10 @@ class UpstreamUpdateTest(unittest.TestCase):
         updated = upstreams.load_manifest()
         self.assertEqual(updated['cwa']['version'], 'v9.0.0')
         self.assertEqual(updated['shelfmark']['version'], 'v9.0.0')
-        self.assertIn('version: "0.1.2"', (self.root / 'config.yaml').read_text())
+        previous = re.search(r'^version: "(\d+)\.(\d+)\.(\d+)"$',
+                             self.before['config.yaml'].decode(), re.M)
+        expected = f'{previous[1]}.{previous[2]}.{int(previous[3]) + 1}'
+        self.assertIn(f'version: "{expected}"', (self.root / 'config.yaml').read_text())
         self.assertEqual((self.root / 'build.yaml').read_text(), upstreams.render(updated))
 
     def test_unchanged_release_provenance_must_match_without_file_changes(self):
