@@ -21,6 +21,7 @@ on:
           - mcphub
           - trilium
           - both
+          - calibre
 
 permissions:
   actions: read
@@ -32,6 +33,39 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  promote-calibre:
+    name: Prepare manual Calibre AIO release pull request
+    if: github.event_name == 'workflow_dispatch' && inputs.app == 'calibre'
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ secrets.AUTOMATION_TOKEN || github.token }}
+    steps:
+      - name: Verify exact development commit and prepare release PR
+        run: |
+          sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/dev-calibre" --jq '.object.sha')"
+          conclusion="$(gh run list --repo "${GITHUB_REPOSITORY}" \
+            --workflow validate-calibre-aio.yml --branch dev-calibre --commit "${sha}" \
+            --status completed --limit 1 --json conclusion --jq '.[0].conclusion // empty')"
+          [[ "${conclusion}" == "success" ]] || {
+            echo "Calibre validation is not successful for ${sha}" >&2
+            exit 1
+          }
+          changed="$(gh api "repos/${GITHUB_REPOSITORY}/compare/main...dev-calibre" --jq '.files | length')"
+          [[ "${changed}" != "0" ]] || exit 0
+          existing="$(gh pr list --repo "${GITHUB_REPOSITORY}" --base main \
+            --head dev-calibre --state open --json number --jq '.[0].number // empty')"
+          [[ -z "${existing}" ]] || exit 0
+          cat > /tmp/calibre-release.md <<EOF
+          Promotes Calibre AIO from dev-calibre after operator testing.
+
+          Native amd64/aarch64 builds, adapter tests and real container boot/restart
+          passed for ${sha}. Verify HA acceptance and current branch checks before
+          merging. Manual merge only; this workflow never publishes the app itself.
+          EOF
+          gh pr create --repo "${GITHUB_REPOSITORY}" --base main --head dev-calibre \
+            --title "release(calibre): validated development candidate" \
+            --body-file /tmp/calibre-release.md
+
   promote-trilium:
     name: Maintain Trilium release pull request
     if: >-
