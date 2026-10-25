@@ -14,10 +14,8 @@ def load_options_and_drop_privileges(path='/data/options.json', account='abc'):
         document = json.load(handle)
     options = read_options(document)
     # AIO never derives privileges from a group header: stable Supervisors do
-    # not supply or sanitize that header. Require the configured HA login name.
+    # not supply or sanitize that header. An empty name grants nobody admin.
     options['admin_username'] = options.get('admin_username', '')
-    if options['enabled'] and not options['admin_username']:
-        raise ValueError('Set sso.admin_username to your Home Assistant login name (not a user ID)')
     os.environ.pop('SUPERVISOR_TOKEN', None)
     os.environ.pop('HASSIO_TOKEN', None)
     bypass = document.get('shelfmark', {}).get('external_bypass_url', '')

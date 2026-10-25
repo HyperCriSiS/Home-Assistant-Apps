@@ -1,7 +1,7 @@
 name: Validate Calibre AIO
 on:
   push:
-    branches: [main]
+    branches: [main, dev-calibre]
     paths: ['Calibre AIO/**', '.github/workflows/validate-calibre-aio.yml']
   pull_request:
     paths: ['Calibre AIO/**', '.github/workflows/validate-calibre-aio.yml']
@@ -53,6 +53,12 @@ jobs:
         run: |
           find 'Calibre AIO/rootfs' -type f \( -name '*.sh' -o -name run \) -print0 |
             while IFS= read -r -d '' script; do bash -n "$script"; done
+      - name: Administrator setup and language browser regression
+        if: hashFiles('Calibre AIO/tests/browser-setup.cjs') != ''
+        run: |
+          npm install --prefix /tmp/aio-browser playwright@1.62.1
+          /tmp/aio-browser/node_modules/.bin/playwright install --with-deps chromium
+          PLAYWRIGHT_MODULE=/tmp/aio-browser/node_modules/playwright node 'Calibre AIO/tests/browser-setup.cjs'
   build:
     needs: test
     strategy:

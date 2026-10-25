@@ -8,6 +8,7 @@ class Supervisor(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path in ('/addons/self/info', '/apps/self/info'):
             data = {
+                'slug': 'local_calibre-aio',
                 'ingress_entry': '/api/hassio_ingress/aio-test',
                 'ingress_url': '/api/hassio_ingress/aio-test',
             }

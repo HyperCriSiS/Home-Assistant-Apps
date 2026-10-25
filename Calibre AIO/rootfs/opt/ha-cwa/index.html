@@ -13,10 +13,13 @@
     nav{display:flex;gap:4px}a{color:#c3cfdd;text-decoration:none;padding:5px 12px;border-radius:6px;font-size:14px;font-weight:600}
     a[aria-current=page]{background:#284b4a;color:#a6f2df}a:hover{background:#2b3541}a:focus-visible{outline:2px solid #a6f2df}
     .hint{margin-left:auto;color:#91a1b5;font-size:12px}iframe{width:100%;flex:1;border:0;min-height:0;background:#10151b}
+    [hidden]{display:none!important}.setup{max-width:640px;margin:10vh auto;padding:24px;line-height:1.6}
+    button{background:#a6f2df;color:#10151b;border:0;border-radius:8px;padding:12px 18px;font:inherit;cursor:pointer}
+    button:disabled{opacity:.5;cursor:default}#status{white-space:pre-wrap}
     @media(max-width:540px){header{gap:8px;padding:4px 8px}.brand{font-size:14px}a{padding:5px 8px}.hint{display:none}}
   </style>
 </head>
-<body>
+<body data-setup-required="__SETUP_REQUIRED__" data-app-slug="__APP_SLUG__">
   <header>
     <div class="brand">Calibre <span>AIO</span></div>
     <nav aria-label="Bereich auswählen">
@@ -25,13 +28,13 @@
     </nav>
     <span class="hint">Bücher finden. Bibliothek genießen.</span>
   </header>
-  <iframe name="workspace" title="Bücher entdecken und Bibliothek verwalten" src="__START_PAGE__/"></iframe>
-  <script>
-    const frame=document.querySelector('iframe');
-    const links=[...document.querySelectorAll('nav a')];
-    function select(view){links.forEach(a=>{if(a.dataset.view===view)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});}
-    links.forEach(a=>a.addEventListener('click',()=>select(a.dataset.view)));
-    frame.addEventListener('load',()=>{try{select(frame.contentWindow.location.pathname.includes('/library/')?'library':'discover')}catch{}});
-  </script>
+  <section class="setup" hidden>
+    <h1 data-text="setupTitle"></h1><p data-text="setupHelp"></p>
+    <button id="adopt" disabled data-text="adopt"></button>
+    <p id="status" role="status" aria-live="polite"></p>
+    <p data-text="manual"></p>
+  </section>
+  <iframe name="workspace" title="Bücher entdecken und Bibliothek verwalten" src="__FRAME_SRC__"></iframe>
+  <script>__AIO_SCRIPT__</script>
 </body>
 </html>

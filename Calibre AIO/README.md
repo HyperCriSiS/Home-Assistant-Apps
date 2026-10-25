@@ -2,9 +2,9 @@
 
 Find books with **Shelfmark** and manage/read them with **Calibre-Web Automated**
 in one Home Assistant App. A shared navigation bar switches between
-**Bibliothek** (your library) and **Entdecken** (discovery/downloads). The compact
-bar opens Bibliothek first by default; choose `start_page: shelfmark` in the
-App options to start with Entdecken instead.
+**Library** and **Discover** (downloads). The compact
+bar opens Library first by default; choose `start_page: shelfmark` in the
+App options to start with Discover instead.
 
 - Automatic Home Assistant ingress sign-in, without copying user IDs
 - One configured HA login name manages both applications; other HA users have their own
@@ -25,15 +25,19 @@ Add this repository to the HA App store:
 https://github.com/HyperCriSiS/Home-Assistant-Apps
 ```
 
-Install **Calibre AIO**. Before starting, set `sso.admin_username` to your HA
-login name (not your display name or user ID). Then start the app and open its
-web interface with that account. Configure search sources and your download service in the
-Shelfmark settings under **Entdecken**. Use **Bibliothek** for CWA settings.
+For development builds use the existing repository URL with `#dev-store` and
+install **Calibre AIO (Dev)**. Start the app and open its interface inside HA.
+Choose **Use signed-in administrator and restart**, then reopen it.
+Alternatively, set `sso.admin_username` manually to your HA login name.
+Configure search sources and your download service in the
+Shelfmark settings under **Discover**. Use **Library** for CWA settings.
 The administrator assignment is managed by this option; changes to HA roles do
 not automatically change it. No additional HA API permission is required.
 
-When upgrading from 0.1.1, fill in the new administrator login option before
-restarting. Existing settings, accounts and library data are retained.
+Existing settings, accounts and library data are retained on upgrades.
+HA option labels and the AIO shell follow your German or English language.
+CWA has its own user language; Shelfmark 1.4.0 uses English.
+[Deutsche Anleitung](DOCS.de.md).
 
 The initial image contains Shelfmark's core download stack. Browser-challenge
 sources may require a separate compatible bypass service, configured through

@@ -6,5 +6,6 @@ if [[ -z "${ingress_path}" ]]; then
     bashio::log.fatal "Calibre AIO needs a Supervisor ingress path."
     exit 1
 fi
-python3 /opt/ha-cwa/prepare_aio.py "${ingress_path}"
+app_slug=$(bashio::app.slug)
+python3 /opt/ha-cwa/prepare_aio.py "${ingress_path}" "${app_slug}"
 bashio::log.info "Calibre AIO ingress configured."
