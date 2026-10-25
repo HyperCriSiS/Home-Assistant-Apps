@@ -15,6 +15,7 @@ on:
       - main
       - dev-trilium
       - dev-mcphub
+      - dev-calibre
     paths:
       - "**.yml"
       - "**.yaml"
