@@ -14,7 +14,13 @@ Long-lived release-candidate branch for **Trilium Notes only**. Trilium changes 
 
 Long-lived release-candidate branch for **MCPHub only**. MCPHub changes are validated and tested here before promotion to `main`.
 
-Both development branches periodically merge the latest `main` so they inherit already released changes from the other App without inheriting the other App's unreleased work.
+## `dev-calibre`
+
+Long-lived release-candidate branch for **Calibre AIO only**. App changes and
+upstream update proposals target this branch. Promotion to `main` remains a
+separate manual release after testing.
+
+Development branches periodically merge the latest `main` so they inherit already released changes from the other Apps without inheriting their unreleased work.
 
 ## `dev-store`
 
@@ -22,6 +28,7 @@ Both development branches periodically merge the latest `main` so they inherit a
 
 - `TriliumNext Notes/` from `dev-trilium`
 - `MCPHub/` from `dev-mcphub`
+- `Calibre AIO/` from `dev-calibre`
 - shared repository content from `main`
 
 Home Assistant development repository URL:
@@ -41,6 +48,7 @@ The generator adds `(Dev)`, `-dev.<run>`, and `stage: experimental` metadata so 
 ```text
 Trilium work -> dev-trilium -> dev-store -> HA test -> main
 MCPHub work  -> dev-mcphub  -> dev-store -> HA test -> main
+Calibre work -> dev-calibre -> dev-store -> HA test -> main
 ```
 
 A Trilium release PR is always `dev-trilium -> main`. An MCPHub release PR is always `dev-mcphub -> main`. This prevents one App's unreleased work from being published with the other App.
@@ -59,10 +67,14 @@ Any other change on `dev-mcphub` keeps the manual release PR. Enable with the re
 
 Use short-lived `feature/*`, `fix/*`, `refactor/*`, `test/*`, `docs/*`, `chore/*`, and `hotfix/*` branches where useful, targeting the corresponding App development branch.
 
-## Calibre AIO initial integration
+## Calibre AIO development installation
 
-`feature/calibre-aio` introduces the new `Calibre AIO/` app. Its initial draft
-PR targets `main`, with image builds and container tests on both architectures
-and live HAOS acceptance required before promotion. It is not yet composed
-into generated `dev-store`; use `#feature/calibre-aio` to test it. Do not add
-it to an existing app's development branch or change other app release flows.
+Refresh the existing `#dev-store` repository and install **Calibre AIO (Dev)**.
+The generated version uses `-dev.<revision>` and separate default library/import
+folders under `/share/calibre-aio-dev`. Never run stable and development apps
+against the same writable library/import paths. Existing configured paths are
+not migrated. The regular Calibre app on `main` changes only on a separate release.
+
+The scheduled Calibre updater opens draft PRs against `dev-calibre`, never
+directly against `main`. `promote.yml` can prepare a manual release PR after
+validation of the exact development commit; it never merges Calibre automatically.
