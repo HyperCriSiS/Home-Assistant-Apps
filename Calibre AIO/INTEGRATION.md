@@ -51,6 +51,18 @@ Supervisor options permission fix. Original add-on attribution is retained.
 
 ## Verification record
 
-Implementation and checks are recorded here only after they actually run.
+- The application, shared interface, HA adapters and update automation are
+  implemented on `feature/calibre-aio`; draft PR #103 tracks acceptance.
+- Native amd64 and aarch64 image builds and real CWA/Shelfmark startup,
+  identity, URL-prefix and Socket.IO checks passed at `fa4a209` in
+  [validation run 40179062659](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/runs/40179062659).
+- The updater was exercised against real upstream releases in an isolated
+  copy. It resolved CWA v4.0.8 and Shelfmark v1.5.1, verified their archive
+  checksums and generated consistent build arguments and app revision 0.1.1.
+  These are update proposals; the initial tested integration pins remain
+  CWA v4.0.6 and Shelfmark v1.4.0 from the starting design.
+- Current-head CI results and the generated-book delivery/import probe are
+  recorded in the PR. Check the run's commit before relying on its result.
+
 Full HAOS acceptance and authenticated Real-Debrid downloads require a real
 installation and operator credentials; automated tests must not claim those.

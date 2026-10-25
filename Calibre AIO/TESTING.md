@@ -12,7 +12,11 @@ The workflow also uses the real pinned CWA login library, tests nginx routing
 from the actual Supervisor source address, checks a root-to-unprivileged
 transition with real file permissions, and builds the complete image on
 native amd64 and arm64 runners. Container probes exercise the real CWA and
-Shelfmark processes, UI prefixes, reader/admin access and Socket.IO.
+Shelfmark processes, UI prefixes, reader/admin access and Socket.IO. A real
+upstream Socket.IO client verifies stale admin sessions are replaced with
+the current reader's scope. A generated EPUB goes through Shelfmark's native
+folder output and CWA's native ingest processor; the probe checks the final
+Calibre database for that book. This offline probe does not contact providers.
 
 ## Live HAOS acceptance
 
