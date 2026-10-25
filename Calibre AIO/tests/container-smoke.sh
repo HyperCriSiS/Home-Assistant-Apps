@@ -31,3 +31,14 @@ trap 'kill "$cwa_pid" "$shelfmark_pid" "$nginx_pid" 2>/dev/null || true' EXIT
 python3 /aio-tests/probe_container.py
 /command/s6-setuidgid abc env 'AIO_SSO_OPTIONS={"enabled":true}' \
   /app/shelfmark/.venv/bin/python /aio-tests/probe_socket_auth.py
+/command/s6-setuidgid abc env 'AIO_SSO_OPTIONS={"enabled":true}' \
+  /app/shelfmark/.venv/bin/python /aio-tests/probe_delivery.py
+timeout 90 python3 /app/calibre-web-automated/scripts/ingest_processor.py \
+  "$(cat /data/shelfmark-staging/probe-delivery-path)"
+python3 - <<'PY'
+import sqlite3
+with sqlite3.connect('/calibre-library/metadata.db') as db:
+    assert db.execute('SELECT id FROM books WHERE title = ?',
+                      ('Calibre AIO Smoke Book',)).fetchone(), 'Generated ebook was not imported'
+print('Real CWA ingest imported the Shelfmark-delivered EPUB into the library')
+PY
