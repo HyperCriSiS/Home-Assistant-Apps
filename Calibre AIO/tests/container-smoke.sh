@@ -14,6 +14,7 @@ printf '%s\n' '{"sso":{"enabled":true,"auto_create_users":true}}' > /data/option
 chmod 600 /data/options.json
 python3 /opt/ha-cwa/prepare_aio.py /api/hassio_ingress/aio-test
 timeout 180 bash /etc/s6-overlay/s6-rc.d/cwa-init/run
+timeout 180 bash /etc/s6-overlay/s6-rc.d/calibre-binaries-setup/run
 bash /etc/s6-overlay/s6-rc.d/cwa-auto-library/run
 chown -R abc:abc /data/config /data/shelfmark
 chown root:root /data/options.json

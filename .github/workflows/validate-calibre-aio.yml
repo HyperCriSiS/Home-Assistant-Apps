@@ -1,7 +1,7 @@
 name: Validate Calibre AIO
 on:
   push:
-    branches: [main, feature/calibre-aio]
+    branches: [main]
     paths: ['Calibre AIO/**', '.github/workflows/validate-calibre-aio.yml']
   pull_request:
     paths: ['Calibre AIO/**', '.github/workflows/validate-calibre-aio.yml']
@@ -73,9 +73,11 @@ jobs:
       - name: Generate pinned build arguments
         id: args
         run: |
-          echo 'values<<END_ARGS' >> "$GITHUB_OUTPUT"
-          python3 'Calibre AIO/scripts/upstreams.py' args >> "$GITHUB_OUTPUT"
-          echo END_ARGS >> "$GITHUB_OUTPUT"
+          {
+            echo 'values<<END_ARGS'
+            python3 'Calibre AIO/scripts/upstreams.py' args
+            echo END_ARGS
+          } >> "$GITHUB_OUTPUT"
       - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8
         with:
           context: 'Calibre AIO'

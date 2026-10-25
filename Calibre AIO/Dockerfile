@@ -196,6 +196,8 @@ RUN mkdir -p \
         /app/calibre-web-automated/metadata_change_logs \
         /app/calibre-web-automated/metadata_temp \
         /app/calibre-web-automated/cps/cache \
+    && touch /app/cwa_update_notice /app/theme_migration_notice \
+    && chown abc:abc /app/cwa_update_notice /app/theme_migration_notice \
     && chown -R abc:abc /app/calibre-web-automated /etc/s6-overlay \
     && chmod a+x /etc/cont-init.d/*.sh \
     && chmod a+x /etc/s6-overlay/s6-rc.d/*/run
