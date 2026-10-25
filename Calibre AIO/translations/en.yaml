@@ -1,0 +1,37 @@
+---
+configuration:
+  start_page:
+    name: Start page
+    description: Open Library (library) or Shelfmark (shelfmark) first.
+  library_dir:
+    name: Library folder
+    description: Path relative to /share.
+  ingest_dir:
+    name: Import folder
+    description: Path relative to /share for completed book downloads.
+  network_share_mode:
+    name: Network share mode
+    description: Use polling instead of filesystem events for SMB/NFS.
+  shelfmark:
+    name: Shelfmark
+    description: Download settings.
+    fields:
+      external_bypass_url:
+        name: External browser service (optional)
+        description: HTTP(S) address of a compatible browser challenge service.
+  sso:
+    name: SSO
+    description: Sign in through Home Assistant.
+    fields:
+      enabled:
+        name: Enable SSO
+        description: Keep enabled for Calibre AIO.
+      admin_username:
+        name: Administrator
+        description: 'HA login name, not display name or ID. Leave empty to set up when opening the app.'
+      admin_account:
+        name: CWA administrator account
+        description: Existing administrator account in Calibre-Web Automated.
+      auto_create_users:
+        name: Create users automatically
+        description: Create CWA reader accounts for other HA users.

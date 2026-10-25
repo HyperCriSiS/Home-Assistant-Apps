@@ -1,7 +1,11 @@
 {
+  "calibre": {
+    "revision": 147,
+    "tree": "82107c2bc702de61c43139b08cc1dc5b4f174a12"
+  },
   "mcphub": {
-    "fingerprint": "e6287f44587f83081a73ee5e6fa96face8df413addfe35931c9ffea2fc46d03e",
-    "revision": 131,
+    "fingerprint": "4a61479b07149e2ac2de8addf8732f9af40c1e9eb6cab1c24101e10a5052830b",
+    "revision": 132,
     "tree": "f30cbc31558c7eee47fe07f1c77d70065a6d9be4"
   },
   "trilium": {

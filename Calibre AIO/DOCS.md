@@ -1,9 +1,15 @@
 # Calibre AIO configuration
 
+[Deutsch](DOCS.de.md) | English
+
 ## Getting started
 
-Open Calibre AIO from Home Assistant. **Entdecken** contains Shelfmark search,
-requests, downloads and source/client settings. **Bibliothek** contains CWA's
+Open Calibre AIO inside Home Assistant. On first use, choose **Use signed-in
+administrator and restart**, then reopen the interface. HA verifies your
+administrator permission before saving your login name. Alternatively, enter
+it manually in the app configuration. No additional app HA API access is needed.
+**Discover** contains Shelfmark search,
+requests, downloads and source/client settings. **Library** contains CWA's
 library, reading and management features. The navigation stays visible while
 using either application. Both native interfaces remain intact.
 
@@ -31,8 +37,8 @@ sso:
   auto_create_users: true
 ```
 
-- `start_page`: initial view, `library` (Bibliothek, default) or `shelfmark`
-  (Entdecken). The compact navigation always lists Bibliothek first. Restart
+- `start_page`: initial view, `library` (Library, default) or `shelfmark`
+  (Discover). The compact navigation always lists Library first. Restart
   the app after changing this option, then reopen its web interface.
 - `library_dir`: library path relative to `/share`.
 - `ingest_dir`: completed-book handoff path relative to `/share`. Do not use
@@ -44,9 +50,9 @@ sso:
   an embedded Chromium/Tor/VPN stack. Configure outbound routing separately.
 - `sso.enabled`: must remain `true` in this initial AIO version. Both applications
   are ingress-only; native standalone login/device clients are not exposed.
-- `sso.admin_username`: required HA login name, matched exactly (case-sensitive).
+- `sso.admin_username`: HA login name, matched exactly (case-sensitive).
   Enter the name used to sign in to HA, not the display name or an ID. Empty
-  configuration stops startup with a clear error. This option selects the
+  configuration opens setup; nobody receives administrator access until configured. This option selects the
   administrator in both applications; other HA users get normal accounts.
 - `sso.admin_account`: name of the existing CWA administrator (default `admin`).
   The initial CWA database creates this account. A missing or non-admin target
@@ -110,8 +116,8 @@ SSO. Standalone external reader sync is outside the initial AIO scope.
 ## Troubleshooting
 
 Check App logs after a restart. The CWA launcher confirms the configured
-HA login-name policy. A missing `sso.admin_username` stops startup; enter the
-HA login name and start again. Shelfmark startup is separate;
+HA login-name policy. An empty `sso.admin_username` opens setup; use the button
+inside HA or configure the login manually and restart. Shelfmark startup is separate;
 one backend can be unavailable while the other is restarting. A 403 means the
 request lacks a trusted HA identity/permission; a 502 normally means that the
 target backend has not started yet. Send only relevant log excerpts; avoid
@@ -120,3 +126,17 @@ including API tokens or ingress URLs containing session identifiers.
 Upstream versions are listed in `upstream.json`. All upgrades should use the
 manifest/update workflow described in [UPDATING.md](UPDATING.md), with a backup
 before a real installation is upgraded.
+
+## Languages and development builds
+
+HA displays option labels in your profile language (German or English). AIO
+navigation and setup use HA's language, with the browser language as fallback.
+CWA has its own per-user language setting. The pinned Shelfmark 1.4.0 interface
+is English; book-language filters do not translate it. Static documentation
+uses separate language files.
+
+Use the existing `#dev-store` repository and install **Calibre AIO (Dev)**.
+It is generated from `dev-calibre`; promotion to `main` is a separate release
+step after testing. Its default library and import folders are separate from
+the stable app. Do not point simultaneously running installations at the same
+library or import folder.

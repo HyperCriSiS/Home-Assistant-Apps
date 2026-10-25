@@ -1,3 +1,11 @@
+# 0.1.3
+
+- Add German and English HA option labels, navigation and setup.
+- Start safely with an empty administrator setting and offer to adopt the
+  signed-in HA administrator using HA's permission-checked APIs.
+- Keep manual setup available without granting the app HA API access.
+- Develop on dev-calibre and publish separately through the shared dev store.
+
 # 0.1.2
 
 - Use a compact navigation bar with Bibliothek first.

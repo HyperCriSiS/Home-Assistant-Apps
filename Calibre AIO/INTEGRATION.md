@@ -48,8 +48,9 @@ Supervisor options permission fix. Original add-on attribution is retained.
   requiring browser-based challenge handling need the supported external
   bypass service; do not embed an outdated pinned Chromium merely to hide
   this dependency. Document this limitation in the app UI/docs.
-- Do not modify other apps or generated `dev-store`. Publish the new app on
-  its feature branch for testing and prepare a draft PR before promotion.
+- Do not modify other apps or generated `dev-store`. Develop on `dev-calibre`;
+  shared automation publishes Calibre AIO (Dev). Promote to `main` separately
+  after operator testing.
 
 ## Verification record
 
@@ -68,3 +69,16 @@ Supervisor options permission fix. Original add-on attribution is retained.
 
 Full HAOS acceptance and authenticated Real-Debrid downloads require a real
 installation and operator credentials; automated tests must not claim those.
+
+## Current development work
+
+- German/English HA option labels and AIO navigation/setup are implemented.
+- Empty administrator configuration now opens setup without granting admin.
+  The setup button uses the signed-in HA administrator's permission-checked
+  auth-list and app-options APIs; the app receives no extra HA API permission.
+- Local adapter suite: 58 tests, with 5 Linux/root checks skipped on Windows.
+  Browser regression covers admin setup, denied access, normal users, restart
+  failure, missing HA context, both languages and compact mobile navigation.
+- Native image builds and real s6 boot/restart remain required in CI for this
+  candidate. Actual frontend embedding in the user's HA installation remains
+  operator acceptance; manual login-name configuration stays available.

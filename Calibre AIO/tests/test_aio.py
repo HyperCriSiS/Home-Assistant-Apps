@@ -74,10 +74,30 @@ class DeploymentTest(unittest.TestCase):
             self.assertIn(f'src="{start}/"', page)
             self.assertIn(f'data-view="{view}" aria-current="page"', page)
             self.assertLess(page.index('>Bibliothek</a>'), page.index('>Entdecken</a>'))
-            self.assertNotIn('__', page)
+            self.assertNotIn('__APP_SLUG__', page)
         self.assertIn('src="library/"', render_index(template, prefix))
         with self.assertRaises(ValueError):
             render_index(template, prefix, '" onload="alert(1)')
+
+    def test_empty_administrator_renders_safe_setup(self):
+        template = (ROOT / 'rootfs/opt/ha-cwa/index.html').read_text()
+        page = render_index(template, '/api/hassio_ingress/test',
+                            app_slug='repo_calibre-aio', setup_required=True)
+        self.assertIn('data-setup-required="true"', page)
+        self.assertIn('src="about:blank"', page)
+        self.assertIn('data-app-slug="repo_calibre-aio"', page)
+        with self.assertRaises(ValueError):
+            render_index(template, '/api/hassio_ingress/test', app_slug='x" onclick="bad')
+
+    def test_no_configured_admin_grants_nobody_admin(self):
+        options = read_options({'sso': {'enabled': True, 'admin_username': ''}})
+        client = Client(IngressIdentity(lambda e, s: Response('ok')(e, s), options), Response)
+        with patch('shelfmark_gateway.is_configured_admin', return_value=False) as check:
+            response = client.get('/', headers={'X-CWA-Ingress': '1',
+                'X-Remote-User-Id': 'a' * 32, 'X-Remote-User-Name': 'admin',
+                'X-Remote-User-Groups': 'system-admin'})
+            self.assertEqual(response.status_code, 200)
+            check.assert_called_once_with('a' * 32, 'admin', '')
 
     def test_prefix_validation_rejects_configuration_injection(self):
         for value in ('', '/', '/api/hassio_ingress/x;allow all', '/x', '/api/hassio_ingress/x/../'):

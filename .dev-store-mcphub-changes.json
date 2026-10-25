@@ -1,5 +1,21 @@
 [
   {
+    "revision": 132,
+    "version": "v2026.10.24-1-dev.132",
+    "source_sha": "5f002ef78968f3157dc2bfefe9793ed08e3ee9aa",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "5f002ef78968f3157dc2bfefe9793ed08e3ee9aa",
+        "subject": "Merge remote-tracking branch 'origin/main' into dev-mcphub"
+      },
+      {
+        "sha": "f99ca160afac7fc37b64728688fb2377f9279312",
+        "subject": "chore(store): integrate Calibre into shared development workflow (#111)"
+      }
+    ]
+  },
+  {
     "revision": 131,
     "version": "v2026.10.24-1-dev.131",
     "source_sha": "c7f99f1bb312a802a2dfcdae11e307a37fb3aa4d",

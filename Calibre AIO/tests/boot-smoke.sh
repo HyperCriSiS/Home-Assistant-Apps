@@ -47,4 +47,22 @@ docker exec calibre-aio-boot sh -c 'printf persistent > /data/config/boot-probe'
 docker restart calibre-aio-boot
 probe
 docker exec calibre-aio-boot grep -qx persistent /data/config/boot-probe
+
+# A default installation must boot safely, rather than loop on an empty admin.
+docker exec calibre-aio-boot python3 -c \
+    'import json; p="/data/options.json"; d=json.load(open(p)); d["sso"]["admin_username"]=""; open(p,"w").write(json.dumps(d))'
+docker restart calibre-aio-boot
+docker exec calibre-aio-supervisor python3 -c \
+    'import json,time,urllib.request,urllib.error
+for attempt in range(120):
+    try:
+        root=urllib.request.urlopen("http://calibre-aio-boot:8084/").read()
+        request=urllib.request.Request("http://calibre-aio-boot:8084/shelfmark/api/auth/check",headers={"X-Remote-User-Id":"a"*32,"X-Remote-User-Name":"ha_admin","X-Remote-User-Groups":"system-admin"})
+        auth=json.load(urllib.request.urlopen(request))
+        assert b"data-setup-required=\"true\"" in root
+        assert b"src=\"about:blank\"" in root
+        assert auth["is_admin"] is False
+        break
+    except (OSError,AssertionError): time.sleep(1)
+else: raise AssertionError("Empty-admin setup did not become ready")'
 echo 'Real /init first boot and restart passed with persistent storage and production ingress ACL'
