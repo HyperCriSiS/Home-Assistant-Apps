@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'rootfs/opt/ha-cwa'))
 from shelfmark_gateway import IngressIdentity
 from ingress_sso import read_options
-from prepare_aio import validate_prefix
+from prepare_aio import render_index, validate_prefix
 
 
 class GatewayTest(unittest.TestCase):
@@ -52,6 +52,19 @@ class GatewayTest(unittest.TestCase):
 
 
 class DeploymentTest(unittest.TestCase):
+    def test_configurable_start_page_defaults_to_library(self):
+        template = (ROOT / 'rootfs/opt/ha-cwa/index.html').read_text()
+        prefix = '/api/hassio_ingress/test'
+        for start, view in (('library', 'library'), ('shelfmark', 'discover')):
+            page = render_index(template, prefix, start)
+            self.assertIn(f'src="{start}/"', page)
+            self.assertIn(f'data-view="{view}" aria-current="page"', page)
+            self.assertLess(page.index('>Bibliothek</a>'), page.index('>Entdecken</a>'))
+            self.assertNotIn('__', page)
+        self.assertIn('src="library/"', render_index(template, prefix))
+        with self.assertRaises(ValueError):
+            render_index(template, prefix, '" onload="alert(1)')
+
     def test_prefix_validation_rejects_configuration_injection(self):
         for value in ('', '/', '/api/hassio_ingress/x;allow all', '/x', '/api/hassio_ingress/x/../'):
             with self.assertRaises(ValueError):
