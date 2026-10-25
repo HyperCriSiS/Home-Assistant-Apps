@@ -29,6 +29,8 @@ def main():
         options = read_options(config)
     if not options['enabled']:
         raise ValueError('Calibre AIO requires sso.enabled: true')
+    if not options.get('admin_username'):
+        raise ValueError('Set sso.admin_username to your Home Assistant login name (not a user ID)')
     runtime = Path('/run/calibre-aio')
     (runtime / 'www').mkdir(parents=True, exist_ok=True)
     template = Path('/etc/nginx/cwa-ingress.conf.template').read_text()

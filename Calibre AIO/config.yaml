@@ -27,6 +27,7 @@ options:
     external_bypass_url: ""
   sso:
     enabled: true
+    admin_username: ""
     admin_account: "admin"
     auto_create_users: true
 schema:
@@ -38,5 +39,6 @@ schema:
     external_bypass_url: "str?"
   sso:
     enabled: "bool"
+    admin_username: "str"
     admin_account: "str"
     auto_create_users: "bool"

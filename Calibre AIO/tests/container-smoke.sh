@@ -10,7 +10,7 @@ if [[ -d /config && ! -L /config ]]; then rmdir /config; fi
 [[ -L /config ]] || ln -s /data/config /config
 ln -sfn /share/calibre-aio/library /calibre-library
 ln -sfn /share/calibre-aio/ingest /cwa-book-ingest
-printf '%s\n' '{"sso":{"enabled":true,"auto_create_users":true}}' > /data/options.json
+printf '%s\n' '{"sso":{"enabled":true,"admin_username":"ha_admin","auto_create_users":true}}' > /data/options.json
 chmod 600 /data/options.json
 python3 /opt/ha-cwa/prepare_aio.py /api/hassio_ingress/aio-test
 timeout 180 bash /etc/s6-overlay/s6-rc.d/cwa-init/run
