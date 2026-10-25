@@ -1,5 +1,21 @@
 [
   {
+    "revision": 128,
+    "version": "v2026.10.24-1-dev.128",
+    "source_sha": "90312862d87d234d4a3a7c39e3ad83e50e880d7c",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "90312862d87d234d4a3a7c39e3ad83e50e880d7c",
+        "subject": "fix(mcphub): use supplied symbol-only store artwork (#106)"
+      },
+      {
+        "sha": "4e4f1d495e12aaffca33c5ebbee2a5e1ce2c9c2c",
+        "subject": "Merge remote-tracking branch 'origin/main' into dev-mcphub"
+      }
+    ]
+  },
+  {
     "revision": 127,
     "version": "v2026.10.24-1-dev.127",
     "source_sha": "3f8a5da6ebfc5effa749e8a2b1b3f10568450012",
