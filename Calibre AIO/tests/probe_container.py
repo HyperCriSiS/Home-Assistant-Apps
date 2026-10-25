@@ -1,6 +1,7 @@
 """Exercise real applications and prefix-aware authentication in the built image."""
 import http.client
 import json
+import os
 import time
 
 ADMIN = {'X-Remote-User-Id': 'a' * 32, 'X-Remote-User-Groups': 'system-admin'}
@@ -8,8 +9,10 @@ READER = {'X-Remote-User-Id': 'b' * 32, 'X-Remote-User-Groups': 'system-users'}
 
 
 def get(path, headers=None, trusted=True):
-    conn = http.client.HTTPConnection('127.0.0.1', 8084, timeout=10,
-                                     source_address=('127.0.0.2' if trusted else '127.0.0.1', 0))
+    target = os.environ.get('AIO_PROBE_HOST', '127.0.0.1')
+    source = None if os.environ.get('AIO_PROBE_HOST') else (
+        '127.0.0.2' if trusted else '127.0.0.1', 0)
+    conn = http.client.HTTPConnection(target, 8084, timeout=10, source_address=source)
     try:
         conn.request('GET', path, headers=headers or {})
         response = conn.getresponse()
@@ -30,7 +33,8 @@ for attempt in range(120):
 else:
     raise RuntimeError('Both backends did not become ready')
 
-assert get('/', trusted=False)[0] == 403
+if not os.environ.get('AIO_PROBE_HOST'):
+    assert get('/', trusted=False)[0] == 403
 assert get('/library/')[0] == 403
 assert get('/shelfmark/')[0] == 403
 status, body, _ = get('/')

@@ -35,7 +35,7 @@ class UpstreamUpdateTest(unittest.TestCase):
         updated = upstreams.load_manifest()
         self.assertEqual(updated['cwa']['version'], 'v9.0.0')
         self.assertEqual(updated['shelfmark']['version'], 'v9.0.0')
-        self.assertIn('version: "0.1.1"', (self.root / 'config.yaml').read_text())
+        self.assertIn('version: "0.1.2"', (self.root / 'config.yaml').read_text())
         self.assertEqual((self.root / 'build.yaml').read_text(), upstreams.render(updated))
 
     def test_unchanged_release_provenance_must_match_without_file_changes(self):

@@ -18,6 +18,12 @@ the current reader's scope. A generated EPUB goes through Shelfmark's native
 folder output and CWA's native ingest processor; the probe checks the final
 Calibre database for that book. This offline probe does not contact providers.
 
+The additional `boot-smoke.sh` starts the image using its actual `/init`,
+without manually creating `/config` or starting services. A minimal Supervisor
+HTTP fixture supplies the ingress entry. The production ingress ACL stays
+unchanged, and requests originate from the fixture at `172.30.32.2`. The test
+checks both applications after first boot and restart with persistent volumes.
+
 ## Live HAOS acceptance
 
 1. Add the feature repository, install **Calibre AIO** and verify the app

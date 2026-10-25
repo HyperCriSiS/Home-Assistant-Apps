@@ -1,3 +1,9 @@
+# 0.1.1
+
+- Fix first boot: wait for HA storage and ingress preparation before CWA init.
+- Test the actual s6 container boot and restart with persistent storage on both architectures.
+- Remove the manual administrator ID list from the HA options; roles come from HA automatically.
+
 # 0.1.0
 
 - Introduce Calibre AIO with Shelfmark discovery/downloads and CWA library

@@ -24,7 +24,6 @@ shelfmark:
   external_bypass_url: ""
 sso:
   enabled: true
-  admin_users: []
   admin_account: admin
   auto_create_users: true
 ```
@@ -39,9 +38,6 @@ sso:
   an embedded Chromium/Tor/VPN stack. Configure outbound routing separately.
 - `sso.enabled`: must remain `true` in this initial AIO version. Both applications
   are ingress-only; native standalone login/device clients are not exposed.
-- `sso.admin_users`: leave `[]` for automatic HA administrator roles. A nonempty
-  optional list selects specific HA user IDs instead, matching the original
-  CWA adapter. It applies consistently to Shelfmark and CWA.
 - `sso.admin_account`: name of the existing CWA administrator (default `admin`).
   The initial CWA database creates this account. A missing or non-admin target
   prevents CWA from starting. This does not select Shelfmark accounts.
@@ -51,8 +47,8 @@ sso:
   this option does not disable its request accounts.
 
 Automatic roles require a Supervisor that supplies `X-Remote-User-Groups`.
-Missing or malformed groups never grant admin rights. Use the optional explicit
-selection if your Supervisor lacks groups. A CWA cookie, Shelfmark cookie or
+Missing or malformed groups never grant admin rights; use a current Supervisor
+that supplies these groups. No manual user IDs are required. A CWA cookie, Shelfmark cookie or
 API key cannot replace the current HA identity. Roles apply as soon as
 Supervisor forwards updated groups; open a fresh HA session when testing role
 revocation to avoid Supervisor session caching.

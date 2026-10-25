@@ -95,3 +95,5 @@ jobs:
             --entrypoint bash \
             -v "$PWD/Calibre AIO/tests:/aio-tests:ro" \
             calibre-aio:test /aio-tests/container-smoke.sh
+      - name: Real s6 boot and persistent restart
+        run: timeout 600 bash 'Calibre AIO/tests/boot-smoke.sh'

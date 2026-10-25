@@ -26,7 +26,7 @@ https://github.com/HyperCriSiS/Home-Assistant-Apps#feature/calibre-aio
 Install **Calibre AIO**, start it and open its web interface as an HA
 administrator. Configure search sources and your download service in the
 Shelfmark settings under **Entdecken**. Use **Bibliothek** for CWA settings.
-Leave the default SSO configuration and `admin_users: []` for automatic roles.
+Leave the default SSO configuration for automatic HA roles; no user IDs are needed.
 
 The initial image contains Shelfmark's core download stack. Browser-challenge
 sources may require a separate compatible bypass service, configured through
