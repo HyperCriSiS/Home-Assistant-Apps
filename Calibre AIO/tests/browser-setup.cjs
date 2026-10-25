@@ -22,7 +22,7 @@ function render(setup, start) {
       page.on('pageerror', e => errors.push(e.message));
       await page.route('https://ha.test/**', route => {
         const url = new URL(route.request().url());
-        if (url.pathname === '/') return route.fulfill({contentType:'text/html',body:`<home-assistant></home-assistant><script>
+        if (url.pathname === '/') return route.fulfill({contentType:'text/html',body:`<style>body{margin:0}#aio{width:100%;height:100vh;border:0}</style><home-assistant></home-assistant><script>
           window.calls=[];
           document.querySelector('home-assistant').hass=${scenario === 'missing-ha' ? 'null' : `{
             locale:{language:'${language}'},user:{id:'current',is_admin:${scenario !== 'reader'}},
