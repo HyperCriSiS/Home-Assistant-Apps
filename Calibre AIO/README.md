@@ -2,10 +2,12 @@
 
 Find books with **Shelfmark** and manage/read them with **Calibre-Web Automated**
 in one Home Assistant App. A shared navigation bar switches between
-**Entdecken** (discovery/downloads) and **Bibliothek** (your library).
+**Bibliothek** (your library) and **Entdecken** (discovery/downloads). The compact
+bar opens Bibliothek first by default; choose `start_page: shelfmark` in the
+App options to start with Entdecken instead.
 
 - Automatic Home Assistant ingress sign-in, without copying user IDs
-- HA administrators manage both applications; normal HA users have their own
+- One configured HA login name manages both applications; other HA users have their own
   identities, reader accounts and Shelfmark requests
 - Real-Debrid, AllDebrid, TorBox and other upstream download clients
 - Complete downloads automatically delivered to CWA's import folder
@@ -15,18 +17,23 @@ in one Home Assistant App. A shared navigation bar switches between
 This is a new experimental app. Its private state is independent of the
 previous CWA test app. Installation does not migrate or delete existing data.
 
-## Install the development build
+## Install
 
 Add this repository to the HA App store:
 
 ```text
-https://github.com/HyperCriSiS/Home-Assistant-Apps#feature/calibre-aio
+https://github.com/HyperCriSiS/Home-Assistant-Apps
 ```
 
-Install **Calibre AIO**, start it and open its web interface as an HA
-administrator. Configure search sources and your download service in the
+Install **Calibre AIO**. Before starting, set `sso.admin_username` to your HA
+login name (not your display name or user ID). Then start the app and open its
+web interface with that account. Configure search sources and your download service in the
 Shelfmark settings under **Entdecken**. Use **Bibliothek** for CWA settings.
-Leave the default SSO configuration for automatic HA roles; no user IDs are needed.
+The administrator assignment is managed by this option; changes to HA roles do
+not automatically change it. No additional HA API permission is required.
+
+When upgrading from 0.1.1, fill in the new administrator login option before
+restarting. Existing settings, accounts and library data are retained.
 
 The initial image contains Shelfmark's core download stack. Browser-challenge
 sources may require a separate compatible bypass service, configured through

@@ -20,6 +20,10 @@ def read_options(options):
     result = dict(enabled=False, admin_users=[], admin_account='admin',
                   auto_create_users=False)
     result.update(sso)
+    if 'admin_username' in result:
+        if not isinstance(result['admin_username'], str):
+            raise ValueError('sso.admin_username must be a Home Assistant login name')
+        result['admin_username'] = result['admin_username'].strip()
     for field in ('enabled', 'auto_create_users'):
         if not isinstance(result[field], bool):
             raise ValueError(f'sso.{field} must be a boolean')
@@ -47,11 +51,19 @@ def install(app, config, constants, ub, usermanagement, options):
         raise ValueError('sso.admin_account must identify an existing CWA administrator')
     admin_id = admin.id if admin is not None else None
 
-    def resolve_user(ha_id, groups_header):
+    def resolve_user(ha_id, groups_header, username=''):
         # Preserve explicit ID mappings on upgrade. An empty list selects
         # automatic HA roles, without requiring users to copy an ID.
-        is_admin = (ha_id in options['admin_users'] if options['admin_users']
-                    else is_home_assistant_admin(groups_header))
+        if 'admin_username' in options:
+            from ha_admin import is_configured_admin, AdminBindingUnavailable
+            try:
+                is_admin = is_configured_admin(ha_id, username, options['admin_username'])
+            except AdminBindingUnavailable:
+                abort(503, description='Home Assistant administrator binding is unavailable')
+        else:
+            # Compatibility for the original non-AIO adapter's tests/configuration.
+            is_admin = (ha_id in options['admin_users'] if options['admin_users']
+                        else is_home_assistant_admin(groups_header))
         if is_admin:
             user = ub.session.get(ub.User, admin_id)
             if user is None or not user.role_admin() or user.role_anonymous():
@@ -111,7 +123,8 @@ def install(app, config, constants, ub, usermanagement, options):
                 or request.path.startswith('/login/')
                 or (request.path == '/login' and request.method == 'POST')):
             abort(403)
-        user = resolve_user(ha_id, request.headers.get('X-Remote-User-Groups', ''))
+        user = resolve_user(ha_id, request.headers.get('X-Remote-User-Groups', ''),
+                            request.headers.get('X-Remote-User-Name', ''))
         # Keep CSRF tokens and UI state; remove only local login credentials.
         for key in ('_user_id', '_id', '_random', '_remember_seconds'):
             session.pop(key, None)
