@@ -83,13 +83,13 @@ jobs:
           tags: calibre-aio:test
           build-args: |
             BUILD_FROM=ghcr.io/home-assistant/${{ matrix.arch }}-base-debian:bookworm
-            BUILD_VERSION=0.1.0
             ${{ steps.args.outputs.values }}
           cache-from: type=gha,scope=calibre-aio-${{ matrix.arch }}
           cache-to: type=gha,mode=max,scope=calibre-aio-${{ matrix.arch }}
       - name: Full container acceptance
-        run: >-
-          docker run --rm
-          --entrypoint bash
-          -v "$PWD/Calibre AIO/tests:/aio-tests:ro"
-          calibre-aio:test /aio-tests/container-smoke.sh
+        run: |
+          trap 'docker rm -f calibre-aio-smoke >/dev/null 2>&1 || true' EXIT
+          timeout 420 docker run --rm --name calibre-aio-smoke \
+            --entrypoint bash \
+            -v "$PWD/Calibre AIO/tests:/aio-tests:ro" \
+            calibre-aio:test /aio-tests/container-smoke.sh

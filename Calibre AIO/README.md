@@ -1,42 +1,37 @@
-# Calibre-Web Automated (HyperCriSiS SSO Test)
+# Calibre AIO
 
-![Supports aarch64 Architecture][aarch64-shield]
-![Supports amd64 Architecture][amd64-shield]
+Find books with **Shelfmark** and manage/read them with **Calibre-Web Automated**
+in one Home Assistant App. A shared navigation bar switches between
+**Entdecken** (discovery/downloads) and **Bibliothek** (your library).
 
-[Calibre-Web Automated](https://github.com/crocodilestick/Calibre-Web-Automated)
-(CWA) is a self-hosted ebook library manager: a Calibre-Web fork with a
-watched ingest folder, automatic format conversion, cover/metadata
-enforcement and Kepub conversion for Kobo devices, wrapped around a Calibre
-library.
+- Automatic Home Assistant ingress sign-in, without copying user IDs
+- HA administrators manage both applications; normal HA users have their own
+  identities, reader accounts and Shelfmark requests
+- Real-Debrid, AllDebrid, TorBox and other upstream download clients
+- Complete downloads automatically delivered to CWA's import folder
+- Separate persistent databases and separate Python environments
+- Pinned upstream sources, checksums and automated update proposals
 
-This is HyperCriSiS's experimental SSO test build, based on Conall O'Brien's
-add-on. Add-on version `4.0.6.2` packages upstream CWA `v4.0.6`; the final
-version component identifies the add-on revision. See `build.yaml`'s
-`CWA_VERSION` for the upstream source version.
+This is a new experimental app. Its private state is independent of the
+previous CWA test app. Installation does not migrate or delete existing data.
 
-## About
+## Install the development build
 
-Optional Home Assistant ingress SSO automatically maps HA administrators to an
-existing CWA administrator and can provision separate reader accounts for
-other HA users. No user ID needs to be copied; an explicit ID list remains
-available for individual selection. It is
-disabled by default. See [SSO configuration and limitations](DOCS.md#option-sso)
-and the [HAOS test checklist](TESTING.md) before enabling it.
+Add this repository to the HA App store:
 
-CWA bundles a real Calibre install, [kepubify](https://github.com/pgaskin/kepubify)
-and several background workers (ingest watcher, metadata change detector,
-nightly library zipper, checksum backfill, process recovery) on top of the
-Calibre-Web Flask app. Upstream distributes it as a single Docker image built
-on `ghcr.io/linuxserver/baseimage-ubuntu`. This add-on instead builds those
-same pieces — the CWA application, Calibre, and kepubify — directly on the
-official Home Assistant Debian base image, fetching each from its own
-upstream source rather than using a third-party image as the base.
+```text
+https://github.com/HyperCriSiS/Home-Assistant-Apps#feature/calibre-aio
+```
 
-Because it reassembles a fairly large upstream project (Calibre plus a full
-Python/Flask app plus several s6 services) rather than a single static
-binary, this is a best-effort initial port: it has not been build- or
-run-verified against a live Supervisor install. Please open an issue with
-build/runtime logs if something doesn't come up cleanly.
+Install **Calibre AIO**, start it and open its web interface as an HA
+administrator. Configure search sources and your download service in the
+Shelfmark settings under **Entdecken**. Use **Bibliothek** for CWA settings.
+Leave the default SSO configuration and `admin_users: []` for automatic roles.
 
-[aarch64-shield]: https://img.shields.io/badge/aarch64-yes-green.svg
-[amd64-shield]: https://img.shields.io/badge/amd64-yes-green.svg
+The initial image contains Shelfmark's core download stack. Browser-challenge
+sources may require a separate compatible bypass service, configured through
+the optional `shelfmark.external_bypass_url` App option. An old pinned browser
+is deliberately not bundled. Torrent/debrid downloads do not require it.
+
+See [configuration](DOCS.md), [integration design](INTEGRATION.md),
+[verification](TESTING.md) and [upstream maintenance](UPDATING.md).

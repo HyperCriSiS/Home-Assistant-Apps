@@ -25,8 +25,8 @@ LIBRARY_TARGET="/share/${library_dir}"
 INGEST_TARGET="/share/${ingest_dir}"
 
 mkdir -p "${CONFIG_TARGET}" "${LIBRARY_TARGET}" "${INGEST_TARGET}"
-mkdir -p /data/shelfmark /data/shelfmark-staging /data/shelfmark-logs
-chown abc:abc /data/shelfmark /data/shelfmark-staging /data/shelfmark-logs
+mkdir -p /data/shelfmark /data/shelfmark-staging /data/shelfmark-logs /data/shelfmark-audiobooks
+chown abc:abc /data/shelfmark /data/shelfmark-staging /data/shelfmark-logs /data/shelfmark-audiobooks
 
 link_dir() {
     local target="$1"

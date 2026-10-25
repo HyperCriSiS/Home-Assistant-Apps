@@ -74,6 +74,11 @@ def main():
     args = parser.parse_args()
     data = load_manifest()
     if args.command == 'args':
+        config = (ROOT / 'config.yaml').read_text()
+        version = re.search(r'^version: "([0-9.]+)"$', config, re.M)
+        if not version:
+            raise ValueError('Unexpected app version')
+        print('BUILD_VERSION=' + version[1])
         print('\n'.join(f'{key}={value}' for key, value in arguments(data).items()))
         return
     if args.command == 'update':
@@ -86,17 +91,20 @@ def main():
                     if candidate != data[name]:
                         raise ValueError('Pinned release provenance changed: ' + name)
                 else:
+                    if tuple(map(int, candidate['version'].lstrip('v').split('.'))) <= tuple(
+                            map(int, data[name]['version'].lstrip('v').split('.'))):
+                        raise ValueError('Refusing an upstream downgrade: ' + name)
                     updated[name] = candidate
         if updated == data:
             print('No upstream updates')
             return
         data = updated
-        (ROOT / 'upstream.json').write_text(json.dumps(data, indent=2) + '\n')
         config = (ROOT / 'config.yaml').read_text()
         match = re.search(r'^version: "(\d+)\.(\d+)\.(\d+)"$', config, re.M)
         if not match:
             raise ValueError('Unexpected app version format')
         version = f'{match[1]}.{match[2]}.{int(match[3]) + 1}'
+        (ROOT / 'upstream.json').write_text(json.dumps(data, indent=2) + '\n')
         (ROOT / 'config.yaml').write_text(config.replace(match[0], f'version: "{version}"', 1))
         changelog = ROOT / 'CHANGELOG.md'
         changelog.write_text(f'# {version}\n\n- Update CWA to {data["cwa"]["version"]} and '

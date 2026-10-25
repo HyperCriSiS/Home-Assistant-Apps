@@ -11,7 +11,15 @@ def load_options_and_drop_privileges(path='/data/options.json', account='abc'):
     # Supervisor protects options.json from unprivileged processes. Read and
     # validate it before dropping privileges; never relax that file's mode.
     with open(path, encoding='utf-8') as handle:
-        options = read_options(json.load(handle))
+        document = json.load(handle)
+    options = read_options(document)
+    bypass = document.get('shelfmark', {}).get('external_bypass_url', '')
+    if bypass:
+        from urllib.parse import urlsplit
+        parsed = urlsplit(bypass)
+        if parsed.scheme not in ('http', 'https') or not parsed.hostname or any(c.isspace() for c in bypass):
+            raise ValueError('shelfmark.external_bypass_url must be an HTTP(S) URL')
+    options['external_bypass_url'] = bypass
     import pwd
     user = pwd.getpwnam(account)
     os.initgroups(user.pw_name, user.pw_gid)

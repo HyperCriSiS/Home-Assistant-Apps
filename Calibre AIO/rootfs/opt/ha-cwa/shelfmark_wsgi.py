@@ -18,7 +18,13 @@ os.environ.update({
     'CALIBRE_WEB_URL': prefix + '/library/',
     'LIBRARY_CHECK_CALIBRE_ENABLED': 'true',
     'CALIBRE_LIBRARY_DB_PATH': '/calibre-library/metadata.db',
-    'SHELFMARK_API_KEY': '', 'DOCKERMODE': 'true', 'USE_CF_BYPASS': 'false',
+    'SHELFMARK_API_KEY': '', 'DOCKERMODE': 'true',
+    'USE_CF_BYPASS': 'true' if options.get('external_bypass_url') else 'false',
+    'USING_EXTERNAL_BYPASSER': 'true',
+    'EXT_BYPASSER_URL': options.get('external_bypass_url') or 'http://127.0.0.1:8191',
+    'BOOKS_OUTPUT_MODE': 'folder',
+    'DESTINATION_AUDIOBOOK': '/data/shelfmark-audiobooks',
+    'HARDLINK_TORRENTS': 'false',
     'FLASK_HOST': '127.0.0.1', 'FLASK_PORT': '8085',
 })
 sys.path.insert(0, '/app/shelfmark')

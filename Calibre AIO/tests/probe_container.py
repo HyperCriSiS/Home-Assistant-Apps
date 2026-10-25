@@ -41,8 +41,11 @@ assert status == 200 and b'/api/hassio_ingress/aio-test/shelfmark/' in body
 status, body, headers = get('/library/', ADMIN)
 assert status == 200 and b'/api/hassio_ingress/aio-test/library' in body
 assert get('/library/', READER)[0] == 200
-status, body, _ = get('/shelfmark/api/auth/status', ADMIN)
+status, body, _ = get('/shelfmark/api/auth/check', ADMIN)
 assert status == 200, (status, body)
+assert json.loads(body)['is_admin'] is True
+status, body, _ = get('/shelfmark/api/auth/check', READER)
+assert status == 200 and json.loads(body)['is_admin'] is False
 assert get('/shelfmark/socket.io/?EIO=4&transport=polling', ADMIN)[0] == 200
 assert get('/shelfmark/socket.io/?EIO=4&transport=polling')[0] == 403
 print('Real CWA + Shelfmark startup, prefixes, HA identities, UI and Socket.IO passed')

@@ -22,6 +22,8 @@ options:
   library_dir: "calibre-aio/library"
   ingest_dir: "calibre-aio/ingest"
   network_share_mode: false
+  shelfmark:
+    external_bypass_url: ""
   sso:
     enabled: true
     admin_users: []
@@ -31,6 +33,8 @@ schema:
   library_dir: "str"
   ingest_dir: "str"
   network_share_mode: "bool"
+  shelfmark:
+    external_bypass_url: "str?"
   sso:
     enabled: "bool"
     admin_users:

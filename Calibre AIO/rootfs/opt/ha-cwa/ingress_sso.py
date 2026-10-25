@@ -103,6 +103,8 @@ def install(app, config, constants, ub, usermanagement, options):
         ha_id = request.headers.get('X-Remote-User-Id', '')
         if not USER_ID.fullmatch(ha_id):
             abort(403)
+        if request.path == '/get_updater_status' and request.method == 'POST':
+            abort(403, description='Update Calibre AIO through Home Assistant')
         # These protocols carry their own identities/tokens. They cannot be
         # combined with a mode in which HA is the sole authentication source.
         if (request.blueprint in ('oauth', 'remotelogin', 'kobo', 'kobo_auth', 'kosync')

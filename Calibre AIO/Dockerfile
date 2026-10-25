@@ -76,6 +76,14 @@ RUN set -eu; \
 RUN printf '%s' "${CWA_VERSION}" > /app/CWA_RELEASE \
     && printf '%s' "${CALIBRE_RELEASE}" > /CALIBRE_RELEASE
 
+# Validate the upstream service contract before packaging HA-specific topology.
+RUN for service in cwa-init cwa-auto-library cwa-auto-zipper cwa-checksum-backfill \
+        cwa-ingest-service cwa-process-recovery metadata-change-detector calibre-binaries-setup; do \
+        test -f "/app/calibre-web-automated/root/etc/s6-overlay/s6-rc.d/${service}/run" \
+        && bash -n "/app/calibre-web-automated/root/etc/s6-overlay/s6-rc.d/${service}/run" || exit 1; \
+    done
+
+
 FROM ghcr.io/astral-sh/uv:0.12.19@sha256:04d046b13e60d6bcec73cbc5e1cad25d680dea90c8573340950a0ac2d1aef424 AS uv
 
 FROM build AS shelfmark-build
@@ -188,8 +196,6 @@ RUN mkdir -p \
         /app/calibre-web-automated/metadata_change_logs \
         /app/calibre-web-automated/metadata_temp \
         /app/calibre-web-automated/cps/cache \
-        /cwa-book-ingest \
-        /calibre-library \
     && chown -R abc:abc /app/calibre-web-automated /etc/s6-overlay \
     && chmod a+x /etc/cont-init.d/*.sh \
     && chmod a+x /etc/s6-overlay/s6-rc.d/*/run
