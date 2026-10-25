@@ -16,6 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
+          ref: dev-calibre
           persist-credentials: false
       - name: Resolve stable upstream releases and verify provenance
         env:
@@ -27,6 +28,7 @@ jobs:
         id: proposal
         uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676
         with:
+          base: dev-calibre
           branch: chore/calibre-aio-upstreams
           commit-message: 'chore(calibre-aio): update pinned upstream sources'
           title: 'chore(calibre-aio): update pinned upstream sources'

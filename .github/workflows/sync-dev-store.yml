@@ -6,6 +6,7 @@ on:
     branches:
       - dev-trilium
       - dev-mcphub
+      - dev-calibre
   workflow_dispatch:
 
 permissions:
@@ -28,7 +29,7 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Compose dev-store from both app branches
+      - name: Compose dev-store from app development branches
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -37,6 +38,7 @@ jobs:
             main \
             dev-trilium \
             dev-mcphub \
+            dev-calibre \
             dev-store
 
           git checkout -B dev-store origin/dev-store
@@ -44,6 +46,7 @@ jobs:
 
           git checkout origin/dev-trilium -- "TriliumNext Notes"
           git checkout origin/dev-mcphub -- "MCPHub"
+          git checkout origin/dev-calibre -- "Calibre AIO"
           git checkout origin/main -- repository.json
 
       - name: Generate development metadata
@@ -177,6 +180,27 @@ jobs:
               config.write_text(text, encoding="utf-8")
 
           patch_config(
+              "Calibre AIO/config.yaml",
+              "Calibre AIO (Dev)",
+              "Calibre AIO (Dev)",
+              "https://github.com/HyperCriSiS/Home-Assistant-Apps/tree/dev-calibre/Calibre%20AIO",
+              app_revision("calibre", "origin/dev-calibre", "Calibre AIO"),
+          )
+          # Stable and Dev may be installed together. Never share writable
+          # library/import defaults between these independent installations.
+          calibre_config = Path("Calibre AIO/config.yaml")
+          calibre_text = calibre_config.read_text(encoding="utf-8")
+          for key, folder in (("library_dir", "library"), ("ingest_dir", "ingest")):
+              calibre_text, count = re.subn(
+                  rf"^  {key}:.*$",
+                  f'  {key}: "calibre-aio-dev/{folder}"',
+                  calibre_text, count=1, flags=re.MULTILINE,
+              )
+              if count != 1:
+                  raise SystemExit(f"Unable to separate Calibre Dev {key}")
+          calibre_config.write_text(calibre_text, encoding="utf-8")
+
+          patch_config(
               "MCPHub/config.yaml",
               "MCPHub (Dev)",
               "MCPHub (Dev)",
@@ -215,6 +239,7 @@ jobs:
             .dev-store-mcphub-changes.json \
             repository.json \
             "MCPHub" \
+            "Calibre AIO" \
             "TriliumNext Notes"
           if ! git diff --cached --quiet; then
             git commit -m "chore(dev-store): compose current app candidates"
