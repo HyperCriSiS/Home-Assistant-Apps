@@ -20,10 +20,12 @@ Supervisor options permission fix. Original add-on attribution is retained.
 4. Provide a shared, responsive navigation shell: Discover (Shelfmark) and
    Library (CWA). Preserve each application's native interface and configure
    real URL prefixes, redirects, static assets, cookies and WebSockets.
-5. Authenticate both through HA. Automatically map HA administrators to app
-   administrators; normal users get separate identities. Validate roles and
-   IDs at the trust boundary, reject cookie/API-key/header impersonation and
-   preserve the optional explicit ID selection for existing policies.
+5. Authenticate both through HA. Configure one HA login name as administrator,
+   automatically bind it to its stable HA ID and share that binding between
+   both applications. Other users get separate normal identities. This works
+   with stable Supervisor versions without group headers or additional API
+   access. Reject cookie/API-key/header impersonation. Changes to HA roles do
+   not automatically change the configured app administrator.
 6. Keep private CWA and Shelfmark state separate under `/data`. Shelfmark
    stages downloads privately and delivers completed files to CWA's ingest
    folder. Configure Real-Debrid and other sources in Shelfmark's native UI;

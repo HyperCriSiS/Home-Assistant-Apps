@@ -1,3 +1,12 @@
+# 0.1.2
+
+- Use a compact navigation bar with Bibliothek first.
+- Open the library by default; make the initial page configurable with start_page.
+- Hide the administrator-only Shelfmark setup wizard for reader sessions.
+- Select the app administrator by sso.admin_username, automatically bind the
+  login to its HA ID, and ignore group headers. Works on stable Supervisor
+  without additional HA API access. Configure the login name before starting.
+
 # 0.1.1
 
 - Fix first boot: wait for HA storage and ingress preparation before CWA init.
