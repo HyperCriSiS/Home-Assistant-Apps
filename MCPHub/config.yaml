@@ -9,7 +9,6 @@ url: "https://github.com/HyperCriSiS/Home-Assistant-Apps/tree/dev-mcphub/MCPHub"
 startup: application
 boot: auto
 init: false
-stage: experimental
 arch:
   - amd64
   - aarch64
