@@ -1,5 +1,11 @@
 # Changelog
 
+## v2026.10.24
+
+### Changed
+
+- Updated Trilium from v0.106.0 to v0.106.1.
+
 ## v2026.10.18
 
 Trilium itself stays at v0.106.0. This release improves backup reliability, configuration and documentation.
