@@ -4,6 +4,8 @@ export PATH="/opt/cwa-venv/bin:$PATH"
 export CALIBRE_DBPATH=/config
 mkdir -p /data/config /data/shelfmark /data/shelfmark-staging /data/shelfmark-logs /data/shelfmark-audiobooks
 mkdir -p /share/calibre-aio/library /share/calibre-aio/ingest
+chown abc:abc /data/config /data/shelfmark /data/shelfmark-staging /data/shelfmark-logs /data/shelfmark-audiobooks
+chown abc:abc /share/calibre-aio/library /share/calibre-aio/ingest
 if [[ -d /config && ! -L /config ]]; then rmdir /config; fi
 [[ -L /config ]] || ln -s /data/config /config
 ln -sfn /share/calibre-aio/library /calibre-library
@@ -13,7 +15,7 @@ chmod 600 /data/options.json
 python3 /opt/ha-cwa/prepare_aio.py /api/hassio_ingress/aio-test
 timeout 180 bash /etc/s6-overlay/s6-rc.d/cwa-init/run
 bash /etc/s6-overlay/s6-rc.d/cwa-auto-library/run
-chown -R abc:abc /data
+chown -R abc:abc /data/config /data/shelfmark
 chown root:root /data/options.json
 chmod 600 /data/options.json
 python3 /opt/ha-cwa/launch.py &

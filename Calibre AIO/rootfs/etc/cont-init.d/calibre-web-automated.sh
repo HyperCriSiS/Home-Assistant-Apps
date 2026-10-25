@@ -1,5 +1,6 @@
 #!/usr/bin/with-contenv bashio
 # shellcheck shell=bash
+set -euo pipefail
 # ==============================================================================
 # Calibre-Web Automated add-on initialization
 #
@@ -25,6 +26,10 @@ LIBRARY_TARGET="/share/${library_dir}"
 INGEST_TARGET="/share/${ingest_dir}"
 
 mkdir -p "${CONFIG_TARGET}" "${LIBRARY_TARGET}" "${INGEST_TARGET}"
+chown abc:abc "${CONFIG_TARGET}"
+if ! bashio::var.true "${network_share_mode}"; then
+    chown abc:abc "${LIBRARY_TARGET}" "${INGEST_TARGET}"
+fi
 mkdir -p /data/shelfmark /data/shelfmark-staging /data/shelfmark-logs /data/shelfmark-audiobooks
 chown abc:abc /data/shelfmark /data/shelfmark-staging /data/shelfmark-logs /data/shelfmark-audiobooks
 
@@ -33,12 +38,16 @@ link_dir() {
     local link="$2"
 
     if [ -L "${link}" ]; then
+        if [[ "$(readlink "${link}")" != "${target}" ]]; then
+            bashio::log.fatal "Unexpected storage symlink: ${link}"
+            exit 1
+        fi
         return 0
     fi
 
     if [ -e "${link}" ]; then
-        bashio::log.warning "${link} already exists and is not a symlink; leaving it as-is instead of pointing it at ${target}"
-        return 0
+        bashio::log.fatal "${link} must point to persistent storage; refusing container-local state."
+        exit 1
     fi
 
     ln -s "${target}" "${link}"

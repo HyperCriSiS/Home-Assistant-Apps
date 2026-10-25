@@ -1,10 +1,10 @@
 """Configure upstream Shelfmark before import, after dropping privileges."""
 import os
+import json
 from pathlib import Path
 import sys
-from launch import load_options_and_drop_privileges
 
-options = load_options_and_drop_privileges()
+options = json.loads(os.environ.pop('AIO_SSO_OPTIONS'))
 if not options['enabled']:
     raise ValueError('Calibre AIO requires ingress SSO')
 prefix = Path('/run/calibre-aio/prefix').read_text()
