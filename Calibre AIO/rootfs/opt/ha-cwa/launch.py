@@ -13,6 +13,13 @@ def load_options_and_drop_privileges(path='/data/options.json', account='abc'):
     with open(path, encoding='utf-8') as handle:
         document = json.load(handle)
     options = read_options(document)
+    # AIO never derives privileges from a group header: stable Supervisors do
+    # not supply or sanitize that header. Require the configured HA login name.
+    options['admin_username'] = options.get('admin_username', '')
+    if options['enabled'] and not options['admin_username']:
+        raise ValueError('Set sso.admin_username to your Home Assistant login name (not a user ID)')
+    os.environ.pop('SUPERVISOR_TOKEN', None)
+    os.environ.pop('HASSIO_TOKEN', None)
     bypass = document.get('shelfmark', {}).get('external_bypass_url', '')
     if bypass:
         from urllib.parse import urlsplit
@@ -32,7 +39,8 @@ def main():
     options = load_options_and_drop_privileges()
     # No CWA code is imported or executed until privileges have been dropped.
     if options['enabled']:
-        policy = 'explicit ID list' if options['admin_users'] else 'automatic Home Assistant roles'
+        policy = ('configured Home Assistant login name' if 'admin_username' in options
+                  else 'explicit ID list' if options['admin_users'] else 'automatic Home Assistant roles')
         print('[ha-cwa] Ingress SSO enabled; admin policy: ' + policy, flush=True)
     else:
         print('[ha-cwa] Ingress SSO disabled; using CWA login', flush=True)

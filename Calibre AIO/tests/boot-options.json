@@ -3,5 +3,5 @@
   "ingest_dir": "calibre-aio/ingest",
   "network_share_mode": false,
   "shelfmark": {"external_bypass_url": ""},
-  "sso": {"enabled": true, "admin_account": "admin", "auto_create_users": true}
+  "sso": {"enabled": true, "admin_username": "ha_admin", "admin_account": "admin", "auto_create_users": true}
 }

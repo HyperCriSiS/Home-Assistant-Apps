@@ -7,7 +7,8 @@ requests, downloads and source/client settings. **Bibliothek** contains CWA's
 library, reading and management features. The navigation stays visible while
 using either application. Both native interfaces remain intact.
 
-An HA administrator receives administrator access to both. Normal HA users
+The HA login configured in `sso.admin_username` receives administrator access
+to both applications. Other HA users
 get a separate CWA reader/download account and a Shelfmark user/request
 account; Shelfmark's source request policies determine what they can request
 or download. A shared Calibre library is visible according to CWA's content
@@ -17,6 +18,7 @@ the selected CWA admin account. Shelfmark keeps separate HA identities.
 ## App options
 
 ```yaml
+start_page: library
 library_dir: calibre-aio/library
 ingest_dir: calibre-aio/ingest
 network_share_mode: false
@@ -24,10 +26,14 @@ shelfmark:
   external_bypass_url: ""
 sso:
   enabled: true
+  admin_username: your_ha_login_name
   admin_account: admin
   auto_create_users: true
 ```
 
+- `start_page`: initial view, `library` (Bibliothek, default) or `shelfmark`
+  (Entdecken). The compact navigation always lists Bibliothek first. Restart
+  the app after changing this option, then reopen its web interface.
 - `library_dir`: library path relative to `/share`.
 - `ingest_dir`: completed-book handoff path relative to `/share`. Do not use
   the same path for the library or another app's active download directory.
@@ -38,6 +44,10 @@ sso:
   an embedded Chromium/Tor/VPN stack. Configure outbound routing separately.
 - `sso.enabled`: must remain `true` in this initial AIO version. Both applications
   are ingress-only; native standalone login/device clients are not exposed.
+- `sso.admin_username`: required HA login name, matched exactly (case-sensitive).
+  Enter the name used to sign in to HA, not the display name or an ID. Empty
+  configuration stops startup with a clear error. This option selects the
+  administrator in both applications; other HA users get normal accounts.
 - `sso.admin_account`: name of the existing CWA administrator (default `admin`).
   The initial CWA database creates this account. A missing or non-admin target
   prevents CWA from starting. This does not select Shelfmark accounts.
@@ -46,12 +56,19 @@ sso:
   Shelfmark's proxy user provisioning remains controlled by HA identity;
   this option does not disable its request accounts.
 
-Automatic roles require a Supervisor that supplies `X-Remote-User-Groups`.
-Missing or malformed groups never grant admin rights; use a current Supervisor
-that supplies these groups. No manual user IDs are required. A CWA cookie, Shelfmark cookie or
-API key cannot replace the current HA identity. Roles apply as soon as
-Supervisor forwards updated groups; open a fresh HA session when testing role
-revocation to avoid Supervisor session caching.
+The app relies on Supervisor's authenticated user ID and login-name headers,
+available in Supervisor 2026.10. It does not trust group headers or need HA API
+access. The selected login is automatically bound to its HA ID in the private
+`/data/config/ha_admin_bindings.db`; a replacement account with the same name
+does not automatically inherit that binding. Both applications use this same
+binding. Include it in app backups.
+
+This assignment is independent of HA's administrator role. If you revoke
+someone's HA admin role, also change `sso.admin_username` and restart this app
+if their Calibre AIO administrator access should end. Disabling an HA account
+still prevents new authenticated ingress sessions. A CWA/Shelfmark cookie,
+API key, display name or supplied group header cannot replace the HA identity.
+Readers do not see the administrator-only Shelfmark setup wizard.
 
 ## Downloads and library handoff
 
@@ -92,8 +109,9 @@ SSO. Standalone external reader sync is outside the initial AIO scope.
 
 ## Troubleshooting
 
-Check App logs after a restart. The CWA launcher identifies whether automatic
-HA roles or an explicit selection is active. Shelfmark startup is separate;
+Check App logs after a restart. The CWA launcher confirms the configured
+HA login-name policy. A missing `sso.admin_username` stops startup; enter the
+HA login name and start again. Shelfmark startup is separate;
 one backend can be unavailable while the other is restarting. A 403 means the
 request lacks a trusted HA identity/permission; a 502 normally means that the
 target backend has not started yet. Send only relevant log excerpts; avoid

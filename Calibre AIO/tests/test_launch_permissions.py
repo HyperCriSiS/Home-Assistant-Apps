@@ -22,7 +22,7 @@ class LaunchPermissionsTest(unittest.TestCase):
                 root = Path(directory)
                 root.chmod(0o755)
                 source = root / 'options.json'
-                source.write_text(json.dumps({'sso': {'enabled': enabled}}))
+                source.write_text(json.dumps({'sso': {'enabled': enabled, 'admin_username': 'ha_admin'}}))
                 source.chmod(0o600)
                 script = '''
 import json, os, sys

@@ -8,6 +8,8 @@ import importlib.util
 import os
 import sys
 import unittest
+import tempfile
+from unittest.mock import patch
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -58,6 +60,20 @@ class User(UserMixin, Base):
 
 
 class SSOTest(unittest.TestCase):
+    def test_configured_login_works_without_groups_and_rejects_reused_names(self):
+        self.options['admin_username'] = 'ha_admin'
+        with tempfile.TemporaryDirectory() as directory, patch(
+                'ha_admin.ADMIN_BINDINGS', Path(directory) / 'bindings.db'):
+            client = self.make_app().test_client()
+            headers = {'X-CWA-Ingress': '1', 'X-Remote-User-Id': ADMIN_ID,
+                       'X-Remote-User-Name': 'ha_admin'}
+            self.assertEqual(client.get('/', headers=headers).json['name'], 'admin')
+            reused = dict(headers, **{'X-Remote-User-Id': READER_ID,
+                                     'X-Remote-User-Groups': 'system-admin'})
+            response = client.get('/', headers=reused)
+            self.assertEqual(response.json['name'], 'ha_' + READER_ID)
+            self.assertFalse(response.json['role'] & 1)
+
     def setUp(self):
         self.engine = create_engine('sqlite://')
         Base.metadata.create_all(self.engine)

@@ -3,6 +3,8 @@ import json
 from pathlib import Path
 import sys
 import unittest
+import tempfile
+from unittest.mock import patch
 from werkzeug.test import Client
 from werkzeug.wrappers import Request, Response
 
@@ -10,10 +12,22 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'rootfs/opt/ha-cwa'))
 from shelfmark_gateway import IngressIdentity
 from ingress_sso import read_options
-from prepare_aio import validate_prefix
+from prepare_aio import render_index, validate_prefix
 
 
 class GatewayTest(unittest.TestCase):
+    def test_configured_name_ignores_forged_groups_and_keeps_stable_binding(self):
+        self.options['admin_username'] = 'ha_admin'
+        with tempfile.TemporaryDirectory() as directory, patch(
+                'ha_admin.ADMIN_BINDINGS', Path(directory) / 'binding.db'):
+            headers = {'X-CWA-Ingress': '1', 'X-Remote-User-Id': 'a' * 32,
+                       'X-Remote-User-Name': 'ha_admin'}
+            self.assertEqual(self.client.get('/', headers=headers).json['groups'], 'system-admin')
+            headers.update({'X-Remote-User-Id': 'b' * 32, 'X-Remote-User-Groups': 'system-admin'})
+            self.assertEqual(self.client.get('/', headers=headers).json['groups'], 'system-users')
+            headers['X-Remote-User-Name'] = 'reader'
+            self.assertEqual(self.client.get('/', headers=headers).json['groups'], 'system-users')
+
     def setUp(self):
         @Request.application
         def upstream(request):
@@ -52,6 +66,19 @@ class GatewayTest(unittest.TestCase):
 
 
 class DeploymentTest(unittest.TestCase):
+    def test_configurable_start_page_defaults_to_library(self):
+        template = (ROOT / 'rootfs/opt/ha-cwa/index.html').read_text()
+        prefix = '/api/hassio_ingress/test'
+        for start, view in (('library', 'library'), ('shelfmark', 'discover')):
+            page = render_index(template, prefix, start)
+            self.assertIn(f'src="{start}/"', page)
+            self.assertIn(f'data-view="{view}" aria-current="page"', page)
+            self.assertLess(page.index('>Bibliothek</a>'), page.index('>Entdecken</a>'))
+            self.assertNotIn('__', page)
+        self.assertIn('src="library/"', render_index(template, prefix))
+        with self.assertRaises(ValueError):
+            render_index(template, prefix, '" onload="alert(1)')
+
     def test_prefix_validation_rejects_configuration_injection(self):
         for value in ('', '/', '/api/hassio_ingress/x;allow all', '/x', '/api/hassio_ingress/x/../'):
             with self.assertRaises(ValueError):
