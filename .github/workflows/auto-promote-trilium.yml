@@ -1,0 +1,85 @@
+---
+name: Auto-promote Trilium updates
+
+# Promotes dev-trilium to main only when it contains nothing but automated
+# Trilium version bumps that passed every gate in
+# .github/scripts/auto_promote_trilium.py, 48 hours after the newest one
+# reached dev-trilium. Everything else stays manual.
+# Pause at any time: set the repository variable TRILIUM_AUTO_PROMOTE=false
+# or label the Trilium release pull request "hold".
+
+on:
+  schedule:
+    - cron: "13 */3 * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: promote-app-development-main
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    name: Gate and merge bot-only Trilium release
+    if: vars.TRILIUM_AUTO_PROMOTE == 'true' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    env:
+      GH_TOKEN: ${{ secrets.AUTOMATION_TOKEN || github.token }}
+
+    steps:
+      - name: Check out trusted gates from main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Test promotion gates
+        run: python3 -m unittest discover -s .github/tests -p 'test_auto_promote_trilium.py' -v
+
+      - name: Check release gates
+        id: gate
+        env:
+          HAOS_E2E_ENABLED: ${{ vars.HAOS_E2E_ENABLED }}
+        run: python3 .github/scripts/auto_promote_trilium.py gate
+
+      - name: Request validation of the current dev-trilium commit
+        if: steps.gate.outputs.action == 'validate'
+        run: gh workflow run validate.yml --repo "$GITHUB_REPOSITORY" --ref dev-trilium
+
+      - name: Re-check and merge the exact validated commit
+        id: merge
+        if: steps.gate.outputs.action == 'promote'
+        env:
+          MAIN_SHA: ${{ steps.gate.outputs.main_sha }}
+          DEV_SHA: ${{ steps.gate.outputs.dev_sha }}
+          UPSTREAM: ${{ steps.gate.outputs.upstream }}
+        run: |
+          python3 .github/scripts/auto_promote_trilium.py merge \
+            --main-sha "$MAIN_SHA" --dev-sha "$DEV_SHA" --upstream "$UPSTREAM"
+
+      # GITHUB_TOKEN merges do not start push workflows; request them explicitly.
+      - name: Start post-release workflows
+        if: steps.merge.outputs.merge_sha != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run validate.yml --repo "$GITHUB_REPOSITORY" --ref main
+          gh workflow run sync-dev-bases.yml --repo "$GITHUB_REPOSITORY" --ref main
+          gh workflow run sync-dev-store.yml --repo "$GITHUB_REPOSITORY" --ref main
+
+      - name: Watch stable validation and prepare a revert on failure
+        if: steps.merge.outputs.merge_sha != ''
+        env:
+          MERGE_SHA: ${{ steps.merge.outputs.merge_sha }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --no-tags origin main
+          python3 .github/scripts/auto_promote_trilium.py watch --merge-sha "$MERGE_SHA"
