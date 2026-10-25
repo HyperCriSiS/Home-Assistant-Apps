@@ -58,3 +58,11 @@ A Trilium release PR is always `dev-trilium -> main`. An MCPHub release PR is al
 Any other change on `dev-mcphub` keeps the manual release PR. Enable with the repository variable `MCPHUB_AUTO_PROMOTE=true`; pause by setting it to `false` or by labelling the release PR `hold`.
 
 Use short-lived `feature/*`, `fix/*`, `refactor/*`, `test/*`, `docs/*`, `chore/*`, and `hotfix/*` branches where useful, targeting the corresponding App development branch.
+
+## Calibre AIO initial integration
+
+`feature/calibre-aio` introduces the new `Calibre AIO/` app. Its initial draft
+PR targets `main`, with image builds and container tests on both architectures
+and live HAOS acceptance required before promotion. It is not yet composed
+into generated `dev-store`; use `#feature/calibre-aio` to test it. Do not add
+it to an existing app's development branch or change other app release flows.
