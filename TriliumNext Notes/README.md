@@ -3,7 +3,7 @@
 **Self-hosted hierarchical notes and personal knowledge base inside Home Assistant.**
 
 [![Validate Trilium](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate.yml/badge.svg?branch=main)](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate.yml)
-[![Trilium version](https://img.shields.io/badge/Trilium-v0.106.0-6E56CF)](https://github.com/TriliumNext/Trilium/releases/tag/v0.106.0)
+[![Trilium version](https://img.shields.io/badge/Trilium-v0.106.1-6E56CF)](https://github.com/TriliumNext/Trilium/releases/tag/v0.106.1)
 ![Architecture amd64](https://img.shields.io/badge/amd64-supported-success)
 ![Architecture aarch64](https://img.shields.io/badge/aarch64-supported-success)
 ![Home Assistant](https://img.shields.io/badge/Home%20Assistant-App-41BDF5?logo=homeassistant&logoColor=white)
