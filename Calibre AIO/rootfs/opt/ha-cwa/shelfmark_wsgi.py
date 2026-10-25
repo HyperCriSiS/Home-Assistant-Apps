@@ -28,8 +28,11 @@ os.environ.update({
     'FLASK_HOST': '127.0.0.1', 'FLASK_PORT': '8085',
 })
 sys.path.insert(0, '/app/shelfmark')
-from shelfmark.main import app
+import shelfmark.main as upstream
 from shelfmark_gateway import IngressIdentity
+from shelfmark_socket_auth import install_socket_auth
 
+app = upstream.app
+install_socket_auth(upstream)
 app.config['SESSION_COOKIE_PATH'] = prefix + '/shelfmark/'
 app.wsgi_app = IngressIdentity(app.wsgi_app, options)

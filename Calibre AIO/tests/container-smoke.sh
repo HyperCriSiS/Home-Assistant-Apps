@@ -29,3 +29,5 @@ nginx -g 'daemon off;' -c /etc/nginx/cwa-ingress.conf &
 nginx_pid=$!
 trap 'kill "$cwa_pid" "$shelfmark_pid" "$nginx_pid" 2>/dev/null || true' EXIT
 python3 /aio-tests/probe_container.py
+/command/s6-setuidgid abc env 'AIO_SSO_OPTIONS={"enabled":true}' \
+  /app/shelfmark/.venv/bin/python /aio-tests/probe_socket_auth.py

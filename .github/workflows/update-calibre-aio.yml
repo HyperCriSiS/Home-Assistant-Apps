@@ -6,6 +6,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write
 concurrency:
   group: calibre-aio-upstream-updates
   cancel-in-progress: false
@@ -23,6 +24,7 @@ jobs:
           python3 'Calibre AIO/scripts/upstreams.py' update
           python3 'Calibre AIO/scripts/upstreams.py' check
       - name: Propose version and checksum updates
+        id: proposal
         uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676
         with:
           branch: chore/calibre-aio-upstreams
@@ -31,12 +33,17 @@ jobs:
           body: |
             Updates only the central upstream manifest, generated build arguments,
             app revision and changelog. Integration adapters remain separate.
-            The Calibre AIO validation workflow must pass before promotion;
-            use its manual dispatch on this branch if token-created PR checks
-            are not automatically triggered. No automatic merge is enabled.
+            The Calibre AIO validation workflow is dispatched automatically
+            for this branch and must pass before promotion.
+            No automatic merge is enabled.
           draft: true
           add-paths: |
             Calibre AIO/upstream.json
             Calibre AIO/build.yaml
             Calibre AIO/config.yaml
             Calibre AIO/CHANGELOG.md
+      - name: Validate the proposed combination on both architectures
+        if: steps.proposal.outputs.pull-request-number
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run validate-calibre-aio.yml --ref chore/calibre-aio-upstreams

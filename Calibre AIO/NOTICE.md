@@ -9,8 +9,8 @@ Home Assistant Calibre-Web Automated packaging, with the HA SSO work from
 - Shelfmark: calibrain/shelfmark, MIT; see `LICENSE-SHELFMARK` and `upstream.json`.
 - Calibre and kepubify retain their upstream licenses, notices and bundled
   source/provenance references. Their versions are recorded in `upstream.json`.
-- The original repository's license remains at the repository root; copied
-  upstream files retain their own copyright and license notices.
+- The original add-on repository's license is included as `LICENSE-BASE-ADDON`;
+  copied upstream files retain their own copyright and license notices.
 
 The build fetches upstream source distributions and does not replace their
 licenses or imply endorsement by their maintainers.

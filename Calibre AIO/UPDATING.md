@@ -19,11 +19,13 @@ already-pinned release. Network/provenance failures stop the proposal.
 
 The scheduled `update-calibre-aio.yml` runs weekly after this app is merged
 to the default branch and creates/updates a draft PR. The script can also be
-run manually on a development branch. GitHub does not normally trigger new
-workflows from PRs created with its own `GITHUB_TOKEN`: manually dispatch
-`validate-calibre-aio.yml` on that proposal branch before promotion, or use
-an explicitly configured GitHub App token to trigger PR checks. Never assume
-an update is tested merely because the PR exists. Automatic merge is disabled.
+run manually on a development branch. Since GitHub does not normally trigger
+new workflows from PRs created with its own `GITHUB_TOKEN`, the update workflow
+explicitly dispatches `validate-calibre-aio.yml` on the proposal branch. This
+starts the tests and both architecture builds automatically. A failed dispatch
+fails the updater; never assume an update is tested merely because the PR
+exists. Verify the validation run belongs to the proposal's current commit
+before promotion. Automatic merge is disabled.
 
 Our adapters, nginx routes, s6 services and navigation shell live under
 `rootfs/`; upstream sources are fetched during the image build and remain

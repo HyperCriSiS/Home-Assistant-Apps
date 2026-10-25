@@ -9,6 +9,8 @@ def main():
     if not options['enabled']:
         raise ValueError('Calibre AIO requires ingress SSO')
     os.environ['AIO_SSO_OPTIONS'] = json.dumps(options)
+    os.environ['HOME'] = '/data/shelfmark'
+    os.environ['XDG_CACHE_HOME'] = '/data/shelfmark/cache'
     executable = '/app/shelfmark/.venv/bin/gunicorn'
     os.execv(executable, [executable, '--bind', '127.0.0.1:8085',
                         '--workers', '1', '--timeout', '300',
