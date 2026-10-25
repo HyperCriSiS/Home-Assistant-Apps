@@ -1,0 +1,17 @@
+{
+  "cwa": {
+    "repository": "crocodilestick/Calibre-Web-Automated",
+    "version": "v4.0.6",
+    "commit": "1b80f9a74b3db1fe9b35978e38d2e62fcb6a7246",
+    "sha256": "19a5d0825d28f5fba9310b415c0eda91e76038e3534fb4c5d8189070876eb342"
+  },
+  "shelfmark": {
+    "repository": "calibrain/shelfmark",
+    "version": "v1.4.0",
+    "commit": "d2b4a0290ec118c541803f31329d6e89e5fe9701",
+    "sha256": "6a45e9401b438860a82b99c39a747bcefd8258be7305669ab4497a71c2eb699a"
+  },
+  "calibre": "9.1.0",
+  "kepubify": "v4.0.4",
+  "shelfmark_python": "3.14.7"
+}
