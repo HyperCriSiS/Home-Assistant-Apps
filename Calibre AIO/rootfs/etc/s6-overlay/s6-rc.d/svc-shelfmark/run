@@ -1,0 +1,9 @@
+#!/usr/bin/with-contenv bash
+# shellcheck shell=bash
+set -euo pipefail
+export PYTHONPATH=/opt/ha-cwa:/app/shelfmark
+cd /app/shelfmark
+exec /app/shelfmark/.venv/bin/gunicorn \
+    --bind 127.0.0.1:8085 --workers 1 --timeout 300 \
+    --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker \
+    --error-logfile - shelfmark_wsgi:app

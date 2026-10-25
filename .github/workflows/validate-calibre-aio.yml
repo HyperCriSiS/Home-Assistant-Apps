@@ -1,0 +1,95 @@
+name: Validate Calibre AIO
+on:
+  push:
+    branches: [main, feature/calibre-aio]
+    paths: ['Calibre AIO/**', '.github/workflows/validate-calibre-aio.yml']
+  pull_request:
+    paths: ['Calibre AIO/**', '.github/workflows/validate-calibre-aio.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: calibre-aio-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify pins and resolve CWA test source
+        id: pins
+        run: |
+          python 'Calibre AIO/scripts/upstreams.py' check
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          print('cwa=' + json.load(open('Calibre AIO/upstream.json'))['cwa']['commit'])
+          PY
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: crocodilestick/Calibre-Web-Automated
+          ref: ${{ steps.pins.outputs.cwa }}
+          path: .cwa-test-source
+          persist-credentials: false
+      - name: Install test tools
+        run: |
+          python -m pip install -r 'Calibre AIO/tests/requirements.txt'
+          sudo apt-get update
+          sudo apt-get install -y nginx
+          sudo systemctl stop nginx
+          sudo ip addr add 172.30.32.2/32 dev lo
+      - name: Adapter, gateway and real nginx checks
+        env:
+          CWA_SOURCE: .cwa-test-source
+          CWA_TEST_NGINX: '1'
+        run: python -m unittest discover -s 'Calibre AIO/tests' -v
+      - name: Real privilege transition
+        run: sudo "$(command -v python)" -m unittest discover -s 'Calibre AIO/tests' -p test_launch_permissions.py -v
+      - name: Shell syntax
+        run: |
+          find 'Calibre AIO/rootfs' -type f \( -name '*.sh' -o -name run \) -print0 |
+            while IFS= read -r -d '' script; do bash -n "$script"; done
+  build:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@v3
+      - name: Generate pinned build arguments
+        id: args
+        run: |
+          echo 'values<<END_ARGS' >> "$GITHUB_OUTPUT"
+          python3 'Calibre AIO/scripts/upstreams.py' args >> "$GITHUB_OUTPUT"
+          echo END_ARGS >> "$GITHUB_OUTPUT"
+      - uses: docker/build-push-action@v6
+        with:
+          context: 'Calibre AIO'
+          load: true
+          tags: calibre-aio:test
+          build-args: |
+            BUILD_FROM=ghcr.io/home-assistant/${{ matrix.arch }}-base-debian:bookworm
+            BUILD_VERSION=0.1.0
+            ${{ steps.args.outputs.values }}
+          cache-from: type=gha,scope=calibre-aio-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=calibre-aio-${{ matrix.arch }}
+      - name: Full container acceptance
+        run: >-
+          docker run --rm
+          --entrypoint bash
+          -v "$PWD/Calibre AIO/tests:/aio-tests:ro"
+          calibre-aio:test /aio-tests/container-smoke.sh

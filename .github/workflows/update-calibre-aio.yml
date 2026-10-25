@@ -1,0 +1,42 @@
+name: Propose Calibre AIO upstream updates
+on:
+  schedule:
+    - cron: '23 7 * * 2'
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: calibre-aio-upstream-updates
+  cancel-in-progress: false
+jobs:
+  update:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Resolve stable upstream releases and verify provenance
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 'Calibre AIO/scripts/upstreams.py' update
+          python3 'Calibre AIO/scripts/upstreams.py' check
+      - name: Propose version and checksum updates
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: chore/calibre-aio-upstreams
+          commit-message: 'chore(calibre-aio): update pinned upstream sources'
+          title: 'chore(calibre-aio): update pinned upstream sources'
+          body: |
+            Updates only the central upstream manifest, generated build arguments,
+            app revision and changelog. Integration adapters remain separate.
+            The Calibre AIO validation workflow must pass before promotion;
+            use its manual dispatch on this branch if token-created PR checks
+            are not automatically triggered. No automatic merge is enabled.
+          draft: true
+          add-paths: |
+            Calibre AIO/upstream.json
+            Calibre AIO/build.yaml
+            Calibre AIO/config.yaml
+            Calibre AIO/CHANGELOG.md

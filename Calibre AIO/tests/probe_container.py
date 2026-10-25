@@ -1,0 +1,48 @@
+"""Exercise real applications and prefix-aware authentication in the built image."""
+import http.client
+import json
+import time
+
+ADMIN = {'X-Remote-User-Id': 'a' * 32, 'X-Remote-User-Groups': 'system-admin'}
+READER = {'X-Remote-User-Id': 'b' * 32, 'X-Remote-User-Groups': 'system-users'}
+
+
+def get(path, headers=None, trusted=True):
+    conn = http.client.HTTPConnection('127.0.0.1', 8084, timeout=10,
+                                     source_address=('127.0.0.2' if trusted else '127.0.0.1', 0))
+    try:
+        conn.request('GET', path, headers=headers or {})
+        response = conn.getresponse()
+        return response.status, response.read(), dict(response.getheaders())
+    finally:
+        conn.close()
+
+
+for attempt in range(120):
+    try:
+        status, _, _ = get('/shelfmark/api/health', ADMIN)
+        library_status, _, _ = get('/library/', ADMIN)
+        if status == 200 and library_status == 200:
+            break
+    except OSError:
+        pass
+    time.sleep(1)
+else:
+    raise RuntimeError('Both backends did not become ready')
+
+assert get('/', trusted=False)[0] == 403
+assert get('/library/')[0] == 403
+assert get('/shelfmark/')[0] == 403
+status, body, _ = get('/')
+assert status == 200 and b'Calibre AIO' in body
+assert b'/api/hassio_ingress/aio-test/' in body
+status, body, _ = get('/shelfmark/', ADMIN)
+assert status == 200 and b'/api/hassio_ingress/aio-test/shelfmark/' in body
+status, body, headers = get('/library/', ADMIN)
+assert status == 200 and b'/api/hassio_ingress/aio-test/library' in body
+assert get('/library/', READER)[0] == 200
+status, body, _ = get('/shelfmark/api/auth/status', ADMIN)
+assert status == 200, (status, body)
+assert get('/shelfmark/socket.io/?EIO=4&transport=polling', ADMIN)[0] == 200
+assert get('/shelfmark/socket.io/?EIO=4&transport=polling')[0] == 403
+print('Real CWA + Shelfmark startup, prefixes, HA identities, UI and Socket.IO passed')

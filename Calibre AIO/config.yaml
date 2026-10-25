@@ -1,0 +1,39 @@
+name: "Calibre AIO"
+description: "Shelfmark book discovery and Calibre library management in one interface"
+version: "0.1.0"
+stage: experimental
+slug: "calibre-aio"
+init: false
+arch:
+  - aarch64
+  - amd64
+icon: false
+url: "https://github.com/HyperCriSiS/Home-Assistant-Apps/tree/main/Calibre%20AIO"
+panel_icon: "mdi:bookshelf"
+panel_title: "Calibre AIO"
+panel_admin: false
+startup: services
+ingress: true
+ingress_port: 8084
+ports: {}
+map:
+  - share:rw
+options:
+  library_dir: "calibre-aio/library"
+  ingest_dir: "calibre-aio/ingest"
+  network_share_mode: false
+  sso:
+    enabled: true
+    admin_users: []
+    admin_account: "admin"
+    auto_create_users: true
+schema:
+  library_dir: "str"
+  ingest_dir: "str"
+  network_share_mode: "bool"
+  sso:
+    enabled: "bool"
+    admin_users:
+      - "match(^[0-9a-f]{32}$)"
+    admin_account: "str"
+    auto_create_users: "bool"
