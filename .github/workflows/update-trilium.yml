@@ -17,9 +17,9 @@ concurrency:
 
 jobs:
   update:
-    name: Detect, validate and promote Trilium updates
+    name: Detect Trilium updates and open a validated PR
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 15
     env:
       GH_TOKEN: ${{ secrets.AUTOMATION_TOKEN || github.token }}
 
@@ -60,26 +60,48 @@ jobs:
           LATEST: ${{ steps.version.outputs.latest }}
         run: docker manifest inspect "docker.io/triliumnext/trilium:${LATEST}" >/dev/null
 
-      - name: Update add-on files
+      - name: Check for an existing update pull request
         if: steps.version.outputs.update == 'true'
-        env:
-          LATEST: ${{ steps.version.outputs.latest }}
-        run: python3 .github/scripts/update_trilium.py --upstream "${LATEST}"
-
-      - name: Create update branch and optional pull request
-        if: steps.version.outputs.update == 'true'
-        id: update
+        id: existing
         env:
           LATEST: ${{ steps.version.outputs.latest }}
         run: |
           branch="automation/trilium-${LATEST}"
-          base_sha="$(git rev-parse HEAD)"
-          echo "branch=${branch}" >> "${GITHUB_OUTPUT}"
-          echo "base_sha=${base_sha}" >> "${GITHUB_OUTPUT}"
+          number="$(gh pr list \
+            --repo "${GITHUB_REPOSITORY}" \
+            --base dev-trilium \
+            --head "${branch}" \
+            --state open \
+            --json number \
+            --jq '.[0].number // empty')"
+          {
+            echo "branch=${branch}"
+            echo "number=${number}"
+          } >> "${GITHUB_OUTPUT}"
 
+      # The pull request keeps its original content (and App version date);
+      # merge-due-updates.yml regenerates it only when dev-trilium moves.
+      - name: Update add-on files with the trusted updater from main
+        if: steps.version.outputs.update == 'true' && steps.existing.outputs.number == ''
+        env:
+          LATEST: ${{ steps.version.outputs.latest }}
+        run: |
+          git fetch --no-tags origin main
+          git show origin/main:.github/scripts/update_trilium.py > "${RUNNER_TEMP}/update_trilium.py"
+          python3 "${RUNNER_TEMP}/update_trilium.py" \
+            --root . \
+            --upstream "${LATEST}" \
+            --date "$(date -u +%F)"
+
+      - name: Create update branch and pull request
+        if: steps.version.outputs.update == 'true' && steps.existing.outputs.number == ''
+        env:
+          BRANCH: ${{ steps.existing.outputs.branch }}
+          LATEST: ${{ steps.version.outputs.latest }}
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git switch -C "${branch}"
+          git switch -C "${BRANCH}"
           git add 'TriliumNext Notes/Dockerfile' \
             'TriliumNext Notes/config.yaml' \
             'TriliumNext Notes/README.md' \
@@ -87,103 +109,39 @@ jobs:
           git commit -m "chore: update Trilium to ${LATEST}"
 
           remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git push --force "${remote}" "HEAD:refs/heads/${branch}"
+          git push --force "${remote}" "HEAD:refs/heads/${BRANCH}"
 
-          existing="$(gh pr list \
+          body="$(printf '%s\n\n%s\n%s\n\nUpstream: %s\n' \
+            "Automated Trilium update to ${LATEST}." \
+            "Merged into dev-trilium automatically 12 hours after opening, once full CI" \
+            "passed for the exact commit. The label hold stops it." \
+            "https://github.com/TriliumNext/Trilium/releases/tag/${LATEST}")"
+          gh pr create \
             --repo "${GITHUB_REPOSITORY}" \
             --base dev-trilium \
-            --head "${branch}" \
-            --state open \
-            --json number \
-            --jq '.[0].number // empty')"
-
-          pr_number="${existing}"
-          if [[ -z "${pr_number}" ]]; then
-            body="$(printf \
-              'Automated Trilium update to %s. Full CI must pass before promotion to dev-trilium.\n\nUpstream: %s\n' \
-              "${LATEST}" \
-              "https://github.com/TriliumNext/Trilium/releases/tag/${LATEST}")"
-
-            if pr_url="$(gh pr create \
-              --repo "${GITHUB_REPOSITORY}" \
-              --base dev-trilium \
-              --head "${branch}" \
-              --title "chore: update Trilium to ${LATEST}" \
-              --body "${body}" 2>/tmp/trilium-pr-error)"; then
-              pr_number="${pr_url##*/}"
-            else
-              cat /tmp/trilium-pr-error >&2
-              echo "GitHub Actions PR creation is disabled; validated fast-forward fallback will be used."
-            fi
-          fi
-
-          echo "number=${pr_number}" >> "${GITHUB_OUTPUT}"
+            --head "${BRANCH}" \
+            --title "chore: update Trilium to ${LATEST}" \
+            --body "${body}"
 
       - name: Dispatch full validation for update branch
-        if: steps.version.outputs.update == 'true'
-        id: dispatch
+        if: steps.version.outputs.update == 'true' && steps.existing.outputs.number == ''
         env:
-          BRANCH: ${{ steps.update.outputs.branch }}
-        run: |
-          # Remember the dispatch time so an older run for the same branch is never awaited.
-          echo "since=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "${GITHUB_OUTPUT}"
-          gh workflow run validate.yml --repo "${GITHUB_REPOSITORY}" --ref "${BRANCH}"
+          BRANCH: ${{ steps.existing.outputs.branch }}
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run validate.yml --repo "${GITHUB_REPOSITORY}" --ref "${BRANCH}"
 
-      - name: Wait for update validation
+      - name: Close superseded Trilium update pull requests
         if: steps.version.outputs.update == 'true'
         env:
-          BRANCH: ${{ steps.update.outputs.branch }}
-          SINCE: ${{ steps.dispatch.outputs.since }}
+          BRANCH: ${{ steps.existing.outputs.branch }}
         run: |
-          run_id=""
-          for _ in $(seq 1 30); do
-            run_id="$(gh run list \
-              --repo "${GITHUB_REPOSITORY}" \
-              --workflow validate.yml \
-              --branch "${BRANCH}" \
-              --event workflow_dispatch \
-              --limit 5 \
-              --json databaseId,createdAt \
-              --jq "map(select(.createdAt >= \"${SINCE}\")) | .[0].databaseId // empty")"
-            [[ -n "${run_id}" ]] && break
-            sleep 2
-          done
-
-          [[ -n "${run_id}" ]] || { echo "Validation run did not start" >&2; exit 1; }
-          gh run watch "${run_id}" --repo "${GITHUB_REPOSITORY}" --exit-status
-
-      - name: Promote validated update into dev-trilium
-        if: steps.version.outputs.update == 'true'
-        env:
-          BRANCH: ${{ steps.update.outputs.branch }}
-          BASE_SHA: ${{ steps.update.outputs.base_sha }}
-          PR_NUMBER: ${{ steps.update.outputs.number }}
-        run: |
-          current_dev="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/dev-trilium" --jq '.object.sha')"
-          if [[ "${current_dev}" != "${BASE_SHA}" ]]; then
-            echo "dev-trilium changed during validation; refusing to promote stale update" >&2
-            exit 1
-          fi
-
-          promoted=false
-          if [[ -n "${PR_NUMBER}" ]]; then
-            if gh pr merge "${PR_NUMBER}" \
-              --repo "${GITHUB_REPOSITORY}" \
-              --squash \
-              --delete-branch; then
-              promoted=true
-            else
-              echo "PR merge failed; using validated fast-forward fallback." >&2
-            fi
-          fi
-
-          if [[ "${promoted}" != "true" ]]; then
-            remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-            git push "${remote}" "refs/heads/${BRANCH}:refs/heads/dev-trilium"
-            git push "${remote}" --delete "${BRANCH}" || true
-          fi
-
-          # GITHUB_TOKEN-generated repository events do not recursively start workflows.
-          # Explicit dispatch keeps validation, the development store, and release promotion in sync.
-          gh workflow run validate.yml --repo "${GITHUB_REPOSITORY}" --ref dev-trilium
-          gh workflow run sync-dev-store.yml --repo "${GITHUB_REPOSITORY}" --ref main
+          gh pr list \
+            --repo "${GITHUB_REPOSITORY}" --base dev-trilium --state open \
+            --author 'app/github-actions' \
+            --json number,headRefName \
+            --jq '.[] | select(.headRefName | startswith("automation/trilium-"))
+              | select(.headRefName != env.BRANCH) | .number' \
+            | while read -r number; do
+                gh pr close "${number}" --repo "${GITHUB_REPOSITORY}" --delete-branch \
+                  --comment "Superseded by ${BRANCH}."
+              done

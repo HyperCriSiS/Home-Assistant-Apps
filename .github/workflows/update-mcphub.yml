@@ -144,7 +144,7 @@ jobs:
       # A workflow_dispatch run on the trusted, same-repository automation
       # branch is still fully validated but does not wait for PR approval.
       - name: Validate generated upstream branch automatically
-        if: steps.upstream.outputs.update == 'true'
+        if: steps.upstream.outputs.update == 'true' && steps.existing.outputs.number == ''
         env:
           BRANCH: ${{ steps.existing.outputs.branch }}
           GH_TOKEN: ${{ github.token }}
@@ -153,24 +153,20 @@ jobs:
             --repo "${GITHUB_REPOSITORY}" \
             --ref "${BRANCH}"
 
-      # workflow_run is not reliably emitted for CI dispatched with GITHUB_TOKEN.
-      # Launch a trusted main-branch worker that waits for the exact read-only
-      # validation run to succeed before invoking the protected merge script.
-      - name: Request verified upstream merge
+      # Merge into dev-mcphub happens in merge-due-updates.yml once the PR has
+      # been open for 12 hours. A newer upstream release supersedes older PRs.
+      - name: Close superseded upstream update pull requests
         if: steps.upstream.outputs.update == 'true'
         env:
           BRANCH: ${{ steps.existing.outputs.branch }}
-          VERSION: ${{ steps.upstream.outputs.latest }}
-          GH_TOKEN: ${{ github.token }}
         run: |
-          sha="$(gh pr list \
-            --repo "${GITHUB_REPOSITORY}" --base dev-mcphub \
-            --head "${BRANCH}" --state open \
-            --json headRefOid --jq '.[0].headRefOid // empty')"
-          [[ "${sha}" =~ ^[0-9a-f]{40}$ ]] || {
-            echo "Unable to resolve upstream PR commit" >&2
-            exit 1
-          }
-          gh workflow run auto-merge-mcphub-upstream.yml \
-            --repo "${GITHUB_REPOSITORY}" --ref main \
-            -f upstream_version="${VERSION}" -f head_sha="${sha}"
+          gh pr list \
+            --repo "${GITHUB_REPOSITORY}" --base dev-mcphub --state open \
+            --author 'app/github-actions' \
+            --json number,headRefName \
+            --jq '.[] | select(.headRefName | test("^automation/mcphub-[0-9]+\.[0-9]+\.[0-9]+$"))
+              | select(.headRefName != env.BRANCH) | .number' \
+            | while read -r number; do
+                gh pr close "${number}" --repo "${GITHUB_REPOSITORY}" --delete-branch \
+                  --comment "Superseded by ${BRANCH}."
+              done
