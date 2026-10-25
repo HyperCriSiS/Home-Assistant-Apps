@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <base href="__AIO_BASE__/">
+  <title>Calibre AIO</title>
+  <style>
+    :root{color-scheme:dark;font-family:system-ui,sans-serif;background:#10151b;color:#eef3f8}
+    *{box-sizing:border-box}body{margin:0;height:100dvh;display:flex;flex-direction:column}
+    header{display:flex;align-items:center;gap:28px;padding:12px 22px;border-bottom:1px solid #2b3541;background:#18212b}
+    .brand{font-weight:750;font-size:19px;white-space:nowrap}.brand span{color:#7dd3c7}
+    nav{display:flex;gap:6px}a{color:#c3cfdd;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:600}
+    a[aria-current=page]{background:#284b4a;color:#a6f2df}a:hover{background:#2b3541}a:focus-visible{outline:2px solid #a6f2df}
+    .hint{margin-left:auto;color:#91a1b5;font-size:12px}iframe{width:100%;flex:1;border:0;min-height:0;background:#10151b}
+    @media(max-width:540px){header{gap:10px;padding:9px 10px}.brand{font-size:16px}a{padding:9px 10px}.hint{display:none}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">Calibre <span>AIO</span></div>
+    <nav aria-label="Bereich auswählen">
+      <a href="shelfmark/" target="workspace" data-view="discover" aria-current="page">Entdecken</a>
+      <a href="library/" target="workspace" data-view="library">Bibliothek</a>
+    </nav>
+    <span class="hint">Bücher finden. Bibliothek genießen.</span>
+  </header>
+  <iframe name="workspace" title="Bücher entdecken und Bibliothek verwalten" src="shelfmark/"></iframe>
+  <script>
+    const frame=document.querySelector('iframe');
+    const links=[...document.querySelectorAll('nav a')];
+    function select(view){links.forEach(a=>{if(a.dataset.view===view)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});}
+    links.forEach(a=>a.addEventListener('click',()=>select(a.dataset.view)));
+    frame.addEventListener('load',()=>{try{select(frame.contentWindow.location.pathname.includes('/library/')?'library':'discover')}catch{}});
+  </script>
+</body>
+</html>
