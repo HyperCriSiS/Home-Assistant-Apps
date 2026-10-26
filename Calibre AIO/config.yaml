@@ -1,6 +1,6 @@
 name: "Calibre AIO (Dev)"
 description: "Shelfmark book discovery and Calibre library management in one interface"
-version: "0.1.5-dev.149"
+version: "0.1.6-dev.150"
 stage: experimental
 slug: "calibre-aio"
 init: false
@@ -14,6 +14,7 @@ panel_title: "Calibre AIO (Dev)"
 panel_admin: false
 startup: services
 ingress: true
+ingress_stream: true
 ingress_port: 8084
 ports: {}
 map:

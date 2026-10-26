@@ -1,3 +1,9 @@
+# 0.1.6
+
+- Enable Supervisor ingress streaming so POST uploads larger than 16 MiB reach
+  the app instead of failing in Supervisor's request-body buffer.
+- Verify uploads over 25 MiB through both production nginx backend routes.
+
 # 0.1.5
 
 - Keep Shelfmark's native Go To Library link inside the shared AIO workspace,
