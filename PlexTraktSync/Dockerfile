@@ -6,7 +6,7 @@ ARG BUILD_VERSION
 ARG BUILD_ARCH
 LABEL io.hass.type="app" io.hass.version="${BUILD_VERSION}" io.hass.arch="${BUILD_ARCH}" \
       org.opencontainers.image.source="https://github.com/HyperCriSiS/Home-Assistant-Apps"
-RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-venv ca-certificates \
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3 python3-venv ca-certificates tzdata \
     && rm -rf /var/lib/apt/lists/* \
     && python3 -m venv /opt/pts \
     && /opt/pts/bin/pip download --no-cache-dir --no-deps "PlexTraktSync==${PTS_VERSION}" -d /tmp/pts \

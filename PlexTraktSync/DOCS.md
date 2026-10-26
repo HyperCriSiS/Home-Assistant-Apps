@@ -1,13 +1,14 @@
 # Setup and operations
 
-## Configuration coverage (App 0.3.0)
+## Configuration coverage (App 0.4.0)
 
 See [OPTIONS.md](OPTIONS.md) for every supported sync/watch setting, all 29 option names, defaults and permanently locked settings.
 All configuration lives in the dark Ingress UI, with a desktop sidebar and mobile
 menu. The native HA configuration form is disabled. No restart is needed after saving.
 Watchlists, liked-list playlists and playback progress are now optional controls;
-all default off. Collection changes, Trakt favorites, direct scrobbles and importing
-other Plex users remain prohibited. The ratings master switch is retained, with
+all default off. Normal sync cannot change the collection or Trakt favorites,
+use direct scrobbles or import other Plex users. Separately approved restoration
+can change selected Trakt categories; see [BACKUPS.md](BACKUPS.md). The ratings master switch is retained, with
 independent per-direction controls. Upgrading from 0.1.0 preserves credentials and
 safe defaults but requires a fresh analysis/approval.
 
@@ -75,6 +76,16 @@ safe defaults. No optional write mode is activated by migration. Replacing Trakt
 client credentials removes the old OAuth authorization and requires reconnection.
 HA metadata uses `options: {}` and `schema: false` to hide the native form while
 accepting legacy Supervisor option data; server-side validation remains enforced.
+
+## Trakt backup and restore
+
+Use **Sicherungen** for full/partial ZIP snapshots, schedules, tiered long-term
+retention, downloads/imports and separately approved merge/overwrite/mirror
+restoration. Configuration is independent from normal sync options. Automatic
+backups start disabled. A mandatory pinned rollback and a current comparison
+precede restore writes; normal sync stays paused until a new analysis/approval.
+See [BACKUPS.md](BACKUPS.md) for supported categories, defaults, operation and
+API limits. Playback is archive-only and this is not a complete account image.
 
 ## Directions and settings
 

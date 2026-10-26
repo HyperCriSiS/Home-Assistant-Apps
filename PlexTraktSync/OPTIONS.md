@@ -1,4 +1,4 @@
-# Configuration coverage and protected defaults
+# Synchronization configuration and protected defaults
 
 This table covers the sync, watch and list settings in the pinned PlexTraktSync
 0.35.21 configuration. The dark Ingress UI exposes all 29 supported controls;
@@ -28,7 +28,7 @@ explicit approval are required again after any option changes.
 | `watch.remove_collection` | Permanently blocked | false, locked |
 | `sync.plex_to_trakt.collection` | Permanently blocked | false, locked |
 | `sync.plex_to_trakt.clear_collected` | Permanently blocked | false, locked |
-| Trakt favorites / history deletion | No write path is exposed | unchanged |
+| Trakt favorites / history deletion | No normal-sync write path; separately approved restore is independent | unchanged during sync |
 
 The `ratings` master switch preserves compatibility with 0.1.0. When it is on,
 the two independent direction switches take effect (both default to true, as in
@@ -134,3 +134,10 @@ preserved, and the legacy ratings switch retains its old behavior. The expanded
 configuration changes the approval fingerprint: perform another analysis and
 explicitly approve before writes resume. No new optional write mode is enabled
 by the migration.
+
+## Backup settings are separate
+
+All controls above govern normal synchronization. The **Sicherungen** workspace
+has its own versioned settings, category scope, schedules and retention. A
+separately previewed and explicitly approved restore can write selected Trakt
+categories even if their normal sync is disabled. See [BACKUPS.md](BACKUPS.md).

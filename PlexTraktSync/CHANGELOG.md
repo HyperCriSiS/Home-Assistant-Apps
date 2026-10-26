@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.4.0
+
+- Add a dark Ingress backup workspace: full/partial category ZIPs, integrity
+  checks, download/import, pins, archive filtering and typed deletion confirmation.
+- Add up to 12 daily/weekly/monthly/interval schedules, explicit IANA timezones,
+  missed-run catch-up, bounded retries and persistent due times. Optional required
+  pre-sync snapshots have a configurable minimum interval.
+- Add newest/daily/weekly/monthly/yearly retention, age limits, manual protection,
+  quota/free-space controls and explicit retention cleanup with a preview count.
+- Add merge/overwrite/mirror restore for seven supported categories, expiring
+  account-bound previews, multiset history de-duplication, pinned rollback before
+  writes, a restore journal and post-restore verification. Playback is archive-only.
+- Keep normal sync guards; restore uses separate explicit approval and pauses
+  sync. No automatic retry of ambiguous writes or interrupted restores.
+- Add archive/security/API/restore/schedule/HTTP tests and native-container
+  persistence checks. No production account writes were used for implementation.
+
 ## 0.3.1
 
 - Remove the prominent personal favorite-archive messaging from the overview and

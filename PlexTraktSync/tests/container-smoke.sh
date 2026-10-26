@@ -26,6 +26,14 @@ c = Controller("/data/pts")
 assert c.options["sync_interval_minutes"] == 60
 c.action("settings", {"revision": c.identity(), "options": {**c.options, "sync_interval_minutes": 75},
                       "credentials": {"plex_token": "nonfunctional-fixture-token"}})'
+docker exec --user 1000 "$container" python -c 'import time
+from server import Controller
+from backup_store import digest, zone
+c = Controller("/data/pts")
+assert str(zone("Europe/Berlin")) == "Europe/Berlin"
+settings = {**c.backups.settings, "timezone": "Europe/Berlin"}
+c.action("backup-settings", {"settings": settings, "revision": digest(c.backups.settings)})
+c.backups.store.save({"id":"fixture","username":"Fixture"}, {"history":[]}, "manual", time.time(), settings, pinned=True)'
 docker stop --time 30 "$container"
 test "$(docker inspect -f '{{.State.ExitCode}}' "$container")" = 0
 docker start "$container"
@@ -42,5 +50,11 @@ c = Controller("/data/pts")
 assert c.options["sync_interval_minutes"] == 75, "Startup overwrote Ingress settings"
 assert c.credentials()["plex_token"] == "nonfunctional-fixture-token"
 assert not c.approved()'
+docker exec --user 1000 "$container" python -c 'from server import Controller
+c = Controller("/data/pts")
+assert c.backups.settings["timezone"] == "Europe/Berlin"
+entries = c.backups.store.entries()
+assert len(entries) == 1 and entries[0]["pinned"] and entries[0]["valid"]
+c.backups.store.inspect(c.backups.store.path(entries[0]["id"]))'
 docker stop --time 30 "$container"
 test "$(docker inspect -f '{{.State.ExitCode}}' "$container")" = 0

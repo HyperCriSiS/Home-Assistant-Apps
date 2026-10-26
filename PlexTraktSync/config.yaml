@@ -1,6 +1,6 @@
 name: "PlexTraktSync"
 description: "Protected Plex and Trakt watched-history synchronisation"
-version: "0.3.1"
+version: "0.4.0"
 slug: "plextraktsync"
 stage: experimental
 init: false
