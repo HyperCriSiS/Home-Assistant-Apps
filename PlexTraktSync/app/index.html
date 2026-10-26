@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>PlexTraktSync</title>
+<style>body{font:16px system-ui;max-width:850px;margin:2rem auto;padding:1rem;color:#163342;background:#f5f8fa}button,input{font:inherit;padding:.6rem;margin:.3rem}section{background:white;padding:1rem;margin:1rem 0;border-radius:10px}pre{white-space:pre-wrap;overflow-wrap:anywhere}label{display:block}</style>
+<h1>PlexTraktSync</h1>
+<p>Die Trakt-Sammlung wird von dieser App nicht verändert, weil sie als Favoritenarchiv verwendet wird. Watchlist und Favoriten bleiben geschützt.</p>
+<section><h2>1. Zugangsdaten</h2><p>Plex-Server und Kontoname in der HA-App-Konfiguration eintragen und die App neu starten. Der Token muss genau diesem Konto gehören.</p>
+<label>Plex-Token <input id="plex_token" type="password" autocomplete="off"></label>
+<label>Trakt-Client-ID <input id="client_id" autocomplete="off"></label>
+<label>Trakt-Client-Secret (optional) <input id="client_secret" type="password" autocomplete="off"></label>
+<button onclick="credentials()">Sicher speichern</button><button onclick="act('plex-test')">Plex prüfen</button>
+<p>Trakt benötigt eine registrierte Anwendung: <a href="https://developer.trakt.tv/apps/new" target="_blank" rel="noreferrer">Client-ID erstellen</a>. Redirect-URI: urn:ietf:wg:oauth:2.0:oob</p>
+<button onclick="act('trakt-start')">2. Trakt-Code anfordern</button><button onclick="act('trakt-poll')">Autorisierung prüfen</button></section>
+<section><h2>3. Sicherer Erstabgleich</h2><button onclick="act('analyze')">Nur lesen und analysieren</button>
+<p>Erst den vollständigen Bericht und die gewählten Synchronisierungsrichtungen prüfen. Nicht zugeordnete Titel werden übersprungen. Freigabe erlaubt den nächsten schreibenden Lauf.</p>
+<button onclick="approve()">4. Schreibenden Abgleich ausdrücklich freigeben</button></section>
+<section><h2>Betrieb</h2><p>Wiedergabeüberwachung gleicht fehlenden Gesehen-Status ab. Wiederholtes Ansehen erzeugt keine zusätzlichen Verlaufseinträge. Für verpasste Ereignisse den periodischen Abgleich aktivieren.</p><button onclick="act('sync')">Jetzt synchronisieren</button><button onclick="act('pause',{paused:true})">Pausieren</button><button onclick="act('pause',{paused:false})">Fortsetzen</button><pre id="status"></pre></section>
+<section><h2>Ergebnis</h2><pre id="result" role="status"></pre></section>
+<script>
+let csrf='';
+async function refresh(){const r=await fetch('api/status');const s=await r.json();csrf=s.csrf;delete s.csrf;document.getElementById('status').textContent=JSON.stringify(s,null,2);}
+async function act(name,data={}){try{const r=await fetch('api/'+name,{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify(data)});document.getElementById('result').textContent=JSON.stringify(await r.json(),null,2);await refresh();}catch(e){document.getElementById('result').textContent='Verbindung zur App unterbrochen';}}
+async function credentials(){const d={};for(const k of ['plex_token','client_id','client_secret']){d[k]=document.getElementById(k).value;document.getElementById(k).value='';}await act('credentials',d);}
+function approve(){if(confirm('Bericht geprüft? Schreibende Synchronisierung mit diesen Einstellungen freigeben?'))act('approve');}
+refresh();setInterval(refresh,5000);
+</script></html>
