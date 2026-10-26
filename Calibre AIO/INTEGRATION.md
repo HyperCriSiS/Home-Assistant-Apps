@@ -95,3 +95,13 @@ installation and operator credentials; automated tests must not claim those.
 - Browser regression now rejects the old REST transport and covers automatic
   setup, denied identity/write access, restart failure, existing assignment,
   unavailable login/context, normal users and German/English navigation.
+
+### Navigation and setup completion (0.1.5)
+
+- The deployment shell handles same-origin links from Shelfmark to its own
+  CWA library inside the workspace; upstream sources remain unmodified.
+- Successful setup polls the uncached shell and both backends before reload.
+  Temporary connection errors are retried; polling is bounded and never
+  resubmits setup options or restarts the app again.
+- Browser regression covers the native target=_blank library link and
+  automatic reload through a temporary ingress startup failure.

@@ -6,13 +6,17 @@
 
 Open Calibre AIO inside Home Assistant. On first use with no configured app
 administrator, your signed-in HA administrator is adopted automatically and
-the app restarts. Reopen the interface afterwards. HA verifies your
+the app restarts. The interface reloads automatically once both applications
+are ready. HA verifies your
 administrator permission before saving your login name. Alternatively, enter
 it manually in the app configuration. No additional app HA API access is needed.
 **Discover** contains Shelfmark search,
 requests, downloads and source/client settings. **Library** contains CWA's
 library, reading and management features. The navigation stays visible while
 using either application. Both native interfaces remain intact.
+
+Shelfmark's Go To Library link opens CWA inside this shared interface on a
+normal click, preserving the navigation bar.
 
 The HA login configured in `sso.admin_username` receives administrator access
 to both applications. Other HA users
