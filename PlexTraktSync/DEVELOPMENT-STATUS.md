@@ -18,7 +18,7 @@ This is the current task handoff, not a replacement repository roadmap.
   post-verification and no automatic replay of ambiguous writes.
 - Normal sync guards remain unchanged. Restore is separately approved and leaves
   sync paused pending a fresh read-only analysis and explicit sync approval.
-- Local suite: 116 tests run; one DST test is skipped on the Windows runtime
+- Local suite: 117 tests run; one DST test is skipped on the Windows runtime
   lacking IANA files. Linux CI requires that test and native containers verify
   Europe/Berlin data and archive/settings persistence. JavaScript/YAML/pin checks pass.
 - Browser fixtures verified settings save/reload, complete backup, seven-category

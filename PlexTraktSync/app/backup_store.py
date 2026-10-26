@@ -191,6 +191,9 @@ class ArchiveStore:
             raise ValueError('Ungültiger Archivpfad.')
         return path
 
+    def used_bytes(self):
+        return sum(path.stat().st_size for path in self.root.glob('*.zip') if not path.is_symlink())
+
     def inspect(self, source, *, full=True):
         if isinstance(source, (bytes, bytearray)):
             if len(source) > MAX_ZIP:

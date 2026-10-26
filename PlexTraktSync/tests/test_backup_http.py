@@ -2,6 +2,7 @@
 import json
 import time
 import unittest
+from unittest.mock import patch
 
 import requests
 
@@ -52,6 +53,15 @@ class BackupHTTPTests(unittest.TestCase):
         self.assertTrue(self.c.backups.store.path(entry['id']).exists())
         self.assertEqual(requests.post(url+'/api/backup-delete',json={'id':entry['id'],'confirmation':'LÖSCHEN'},headers=headers,timeout=5).status_code,200)
         self.assertFalse(self.c.backups.store.path(entry['id']).exists())
+
+    def test_import_cannot_bypass_archive_quota(self):
+        entry=self.seed();url=self.serve(ingress=True)
+        payload=self.c.backups.store.path(entry['id']).read_bytes()
+        with patch.object(self.c.backups.store,'used_bytes',return_value=self.c.backups.settings['max_total_mb']*1024*1024):
+            result=requests.post(url+'/api/backups/import',data=payload,
+                                 headers={'Content-Type':'application/zip','X-CSRF-Token':self.c.csrf},timeout=5)
+        self.assertEqual(result.status_code,400)
+        self.assertEqual(len(self.c.backups.store.entries()),1)
 
 
 if __name__=='__main__':
