@@ -65,7 +65,7 @@ class BackupService:
         with self.mutex:
             entries = self.store.entries()
             keep = retained(entries, self.settings, time.time())
-            used = sum(path.stat().st_size for path in self.store.root.glob('*.zip') if not path.is_symlink())
+            used = self.store.used_bytes()
             return {'settings': deepcopy(self.settings), 'revision': digest(self.settings), 'categories': CATEGORIES,
                     'restorable': sorted(RESTORABLE), 'archives': entries, 'state': deepcopy(self.state),
                     'storage': {'used_bytes': used, 'free_bytes': shutil.disk_usage(self.store.root).free,
@@ -86,13 +86,16 @@ class BackupService:
                            deadline=time.monotonic() + self.settings['job_timeout_minutes'] * 60)
 
     def create(self, client, categories, reason='manual', *, pinned=False):
-        if sum(p.stat().st_size for p in self.store.root.glob('*.zip')) >= self.settings['max_total_mb'] * 1024 * 1024:
-            raise ValueError('Speicherlimit erreicht. Aufbewahrung prüfen oder nicht mehr benötigte Sicherungen entfernen.')
+        self.check_quota()
         account, data = client.snapshot(selection(categories))
         with self.mutex:
             saved = self.store.save(account, data, reason, time.time(), self.settings, pinned=pinned)
             self.store.prune(self.settings, time.time())
         return saved
+
+    def check_quota(self):
+        if self.store.used_bytes() >= self.settings['max_total_mb'] * 1024 * 1024:
+            raise ValueError('Speicherlimit erreicht. Aufbewahrung prüfen oder nicht mehr benötigte Sicherungen entfernen.')
 
     def start(self, kind, data, *, reason='manual', schedule_id=None):
         if not self.owner.lock.acquire(blocking=False):
@@ -282,6 +285,7 @@ class BackupService:
             raise ValueError('Wait until the current job finishes')
         try:
             with self.mutex:
+                self.check_quota()
                 saved = self.store.import_archive(raw, self.settings, time.time())
             return {'ok': True, 'archive_id': saved['id']}
         finally:
