@@ -4,8 +4,9 @@
 
 ## Getting started
 
-Open Calibre AIO inside Home Assistant. On first use, choose **Use signed-in
-administrator and restart**, then reopen the interface. HA verifies your
+Open Calibre AIO inside Home Assistant. On first use with no configured app
+administrator, your signed-in HA administrator is adopted automatically and
+the app restarts. Reopen the interface afterwards. HA verifies your
 administrator permission before saving your login name. Alternatively, enter
 it manually in the app configuration. No additional app HA API access is needed.
 **Discover** contains Shelfmark search,
@@ -116,8 +117,10 @@ SSO. Standalone external reader sync is outside the initial AIO scope.
 ## Troubleshooting
 
 Check App logs after a restart. The CWA launcher confirms the configured
-HA login-name policy. An empty `sso.admin_username` opens setup; use the button
-inside HA or configure the login manually and restart. Shelfmark startup is separate;
+HA login-name policy. An empty `sso.admin_username` opens automatic setup inside
+HA for an HA administrator. Existing assignments are never overwritten by setup.
+If setup fails, the message identifies the failed step; retry or configure the
+login manually and restart. Shelfmark startup is separate;
 one backend can be unavailable while the other is restarting. A 403 means the
 request lacks a trusted HA identity/permission; a 502 normally means that the
 target backend has not started yet. Send only relevant log excerpts; avoid

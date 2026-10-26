@@ -3,7 +3,9 @@
 Deutsch | [English](DOCS.md)
 
 Starte die App und öffne sie innerhalb von Home Assistant. Beim ersten Aufruf
-kannst Du **Angemeldeten Administrator übernehmen und neu starten** wählen.
+mit leerem Administratorfeld wird Dein angemeldetes HA-Administratorkonto
+automatisch übernommen und die App neu gestartet. Eine bereits konfigurierte
+Administratorzuweisung wird dabei nicht überschrieben.
 Home Assistant prüft Deine Administratorberechtigung und speichert Deinen
 HA-Anmeldenamen. Öffne die Oberfläche nach dem Neustart erneut. Die App erhält
 dafür keinen zusätzlichen HA-API-Zugriff. Falls die direkte Übernahme in Deinem

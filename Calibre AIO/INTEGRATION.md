@@ -74,7 +74,7 @@ installation and operator credentials; automated tests must not claim those.
 
 - German/English HA option labels and AIO navigation/setup are implemented.
 - Empty administrator configuration now opens setup without granting admin.
-  The setup button uses the signed-in HA administrator's permission-checked
+  Automatic setup uses the signed-in HA administrator's permission-checked
   auth-list and app-options APIs; the app receives no extra HA API permission.
 - Local adapter suite: 58 tests, with 5 Linux/root checks skipped on Windows.
   Browser regression covers admin setup, denied access, normal users, restart
@@ -82,3 +82,16 @@ installation and operator credentials; automated tests must not claim those.
 - Native image builds and real s6 boot/restart remain required in CI for this
   candidate. Actual frontend embedding in the user's HA installation remains
   operator acceptance; manual login-name configuration stays available.
+
+### Administrator setup correction (0.1.4)
+
+- Replaced unsupported REST app-management calls with the native HA frontend's
+  `supervisor/api` WebSocket messages. Responses are unwrapped by HA; successful
+  writes need not return a result wrapper. The previous mock incorrectly accepted
+  REST calls and wrapped responses, so its green result did not cover this bug.
+- Setup runs automatically only for an HA administrator on an unconfigured
+  installation, preserves an assignment found during the fresh options read,
+  and identifies the failed step without exposing raw API errors or credentials.
+- Browser regression now rejects the old REST transport and covers automatic
+  setup, denied identity/write access, restart failure, existing assignment,
+  unavailable login/context, normal users and German/English navigation.
