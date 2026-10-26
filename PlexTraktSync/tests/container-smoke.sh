@@ -21,6 +21,11 @@ except urllib.error.HTTPError as e:
     assert e.code == 403'
 docker exec --user 1000 "$container" python -c \
   'from pathlib import Path; Path("/data/pts/persistence-test").write_text("retained")'
+docker exec --user 1000 "$container" python -c 'from server import Controller
+c = Controller("/data/pts")
+assert c.options["sync_interval_minutes"] == 60
+c.action("settings", {"revision": c.identity(), "options": {**c.options, "sync_interval_minutes": 75},
+                      "credentials": {"plex_token": "nonfunctional-fixture-token"}})'
 docker stop --time 30 "$container"
 test "$(docker inspect -f '{{.State.ExitCode}}' "$container")" = 0
 docker start "$container"
@@ -32,5 +37,10 @@ for attempt in $(seq 1 30); do
 done
 docker exec "$container" python -c \
   'from pathlib import Path; assert Path("/data/pts/persistence-test").read_text() == "retained"'
+docker exec --user 1000 "$container" python -c 'from server import Controller
+c = Controller("/data/pts")
+assert c.options["sync_interval_minutes"] == 75, "Startup overwrote Ingress settings"
+assert c.credentials()["plex_token"] == "nonfunctional-fixture-token"
+assert not c.approved()'
 docker stop --time 30 "$container"
 test "$(docker inspect -f '{{.State.ExitCode}}' "$container")" = 0

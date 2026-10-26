@@ -23,7 +23,7 @@ class AuthTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.directory = Path(self.temp.name)
-        write(self.directory / "options.json", yaml.safe_load((ROOT / "config.yaml").read_text())["options"])
+        write(self.directory / "options.json", json.loads((ROOT / "default-options.json").read_text()))
         self.c = Controller(self.directory)
         self.c.action("credentials", {"client_id": "client"})
         self.c.device = {"device_code": "private", "started": time.time(), "expires_in": 600,
@@ -83,7 +83,7 @@ class HTTPTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.directory = Path(self.temp.name)
-        write(self.directory / "options.json", yaml.safe_load((ROOT / "config.yaml").read_text())["options"])
+        write(self.directory / "options.json", json.loads((ROOT / "default-options.json").read_text()))
         self.c = Controller(self.directory)
         self.servers = []
 

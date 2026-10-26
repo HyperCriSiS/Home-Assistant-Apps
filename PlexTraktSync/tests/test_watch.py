@@ -68,7 +68,7 @@ class WatchSchedulingTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.directory = Path(self.temp.name)
-        options = yaml.safe_load((ROOT / "config.yaml").read_text())["options"]
+        options = json.loads((ROOT / "default-options.json").read_text())
         options["watch_enabled"] = True
         write(self.directory / "options.json", options)
         self.c = Controller(self.directory)
