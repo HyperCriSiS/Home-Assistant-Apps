@@ -14,6 +14,7 @@ const pages = {
 let snapshot = null, status = null, dirty = false, pending = false, online = false;
 let toastTimer, deviceTimer, deviceExpires = 0, deviceInterval = 5, lastReport = '';
 const fields = new Map();
+let libraryNames = [], libraryIdentity = null;
 function element(tag, className, text) {
   const el = document.createElement(tag);
   if (className) el.className = className;
@@ -31,7 +32,7 @@ function field(parent, key, label, help, type = 'text', choices = null, limits =
   else if (type !== 'lines') input.type = type;
   if (limits) { input.min = limits[0]; input.max = limits[1]; input.step = 1; input.required = true; }
   if (type === 'text') input.maxLength = key === 'plex_username' ? 256 : 2048;
-  if (type === 'lines') { input.rows = 4; input.placeholder = 'Ein Eintrag pro Zeile'; }
+  if (type === 'lines') { input.rows = 2; input.placeholder = 'Ein Eintrag pro Zeile'; }
   if (key === 'plex_url') input.placeholder = 'http://192.168.1.10:32400';
   if (key === 'plex_username') input.placeholder = 'Dein Plex-Benutzername';
   const hint = element('p', 'field-help', help); hint.id = 'help-' + key;
@@ -51,14 +52,46 @@ function group(target, title, description) {
   $(target + '-fields').append(card); return card;
 }
 function warning(parent, text) { parent.append(element('p', 'inline-warning', text)); }
+function explanation(parent, title, text) {
+  const details = element('details', 'option-explanation');
+  details.append(element('summary', '', title), element('p', '', text)); parent.append(details);
+}
+function renderLibraries() {
+  const target = $('library-choices'); target.replaceChildren();
+  if (!libraryNames.length) { target.append(element('p', 'field-help', 'Lade die verfügbaren Film- und Serienbibliotheken aus Plex. Gespeicherte Filter bleiben auch ohne Verbindung erhalten.')); return; }
+  const options = collect();
+  const names = [...new Set([...libraryNames, ...options.include_libraries, ...options.exclude_libraries])];
+  target.append(element('p', 'field-help', 'Ohne Haken unter „Nur diese“ sind alle Bibliotheken eingeschlossen. Sobald dort ein Haken gesetzt ist, zählen nur diese Bibliotheken. „Ausschließen“ hat immer Vorrang.'));
+  for (const name of names) {
+    const row = element('div', 'library-choice');
+    row.append(element('strong', '', name + (libraryNames.includes(name) ? '' : ' (gespeichert, derzeit nicht gefunden)')));
+    for (const [key, label] of [['include_libraries', 'Nur diese'], ['exclude_libraries', 'Ausschließen']]) {
+      const wrap = element('label', 'check-label'); const input = element('input'); input.type = 'checkbox';
+      input.checked = options[key].includes(name); input.setAttribute('aria-label', label + ': ' + name);
+      input.addEventListener('change', () => {
+        const selected = collect()[key].filter(x => x !== name);
+        if (input.checked) selected.push(name);
+        fields.get(key).input.value = selected.join('\n'); markDirty();
+      });
+      wrap.append(input, document.createTextNode(label)); row.append(wrap);
+    }
+    target.append(row);
+  }
+}
+async function loadLibraries() {
+  requireSaved(); const result = await api('plex-test', {});
+  libraryNames = result.libraries; libraryIdentity = JSON.stringify([snapshot.options.plex_url, snapshot.options.plex_username]); renderLibraries();
+  $('plex-test-result').textContent = 'Verbindung bestätigt. Bibliotheken: ' + (result.libraries.join(', ') || 'keine Film-/Serienbibliotheken');
+  toast('Plex-Konto geprüft und Bibliotheken geladen.');
+}
 function buildFields() {
   field($('plex-fields'), 'plex_url', 'Plex-Server-URL', 'Lokale Adresse oder HTTPS-Adresse deines Plex Media Servers.');
   field($('plex-fields'), 'plex_username', 'Plex-Benutzername', 'Exakter Kontoname des Token-Inhabers. Keine fremden Benutzer.');
   let g = group('sync', 'Zeitplan & Ereignisse', 'Automatische Läufe starten erst nach einer gültigen Analyse und Freigabe.');
   toggle(g, 'sync_enabled', 'Regelmäßig synchronisieren', 'Führt einen vollständigen Abgleich im gewählten Intervall aus.');
   field(g, 'sync_interval_minutes', 'Sync-Intervall in Minuten', '15 bis 1.440 Minuten. Gilt für den vollständigen Abgleich.', 'number', null, [15, 1440]);
-  toggle(g, 'watch_enabled', 'Auf Plex-Wiedergabe reagieren', 'Plex-Ereignisse lösen einen gezielten Abgleich abgeschlossener Wiedergaben aus. Benötigt Plex → Trakt für den Gesehen-Status.');
-  warning(g, 'Die Ereignisüberwachung verwendet denselben geschützten Sync-Prozess. Sie fügt keine zusätzlichen Rewatch-Einträge per Live-Scrobbling hinzu.');
+  toggle(g, 'watch_enabled', 'Auf Plex-Wiedergabe reagieren', 'Prüft nach Plex-Wiedergabeereignissen zeitnah den betroffenen Titel. Benötigt Gesehen-Status: Plex → Trakt.');
+  explanation(g, 'Gesehen-Status und Ereignisse: Was ist der Unterschied?', 'Der Gesehen-Schalter legt fest, was übertragen werden darf. Zeitplan, manueller Lauf und Wiedergabeereignisse bestimmen, wann der Abgleich läuft. Beispiel: Statt bis zum nächsten Stundenlauf zu warten, prüft die App den gespielten Titel nach einem Plex-Ereignis. Erst wenn Plex ihn als gesehen führt, wird dieser Status übertragen. Unsere Ereignisüberwachung nutzt den normalen Sync-Prozess, kein Live-Scrobbling und keine zusätzlichen Rewatch-Einträge.');
   g = group('sync', 'Gesehen-Status', 'Einträge werden ergänzt. Bereits vorhandener Verlauf wird nicht erneut als Wiedergabe hinzugefügt.');
   toggle(g, 'plex_to_trakt_watched', 'Plex → Trakt', 'Überträgt in Plex gesehene Filme und Episoden nach Trakt.');
   toggle(g, 'trakt_to_plex_watched', 'Trakt → Plex', 'Markiert in Trakt gesehene Medien auch in Plex als gesehen.');
@@ -70,10 +103,12 @@ function buildFields() {
   g = group('sync', 'Watchlists & Playlists', 'Diese Funktionen sind standardmäßig aus. Aktiviere nur die benötigten Richtungen.');
   toggle(g, 'plex_to_trakt_watchlist', 'Watchlist: Plex → Trakt', 'Gleicht die Trakt-Watchlist mit der Plex-Watchlist ab.');
   toggle(g, 'trakt_to_plex_watchlist', 'Watchlist: Trakt → Plex', 'Übernimmt die Trakt-Watchlist in Plex.');
-  toggle(g, 'watchlist_as_playlist', 'Trakt-Watchlist als Plex-Playlist', 'Verwendet beim Import Trakt → Plex eine verwaltete Playlist statt der Plex-Watchlist.');
-  warning(g, 'Watchlist-Abgleiche können Einträge hinzufügen UND entfernen. Bei einer Richtung wird die Quelle gespiegelt. Verwaltete Playlist-Inhalte können ersetzt werden.');
-  g = group('sync', 'Gelikte Trakt-Listen', 'Importiere gelikte Listen als Plex-Playlists. Die ursprünglichen Trakt-Listen bleiben unverändert.');
-  toggle(g, 'liked_lists', 'Gelikte Listen importieren', 'Erstellt oder aktualisiert die dazugehörigen Plex-Playlists.');
+  toggle(g, 'watchlist_as_playlist', 'Trakt-Watchlist als Plex-Playlist', 'Importiert die Filme deiner Trakt-Watchlist als abspielbare Plex-Playlist mit lokal verfügbaren Titeln. Benötigt Watchlist: Trakt → Plex.');
+  warning(g, 'Einseitiger Watchlist-Abgleich kann Zieleinträge hinzufügen und entfernen; beidseitiger Abgleich vereinigt die Listen. Verwaltete Playlists können neu aufgebaut werden.');
+  explanation(g, 'Watchlist oder Playlist – wofür ist das gut?', 'Die Plex-Watchlist ist deine Merkliste in Plex Discover und kann auch Titel enthalten, die du nicht auf deinem Server hast. Eine Plex-Playlist enthält dagegen direkt abspielbare Medien aus deinen Bibliotheken. Beispiel: Von zehn Filmen deiner Trakt-Watchlist liegen vier auf deinem Server – diese vier können in der verwalteten Playlist erscheinen. Der Playlist-Import umfasst in PlexTraktSync nur Filme und benötigt einen vollständigen Lauf mit Medientyp „Filme & Serien“. Die normale Plex-Watchlist wird durch diesen Import nicht befüllt. Ein separat aktiviertes Plex → Trakt arbeitet weiterhin mit der Plex-Watchlist. Bibliotheksfilter begrenzen nicht die kontoweiten Watchlists. Besonderheit der eingebundenen Version: Der normale Watchlist-Abgleich wird bei leerer Plex-Watchlist übersprungen.');
+  g = group('sync', 'Gelikte Trakt-Listen', 'Gemeint sind ganze Trakt-Listen, denen du ein Like gegeben hast – keine einzelnen gelikten Filme und keine Trakt-Favoriten.');
+  toggle(g, 'liked_lists', 'Gelikte Listen importieren', 'Erstellt aus diesen Listen abspielbare Plex-Playlists mit passenden Medien auf deinem Server.');
+  explanation(g, 'Beispiel und Verhalten beim nächsten Lauf', 'Du gibst der Trakt-Liste „Science-Fiction fürs Wochenende“ ein Like. Beim vollständigen Sync erstellt oder aktualisiert PlexTraktSync daraus eine Plex-Playlist mit den passenden Medien aus deinen Bibliotheken. Fehlende Medien werden nicht heruntergeladen. Ändert sich die Trakt-Liste, wird die verwaltete Playlist beim nächsten vollständigen Lauf entsprechend neu aufgebaut; eigene Ergänzungen darin können verloren gehen. Die Trakt-Quellliste bleibt unverändert. „Gesehene Medien behalten“ entscheidet, ob bereits gesehene Titel enthalten bleiben; Ausnahmen gelten pro exaktem Listennamen. Benötigt Medientyp „Filme & Serien“; gezielte Ereignisläufe aktualisieren diese Playlists nicht.');
   toggle(g, 'liked_lists_keep_watched', 'Gesehene Medien in Playlists behalten', 'Standardwert für alle importierten Listen. Einzelne Listen lassen sich unten abweichend einstellen.');
   const overrides = element('div', 'field'); overrides.dataset.setting = 'liked_list_overrides';
   overrides.append(element('h3', '', 'Ausnahmen pro Liste'), element('p', 'field-help', 'Exakter Trakt-Listenname. Doppelte Namen sind nicht erlaubt.'));
@@ -86,18 +121,23 @@ function buildFields() {
   warning(g, 'Überschreibt vorhandenen Plex-Fortschritt. Ab 99 % kann Plex Medien als gesehen markieren – auch wenn der umgekehrte Gesehen-Abgleich ausgeschaltet ist.');
   g = group('libraries', 'Medien & Bibliotheken', 'Leere Bibliotheksfilter berücksichtigen alle passenden Bibliotheken. Ausschlüsse haben Vorrang.');
   field(g, 'sync_media', 'Medientyp', 'Wähle den Umfang des vollständigen und ereignisbezogenen Abgleichs.', 'select', [['all', 'Filme & Serien'], ['movies', 'Nur Filme'], ['tv', 'Nur Serien']]);
-  const grid = element('div', 'fields-grid'); g.append(grid);
+  const load = element('button', 'button', 'Bibliotheken aus Plex laden'); load.type = 'button'; load.id = 'load-libraries';
+  load.addEventListener('click', () => perform(loadLibraries)); g.append(load);
+  const choices = element('div'); choices.id = 'library-choices'; g.append(choices);
+  const manual = element('details', 'option-explanation'); manual.append(element('summary', '', 'Bibliotheksnamen manuell bearbeiten (auch offline)')); g.append(manual);
+  const grid = element('div', 'fields-grid'); manual.append(grid);
   field(grid, 'include_libraries', 'Bibliotheken einschließen', 'Exakte Plex-Bibliotheksnamen, ein Name pro Zeile. Leer = alle.', 'lines');
   field(grid, 'exclude_libraries', 'Bibliotheken ausschließen', 'Diese Bibliotheken werden immer übersprungen.', 'lines');
   g = group('libraries', 'Gezielte Ausschlüsse', 'Filter begrenzen die Analyse und die anschließende Synchronisierung.');
-  field(g, 'ignore_ids', 'Plex-Medien-IDs ignorieren', 'Numerische Plex-IDs (ratingKey), eine ID pro Zeile. Maximal 12 Stellen je ID.', 'lines');
-  field(g, 'watch_ignore_clients', 'Wiedergabegeräte ignorieren', 'Plex-Client-IDs für die Ereignisüberwachung. Eine ID pro Zeile.', 'lines');
+  const filters = element('div', 'fields-grid'); g.append(filters);
+  field(filters, 'ignore_ids', 'Plex-Medien-IDs ignorieren', 'Numerische Plex-IDs (ratingKey), eine ID pro Zeile. Maximal 12 Stellen je ID.', 'lines');
+  field(filters, 'watch_ignore_clients', 'Wiedergabegeräte ignorieren', 'Plex-Client-IDs für die Ereignisüberwachung. Eine ID pro Zeile.', 'lines');
   g = group('advanced', 'Verbindungen & Verarbeitung', 'Zeitlimits gelten für Verbindungsversuche. Eine Stapelpause reduziert die Anzahl schneller API-Aufrufe.');
   const timing = element('div', 'fields-grid'); g.append(timing);
   field(timing, 'plex_timeout', 'Plex-Zeitlimit in Sekunden', '5 bis 300 Sekunden.', 'number', null, [5, 300]);
   field(timing, 'request_timeout', 'API-Zeitlimit in Sekunden', '5 bis 300 Sekunden für HTTP-Anfragen.', 'number', null, [5, 300]);
   field(timing, 'batch_delay', 'Stapelpause in Sekunden', '0 bis 300 Sekunden zwischen Übertragungsstapeln.', 'number', null, [0, 300]);
-  g = group('advanced', 'Metadaten-Zuordnung', 'Anbieter für die Auflösung unterstützter Metadaten-IDs. Bestehende Plex-Metadaten werden nicht verändert.');
+  g = group('advanced', 'Legacy-Metadaten: XBMC/NFO', 'Originaloption aus PlexTraktSync für alte xbmcnfo-/xbmcnfotv-Agenten: Welche Datenbank beschreibt deren IDs? Beispiel: Eine Film-ID wird als IMDb- statt TMDb-ID gelesen, damit Trakt den richtigen Film findet. Bei modernen Plex-Agenten ist diese Einstellung normalerweise ohne Wirkung. Plex-Metadaten werden nicht verändert.');
   const providers = element('div', 'fields-grid'); g.append(providers);
   field(providers, 'movie_provider', 'Anbieter für Filme', 'Standard: IMDb.', 'select', [['imdb', 'IMDb'], ['tmdb', 'TMDb']]);
   field(providers, 'show_provider', 'Anbieter für Serien', 'Standard: TheTVDB.', 'select', [['tvdb', 'TheTVDB'], ['tmdb', 'TMDb'], ['imdb', 'IMDb']]);
@@ -128,6 +168,7 @@ function credentials() {
 }
 function sameOptions(a, b) { return Object.keys(a).length === Object.keys(b).length && Object.keys(a).every(key => JSON.stringify(a[key]) === JSON.stringify(b[key])); }
 function fill(data) {
+  const replacedToken = Boolean(credentials().plex_token);
   snapshot = data;
   fields.forEach(({ input, type }, key) => {
     const value = data.options[key];
@@ -139,10 +180,11 @@ function fill(data) {
     input.value = ''; input.type = 'password';
     input.placeholder = data.stored_credentials[input.dataset.secret] ? 'Gespeichert · leer lassen zum Beibehalten' : 'Noch nicht hinterlegt';
     $('help-' + input.dataset.secret).textContent = data.stored_credentials[input.dataset.secret]
-      ? 'Sicher gespeichert. Zum Ersetzen einen neuen Wert eingeben.' : 'Noch kein Wert gespeichert.';
+      ? 'Auf dem Server gespeichert; wird hier nicht erneut angezeigt. Nur zum Ersetzen einen neuen Wert eingeben.' : 'Noch kein Wert gespeichert.';
   });
   all('[data-reveal]').forEach(el => { el.textContent = 'Anzeigen'; el.setAttribute('aria-label', 'Plex-Token anzeigen'); });
-  markDirty();
+  if (replacedToken || libraryIdentity !== JSON.stringify([data.options.plex_url, data.options.plex_username])) { libraryNames = []; libraryIdentity = null; }
+  renderLibraries(); markDirty();
 }
 function markDirty() {
   dirty = Boolean(snapshot && (!sameOptions(collect(), snapshot.options) || Object.keys(credentials()).length));
@@ -154,6 +196,7 @@ function navigate(focus = false) {
   all('[data-page]').forEach(el => {
     if (el.dataset.page === page) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current');
   });
+  if (page === 'libraries' && snapshot) renderLibraries();
   const [title, eyebrow, description] = pages[page];
   $('page-title').textContent = title; $('breadcrumb').textContent = title;
   $('eyebrow').textContent = eyebrow; $('page-description').textContent = description;
@@ -176,11 +219,17 @@ function updateButtons() {
   $('save').disabled = blocked || !dirty; $('discard').disabled = pending;
   $('approve').disabled = blocked || dirty || !status?.analysis || status?.approved;
   $('plex-test').disabled = blocked || dirty || !status?.plex_configured || !snapshot?.options.plex_url || !snapshot?.options.plex_username;
+  $('load-libraries').disabled = $('plex-test').disabled;
   $('trakt-start').disabled = blocked || dirty || !snapshot?.stored_credentials.client_id;
   $('trakt-poll').disabled = blocked || dirty;
   $('pause').disabled = pending || !online || !snapshot;
   // Freeze editing during saves so newer keystrokes cannot be discarded by the response.
-  all('[data-setting] input, input[data-setting], textarea[data-setting], select[data-setting], [data-secret], .override-row input, #add-override, .override-remove').forEach(el => { el.disabled = pending || !snapshot; });
+  all('[data-setting] input, input[data-setting], textarea[data-setting], select[data-setting], [data-secret], .override-row input, #add-override, .override-remove, #library-choices input').forEach(el => { el.disabled = pending || !snapshot; });
+  for (const key of ['plex_to_trakt_ratings', 'trakt_to_plex_ratings', 'rating_priority']) {
+    const input = fields.get(key).input; const inactive = !fields.get('ratings').input.checked;
+    input.disabled = input.disabled || inactive;
+    input.closest('.toggle-row, .field').classList.toggle('option-disabled', inactive);
+  }
 }
 const errors = {
   'Settings changed in another session; reload before saving': 'Die Einstellungen wurden in einer anderen Sitzung geändert. Lade die Seite neu, bevor du speicherst.',
@@ -305,7 +354,10 @@ function scheduleDevicePoll() {
 buildFields();
 $('settings-form').noValidate = true;
 $('settings-form').addEventListener('input', markDirty);
-$('settings-form').addEventListener('change', markDirty);
+$('settings-form').addEventListener('change', event => {
+  if (['include_libraries', 'exclude_libraries'].includes(event.target.dataset.setting)) renderLibraries();
+  markDirty();
+});
 $('settings-form').addEventListener('submit', event => {
   event.preventDefault(); if (!dirty || pending || status?.busy || !online) return;
   const invalid = all('#settings-form input, #settings-form textarea, #settings-form select').find(el => !el.disabled && !el.checkValidity());
@@ -325,8 +377,7 @@ all('[data-action]').forEach(button => button.addEventListener('click', () => pe
 })));
 $('pause').addEventListener('click', () => perform(async () => { await api('pause', { paused: !status.paused }); toast(status.paused ? 'Betrieb fortgesetzt.' : 'Betrieb pausiert.'); }));
 $('plex-test').addEventListener('click', () => perform(async () => {
-  requireSaved(); const result = await api('plex-test', {});
-  $('plex-test-result').textContent = 'Verbindung bestätigt. Bibliotheken: ' + (result.libraries.join(', ') || 'keine'); toast('Plex-Konto und Verbindung bestätigt.');
+  await loadLibraries();
 }));
 $('trakt-start').addEventListener('click', () => perform(async () => {
   requireSaved(); const result = await api('trakt-start', {});

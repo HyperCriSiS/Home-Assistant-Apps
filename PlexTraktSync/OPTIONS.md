@@ -141,3 +141,36 @@ All controls above govern normal synchronization. The **Sicherungen** workspace
 has its own versioned settings, category scope, schedules and retention. A
 separately previewed and explicitly approved restore can write selected Trakt
 categories even if their normal sync is disabled. See [BACKUPS.md](BACKUPS.md).
+
+## UI explanations and origin (0.4.1)
+
+The sync directions, rating priority, watchlist-as-playlist, liked-list handling,
+playback import, library filters, ignore IDs/clients, timeouts and XBMC providers
+come from PlexTraktSync or its command-line/server configuration. The rating
+master, Ingress UI, schedules, analysis/approval, protected HTTP policy and backup/
+restore workspace are App additions. Our event trigger reuses upstream event
+tracking but schedules guarded targeted sync instead of raw live scrobbling.
+
+Watched status specifies WHAT may transfer; manual runs, intervals and events
+specify WHEN. Playlist imports need a full library walk (media scope `all`);
+targeted event jobs never rebuild account-wide playlists. Watchlist playlist
+import handles locally available movies, while ordinary watchlists are account
+level and can contain unavailable media. One-way ordinary watchlist sync mirrors
+its source; two-way sync unions entries. A separate Plex-to-Trakt direction still
+uses the Plex Watchlist, even when reverse import targets a playlist. Upstream
+skips ordinary watchlist sync if the Plex Watchlist is empty.
+
+Liked lists are entire Trakt lists the user liked, not individual media favorites.
+Matching local media become managed Plex playlists; playlist rebuilding may
+replace manual playlist edits, without modifying the Trakt source list. The
+keep-watched default and per-name overrides control inclusion of seen items.
+
+`xbmc-providers` only resolves IDs from legacy `xbmcnfo`/`xbmcnfotv` agents to
+IMDb/TMDb/TheTVDB. It is not a metadata refresh or Plex agent setting; modern
+Plex agent IDs normally do not use this mapping.
+
+Library selection loads film/series section names after checking the token's
+Plex account. Empty include selection means all; explicit exclusions win.
+Unknown saved names remain visible after loading and can be edited offline.
+Changing filters still requires a fresh analysis/approval. Secrets remain stored
+server-side; empty replacement fields never clear them or reload their contents.
