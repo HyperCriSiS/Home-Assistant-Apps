@@ -30,7 +30,7 @@
       <article class="card" id="backup-plan" hidden><div class="card-header"><div><h2>Wiederherstellungsvorschau</h2><p id="backup-plan-account"></p></div><span class="pill" id="backup-plan-expires"></span></div><div id="backup-plan-counts"></div><div id="backup-plan-warnings"></div><div id="backup-plan-examples"></div><div class="card-footer"><button type="button" class="button primary" id="backup-restore">Vorschau freigeben & wiederherstellen</button><span class="field-help">Nach der Wiederherstellung bleibt Sync bis zu neuer Analyse/Freigabe pausiert.</span></div></article>
     </div>
     <dialog id="backup-confirm-dialog"><form id="backup-confirm-form" class="dialog-body"><span class="eyebrow">BESTÄTIGUNG</span><h2 id="backup-confirm-title"></h2><p id="backup-confirm-description"></p><div class="field"><label for="backup-confirm-input" id="backup-confirm-label"></label><input type="text" id="backup-confirm-input" autocomplete="off" required></div><div class="button-row"><button type="button" class="button" id="backup-confirm-cancel">Abbrechen</button><button type="submit" class="button primary" id="backup-confirm-submit">Bestätigen</button></div></form></dialog>`;
-  $('main').insertBefore(root, document.querySelector('.page-footer'));
+  $('main').append(root);
   const b = id => document.getElementById(id);
   const qa = selector => [...root.querySelectorAll(selector)];
   let model = null, configSnapshot = null, configDirty = false, requestPending = false;
