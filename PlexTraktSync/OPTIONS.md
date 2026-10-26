@@ -46,7 +46,8 @@ libraries. Keep both switches off for your original history-only plan.
 
 `watchlist_as_playlist` takes effect only with `trakt_to_plex_watchlist`. It imports
 the Trakt watchlist as a managed Plex playlist instead of editing the Plex online
-watchlist. `liked_lists` imports liked Trakt lists into managed Plex playlists;
+watchlist (the pinned upstream imports movies only in this playlist mode).
+`liked_lists` imports liked Trakt lists into managed Plex playlists;
 it does not change Trakt favorites. These features can replace the contents of
 Plex playlists managed by upstream. `liked_list_overrides` uses exact Trakt list
 names, for example:

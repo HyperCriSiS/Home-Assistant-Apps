@@ -85,5 +85,8 @@ This file records the current task's handoff, not a replacement repository roadm
   blocked, and disables global list writes in playback-event jobs. Preview also
   blocks Plex GET progress writes. Additional write effects are disclosed in OPTIONS.md.
 - Missing fields migrate to safe defaults without deleting tokens; old approval
-  fingerprints become invalid. 58 App/security/migration tests pass locally. YAML and upstream-pin checks pass. Native CI for this
-  revision must be checked separately from the earlier 0.1.0 evidence above.
+  fingerprints become invalid. 60 App/security/migration tests pass locally, including actual worker routing.
+  YAML and upstream-pin checks pass. Native amd64/aarch64 builds, container checks
+  and GitHub lint passed for feature commit 15dce393570b67f7f084e0fec2b68adc91121778:
+  https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/runs/40361397450
+  A separate test/documentation-only follow-up adds the last worker-routing checks.
