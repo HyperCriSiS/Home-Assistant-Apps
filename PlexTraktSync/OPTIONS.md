@@ -1,8 +1,9 @@
 # Configuration coverage and protected defaults
 
 This table covers the sync, watch and list settings in the pinned PlexTraktSync
-0.35.21 configuration. Native HA options expose supported controls; the Ingress
-status shows effective sync directions and immutable protection. An analysis and
+0.35.21 configuration. The dark Ingress UI exposes all 29 supported controls;
+Home Assistant's native App configuration form is disabled. The analysis shows
+effective sync directions and immutable protection. An analysis and
 explicit approval are required again after any option changes.
 
 ## Your history-first defaults
@@ -105,7 +106,26 @@ logger/file/filter knobs are intentionally not exposed because errors may contai
 token-bearing URLs. Cache, config and log paths stay under `/data`; HTTP caching
 is disabled to avoid stale watched-state decisions. Environment-file overrides
 are disabled. Favorites, collection locks and username filtering cannot be
-overridden through native options or an arbitrary upstream YAML block.
+overridden through the settings API or an arbitrary upstream YAML block.
+
+## Ingress navigation (0.3.0)
+
+| Area | Controls |
+| --- | --- |
+| Verbindungen | Plex URL, username and write-only Plex/Trakt credentials, connection test and device OAuth |
+| Synchronisierung | Timer, interval, event monitoring, watched/ratings/watchlist directions, priority, playlists, per-list exceptions and playback progress |
+| Bibliotheken & Filter | Media scope, library include/exclude, ignored media IDs and clients |
+| Erweitert | Plex/API timeouts, batch delay, metadata providers and log level |
+| Analyse & Freigabe | Counts, chosen directions, risk notices, title lists, approval and manual sync |
+
+The save bar applies validated settings immediately. A new analysis/approval is
+required before further writes. Unsaved edits survive navigation and status
+refreshes. Concurrent stale saves are rejected. Blank secret fields retain stored
+values; replacing Trakt client credentials requires a new device authorization.
+
+Upgrades retain `/data/pts/options.json` and credentials. On first start only,
+legacy Supervisor options are imported if the persistent options file is absent.
+Subsequent starts never overwrite Ingress settings from `/data/options.json`.
 
 ## Upgrade from 0.1.0
 

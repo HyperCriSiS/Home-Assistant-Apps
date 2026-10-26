@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.0
+
+- Move all 29 settings into a dark Ingress interface with desktop sidebar and
+  mobile menu: overview, connections, synchronization, libraries/filters,
+  advanced options and analysis/approval. Replace raw JSON with status cards,
+  readable reports, switches, selectors and a per-list exception editor.
+- Apply settings without restarting, retain unsaved edits while polling,
+  validate on the server, reject stale saves from other sessions and refuse
+  configuration changes during active jobs. Secrets remain write-only.
+- Preserve existing options and tokens; import Supervisor options only once.
+  Disable the native HA settings form. Changes revoke previous analysis/approval.
+- Add settings API, security and persistence regression tests, strict static
+  asset routing/CSP and container restart coverage for Ingress-saved settings.
+
 ## 0.2.0
 
 - Expose independent rating directions, optional watchlist directions and playlist

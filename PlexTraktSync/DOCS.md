@@ -1,9 +1,10 @@
 # Setup and operations
 
-## Configuration coverage (App 0.2.0)
+## Configuration coverage (App 0.3.0)
 
-See [OPTIONS.md](OPTIONS.md) for every supported sync/watch setting, the native
-option names, German/English UI labels, defaults and permanently locked settings.
+See [OPTIONS.md](OPTIONS.md) for every supported sync/watch setting, all 29 option names, defaults and permanently locked settings.
+All configuration lives in the dark Ingress UI, with a desktop sidebar and mobile
+menu. The native HA configuration form is disabled. No restart is needed after saving.
 Watchlists, liked-list playlists and playback progress are now optional controls;
 all default off. Collection changes, Trakt favorites, direct scrobbles and importing
 other Plex users remain prohibited. The ratings master switch is retained, with
@@ -12,9 +13,12 @@ safe defaults but requires a fresh analysis/approval.
 
 ## Candidate status
 
-Local adapter tests and GitHub native amd64/aarch64 builds passed, including
-container startup, source restriction, clean stop and persistent restart checks.
-[CI evidence](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/runs/40348133083).
+The previous 0.2.0 candidate passed native amd64/aarch64 builds, startup,
+source restrictions, clean stop and persistent restart checks.
+[0.2.0 CI evidence](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/runs/40361937573).
+The 0.3.0 Ingress implementation passes 69 local tests and desktop/mobile browser QA.
+Use the [current validation workflow](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate-plextraktsync.yml)
+for the latest native build results.
 Real Home Assistant OS installation, actual Ingress and live Plex/Trakt acceptance
 must still pass before stable release.
 
@@ -36,26 +40,41 @@ It will contain **PlexTraktSync (Dev)** only after the development branch and
 shared generator changes have been published. Until then this is a source-only
 candidate. Do not claim store availability from these instructions.
 
-1. Install the development App in HAOS after the generated store contains it.
-2. Set `plex_url` to a reachable LAN URL or hostname, normally `http://SERVER:32400`.
-3. Set `plex_username` to the Plex account owning the token. Start the App with
-   both automatic modes disabled. Open its Ingress panel as an HA administrator.
-4. Enter the Plex token in the panel and save. The connection test checks account
-   identity and lists accessible libraries. A token for another account is rejected.
-   Managed Plex Home profiles are not supported by this candidate; do not put
-   an owner's token alongside a managed user's name.
-5. Create an application at <https://developer.trakt.tv/apps/new> and enter its
-   client ID. Use redirect URI `urn:ietf:wg:oauth:2.0:oob`. Client secret is optional
-   for newer applications. No manually generated access token is needed.
-6. Request a Trakt device code, open the returned verification URL in your browser
-   and confirm the displayed code. Click authorization check after confirming.
+1. Install and start the development App in HAOS after the generated store contains it.
+2. Open **Web UI / Ingress** as a Home Assistant administrator. Under
+   **Verbindungen**, enter the Plex server URL (normally `http://SERVER:32400`),
+   exact Plex username and its Plex token. Save, then test the connection.
+   The test rejects tokens belonging to another account and lists libraries.
+   Managed Plex Home profiles are not supported by this candidate.
+3. Create a Trakt API application at <https://trakt.tv/oauth/applications> using
+   redirect URI `urn:ietf:wg:oauth:2.0:oob`. Enter its client ID and, when needed,
+   client secret in **Verbindungen**, then save. Existing values remain stored
+   when secret fields are left blank; they are never sent back to the browser.
+4. Click **Mit Trakt verbinden**, open Trakt's activation page and confirm the
+   displayed code. The App polls automatically; manual checks are also available.
    Polling respects Trakt's interval, slows on HTTP 429 and refuses expired codes.
-7. Prepare the initial analysis. Wait until `busy` becomes false and inspect the
-   counts and unmatched titles. Approval must match the current options and
-   credentials. Reauthorization invalidates the previous analysis and approval.
-8. Explicitly approve the first write and use manual sync. Enable `sync_enabled`
-   for periodic operation after reviewing the results. HA configuration changes
-   require restart and another analysis/approval.
+5. Choose directions and scheduling under **Synchronisierung**, media selection
+   under **Bibliotheken & Filter**, and timeouts/providers under **Erweitert**.
+   Automatic modes and optional list/progress writes are off by default.
+6. Save changes. They apply immediately, stop the playback listener and revoke
+   previous analysis/approval. Invalid inputs and stale saves from other browser
+   sessions are rejected. A running job must finish before settings can change.
+7. Open **Analyse & Freigabe** and analyze. Wait for completion, inspect counts,
+   enabled directions, warnings and title lists, then explicitly approve.
+8. Use manual sync and review results. Timer/listener operation requires the same
+   approval. Enabling a mode is a configuration change, so analyze and approve
+   again after saving it. Pause/resume does not change the configuration.
+
+### Upgrade from native HA configuration
+
+The existing `/data/pts/options.json`, credentials and OAuth tokens are retained.
+Only when the persistent options file does not yet exist does startup import
+legacy `/data/options.json`. Ingress becomes the configuration source afterward;
+restarts never copy Supervisor options over it. Additive missing settings receive
+safe defaults. No optional write mode is activated by migration. Replacing Trakt
+client credentials removes the old OAuth authorization and requires reconnection.
+HA metadata uses `options: {}` and `schema: false` to hide the native form while
+accepting legacy Supervisor option data; server-side validation remains enforced.
 
 ## Directions and settings
 
@@ -106,8 +125,8 @@ analysis and approval as full sync. Both automation switches are independent.
 
 ## Initial analysis and privacy
 
-The preview walks the library with upstream's reader and resolver and never calls
-its synchronization method. HTTP policy additionally refuses media writes,
+The preview walks the library with upstream's reader and resolver; optional
+features additionally use upstream synchronization in dry-run mode. HTTP policy additionally refuses media writes,
 including Plex's GET-based scrobble/rate endpoints. OAuth refresh is permitted
 because it updates credentials, not watched history. ID searches returning more
 than one match fail closed. API failures invalidate the analysis run.
@@ -141,7 +160,7 @@ published. Real Supervisor/Ingress access still needs verification.
   and Trakt authorization. Reauthorize invalid or revoked OAuth credentials.
 - No automatic sync: check `sync_enabled`, pause state and current approval.
 - Approval unavailable: run a new analysis and wait for it to finish. Changes to
-  any native option or credentials require a new approval.
+  any saved option or credentials require a new approval.
 - Job failure: no success timestamp is recorded and the scheduler waits until
   the next interval. An ambiguous network failure after a server accepted a write
   cannot provide an exactly-once guarantee; inspect history before retrying.

@@ -10,6 +10,7 @@ import subprocess
 import sys
 import threading
 import time
+from urllib.parse import urlsplit
 
 import requests
 
@@ -70,6 +71,48 @@ class Controller:
                                        "watch_add_collection": False, "watch_remove_collection": False,
                                        "username_filter": True, "trakt_favorites": "unchanged"},
                 "csrf": self.csrf}
+
+    def settings(self):
+        credentials = self.credentials()
+        return {"options": self.options, "revision": self.identity(),
+                "stored_credentials": {key: bool(credentials.get(key))
+                                       for key in ("plex_token", "client_id", "client_secret")}}
+
+    def update_settings(self, data):
+        if not isinstance(data, dict) or set(data) - {"options", "credentials", "revision"}:
+            raise ValueError("Invalid settings request")
+        if data.get("revision") != self.identity():
+            raise ValueError("Settings changed in another session; reload before saving")
+        options = normalize_options(data.get("options"))
+        changes = data.get("credentials", {})
+        allowed = {"plex_token", "client_id", "client_secret"}
+        if (not isinstance(changes, dict) or set(changes) - allowed
+                or any(not isinstance(value, str) or len(value) > 4096
+                       or any(ord(c) < 32 for c in value) for value in changes.values())):
+            raise ValueError("Invalid credentials")
+        credentials = self.credentials()
+        client_changed = bool(changes.get("client_id") and changes["client_id"] != credentials.get("client_id"))
+        trakt_changed = client_changed or bool(changes.get("client_secret")
+                                              and changes["client_secret"] != credentials.get("client_secret"))
+        if client_changed:
+            credentials.pop("client_secret", None)
+        credentials.update({key: value for key, value in changes.items() if value})
+        if options == self.options and credentials == self.credentials():
+            return {"ok": True, **self.settings()}
+        self.stop_watch()
+        # Revoke before persistence: a partial disk failure must fail closed.
+        for name in ("approval.json", "analysis.json"):
+            (self.directory / name).unlink(missing_ok=True)
+        if trakt_changed:
+            self.device = None
+            (self.directory / ".pytrakt.json").unlink(missing_ok=True)
+        write(self.directory / "credentials.json", credentials)
+        write(self.directory / "options.json", options)
+        self.options = options
+        self.next_sync = time.time() + options["sync_interval_minutes"] * 60
+        self.error = None
+        self.save()
+        return {"ok": True, **self.settings()}
 
     def run(self, mode, ids=None):
         if not self.lock.acquire(blocking=False):
@@ -209,6 +252,10 @@ class Controller:
                 self.lock.release()
 
     def _action(self, action, data):
+        if not isinstance(data, dict):
+            raise ValueError("Expected a JSON object")
+        if action == "settings":
+            return self.update_settings(data)
         if action in ("analyze", "sync"):
             if self.lock.locked():
                 raise ValueError("A job is already running")
@@ -226,18 +273,7 @@ class Controller:
                 self.stop_watch()
                 self.shutdown_worker()
         elif action == "credentials":
-            allowed = {"plex_token", "client_id", "client_secret"}
-            credentials = self.credentials()
-            if data.get("client_id") and data["client_id"] != credentials.get("client_id"):
-                credentials.pop("client_secret", None)
-                self.device = None
-                (self.directory / ".pytrakt.json").unlink(missing_ok=True)
-                (self.directory / "analysis.json").unlink(missing_ok=True)
-                (self.directory / "approval.json").unlink(missing_ok=True)
-            for key in allowed:
-                if data.get(key):
-                    credentials[key] = str(data[key])
-            write(self.directory / "credentials.json", credentials)
+            return self.update_settings({"options": self.options, "credentials": data, "revision": self.identity()})
         elif action == "plex-test":
             from plexapi.server import PlexServer
             server = PlexServer(self.options["plex_url"], self.credentials()["plex_token"],
@@ -308,6 +344,10 @@ def handler(controller):
             self.send_header("Content-Type", content_type)
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; "
+                             "connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; "
+                             "form-action 'self'; frame-ancestors 'self'")
+            self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
 
@@ -318,19 +358,38 @@ def handler(controller):
         def do_GET(self):
             if not self.permitted():
                 return self.send(403, b'{}')
-            if self.path.rstrip("/").endswith("/api/status"):
-                return self.send(200, json.dumps(controller.status()).encode())
-            return self.send(200, Path(__file__).with_name("index.html").read_bytes(), "text/html; charset=utf-8")
+            path = urlsplit(self.path).path
+            if path == "/api/status":
+                with controller.action_lock:
+                    body = json.dumps(controller.status()).encode()
+                return self.send(200, body)
+            if path == "/api/settings":
+                with controller.action_lock:
+                    body = json.dumps(controller.settings()).encode()
+                return self.send(200, body)
+            assets = {"/": ("index.html", "text/html; charset=utf-8"),
+                      "/index.html": ("index.html", "text/html; charset=utf-8"),
+                      "/styles.css": ("styles.css", "text/css; charset=utf-8"),
+                      "/ui.js": ("ui.js", "text/javascript; charset=utf-8")}
+            if path not in assets:
+                return self.send(404, b'{}')
+            name, content_type = assets[path]
+            return self.send(200, Path(__file__).with_name(name).read_bytes(), content_type)
 
         def do_POST(self):
             if not self.permitted() or not hmac.compare_digest(self.headers.get("X-CSRF-Token", ""), controller.csrf):
                 return self.send(403, b'{}')
             try:
+                path = urlsplit(self.path).path
+                allowed = {"settings", "credentials", "plex-test", "trakt-start", "trakt-poll",
+                           "analyze", "approve", "sync", "pause"}
+                if path not in {"/api/" + action for action in allowed}:
+                    return self.send(404, b'{}')
                 length = int(self.headers.get("Content-Length", "0"))
                 if length < 0 or length > 16384:
                     raise ValueError("Request too large")
                 data = json.loads(self.rfile.read(length))
-                result = controller.action(self.path.rsplit("/", 1)[-1], data)
+                result = controller.action(path.rsplit("/", 1)[-1], data)
                 return self.send(200, json.dumps(result).encode())
             except Exception as error:
                 # Avoid request exception text, response bodies and secrets.

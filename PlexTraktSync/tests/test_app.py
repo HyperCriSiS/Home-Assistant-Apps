@@ -22,7 +22,7 @@ from worker import analyze
 
 
 def options():
-    return yaml.safe_load((ROOT / "config.yaml").read_text())["options"]
+    return json.loads((ROOT / "default-options.json").read_text())
 
 
 class PolicyTests(unittest.TestCase):
@@ -100,13 +100,13 @@ class PolicyTests(unittest.TestCase):
 
     def test_metadata(self):
         c = yaml.safe_load((ROOT / "config.yaml").read_text())
-        self.assertEqual(set(c["options"]), set(c["schema"]))
+        self.assertEqual(c["options"], {})
+        self.assertIs(c["schema"], False)
         self.assertEqual(c["ports"], {})
         self.assertTrue(c["panel_admin"])
-        self.assertFalse(c["options"]["sync_enabled"])
+        self.assertFalse(options()["sync_enabled"])
         self.assertFalse(c.get("host_network", False))
         self.assertEqual(c["arch"], ["amd64", "aarch64"])
-        self.assertEqual(c["options"], json.loads((ROOT / "default-options.json").read_text()))
 
 
 class ControllerTests(unittest.TestCase):

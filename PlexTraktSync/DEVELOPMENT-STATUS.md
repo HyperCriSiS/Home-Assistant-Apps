@@ -1,92 +1,64 @@
 # Development status — 2026-10-26
 
-This file records the current task's handoff, not a replacement repository roadmap.
+This is the current task handoff, not a replacement repository roadmap.
 
-## Published development candidate
+## App 0.3.0: configuration in dark Ingress
 
-- Dedicated local `dev-plextraktsync` baseline and feature branch.
-- Experimental App metadata, version-pinned upstream installation, unprivileged runtime.
-- Ingress panel, account-token connection test, Trakt device OAuth with persistent
-  pytrakt-compatible credentials, interval/expiry/rate-limit handling.
-- Read-only library analysis, report-bound approval and invalidation on changes.
-- Periodic/manual scheduling, one writer, bounded jobs, pause, persistent status.
-- Read-only upstream playback listener, session/user binding, coalesced targeted
-  jobs, reconnect backoff and shared single-writer execution.
-- Independent library inventory including unresolved/skipped episodes and
-  show-level rating conflicts; structured sanitized logs with persistent errors.
-- Wheel checksum verification and stable update draft PRs; manual draft release
-  integration in the existing promotion workflow.
-- Immutable collection/watchlist/list policy, HTTP write guard, preview Plex GET
-  mutation guard, account-identity validation, ambiguous ID-match rejection.
-- Proposed shared generator/base-sync changes; independent four-App revision test.
-- Proposed amd64/aarch64 build and real container stop/restart CI workflow.
-- Setup, attribution and operational limitations documented.
+- All 29 supported options moved into Ingress; the native HA configuration form
+  is hidden. Desktop sidebar and mobile drawer provide overview, connections,
+  synchronization, libraries/filters, advanced options and analysis/approval.
+- Charcoal surfaces, amber accents, muted rose/teal connection states, readable
+  analysis cards and title lists replace the former pale page and raw JSON.
+- Settings apply immediately. Status polling preserves unsaved form edits;
+  server validation, stale-tab rejection and the writer lock protect saves.
+- Existing settings and credentials persist. Legacy Supervisor options are
+  imported only if `/data/pts/options.json` is absent, never on subsequent starts.
+- Secret values are write-only; blank fields retain credentials. Replacing Trakt
+  client credentials requires renewed authorization. Settings changes revoke
+  analysis/approval and stop the listener before persistence, including failures.
+- Static assets use an explicit allowlist, same-origin CSP, no-store and nosniff.
+  Ingress-source enforcement and per-process CSRF checks remain enabled.
+- Collection, Trakt favorites, foreign-user filtering, watched-history policy,
+  single-writer scheduling and the pinned upstream version remain protected.
+- No production Plex/Trakt data was accessed and no HA installation was changed.
 
-## Validation evidence
+## Verified locally
 
-- 45 App unit, HTTP, OAuth refresh, notification and pinned-upstream contract tests
-  pass locally on Python 3.14.
-- Existing repository automation suite: 56 tests pass, including the extended
-  generated Dev-Store test.
-- Changed YAML files pass yamllint 1.37.1; Git whitespace checks pass.
-- GitHub validation passed on source commit `ea882d7745ffd476a0b75e5cb4ff7aaf06761792`:
-  native amd64/aarch64 builds and real container startup, source restriction,
-  clean stop and persistent restart checks. Evidence:
-  https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/runs/40348133083
-- GitHub YAML/Actions lint and repository automation tests passed for that commit.
-- Real HAOS/Supervisor acceptance is still pending. No production Plex/Trakt data
-  was read or written; tests use fixture credentials only.
+- 69 App tests pass on Python 3.14: policy, upstream contracts, workers, event
+  monitoring, OAuth, real HTTP/CSRF routes, all option types, validation without
+  side effects, stale/busy saves, secret redaction, restart and disk-failure cases.
+- JavaScript syntax, YAML formatting and upstream pin checks pass.
+- Browser QA against an isolated local preview: all 29 settings present,
+  navigation, save/reload, rating switch, per-list override, invalid URL feedback,
+  and responsive desktop/mobile layouts. No horizontal overflow at 390px and
+  1280px viewport sizes. Preview uses temporary files and no scheduler/accounts.
+- Container smoke checks now verify that Ingress-saved settings and credentials
+  survive restart without being replaced by Supervisor's older option values.
+  The latest GitHub run is the authority for native amd64/aarch64 results.
 
-## Publication and environment status
+## Development publication
 
-- The GitHub MCP connection was rechecked successfully after the user's permission
-  change. `dev-plextraktsync` now exists on the intended Home-Assistant-Apps repository.
-- Publishing uses the connected GitHub tools. The desktop checkout's `.git` is
-  read-only in this execution environment; its existing MCPHub branch is preserved.
-- Development review: https://github.com/HyperCriSiS/Home-Assistant-Apps/pull/112
-- Separate Dev-Store infrastructure: https://github.com/HyperCriSiS/Home-Assistant-Apps/pull/113
-- Native container checks passed. No stable release or completed HAOS acceptance
-  is claimed. The generated Dev-Store needs PR #113 reviewed and merged on `main`;
-  it is never edited directly.
+- App branch: `dev-plextraktsync`.
+- App review: https://github.com/HyperCriSiS/Home-Assistant-Apps/pull/112
+- Native checks: https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate-plextraktsync.yml
+- Previous 0.2.0 candidate passed native amd64/aarch64 build/start/stop/restart:
+  https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/runs/40361937573
+- Separate shared Dev-Store infrastructure review:
+  https://github.com/HyperCriSiS/Home-Assistant-Apps/pull/113
+- The generated Dev-Store is never edited directly. Its generator changes need
+  separate review before they become active from `main`. No stable release is claimed.
+- Publication uses the connected GitHub tools; unrelated local MCPHub work is preserved.
 
-## Required remaining work
+## Remaining acceptance
 
-1. Perform end-to-end playback acceptance against disposable Plex/Trakt fixtures:
-   reconnects, real sessions permission responses, overlapping manual/periodic
-   triggers and library changes. Current monitoring intentionally synchronizes
-   missing watched state; it does not expose direct scrobbling or add history
-   entries for each rewatch. This limitation is documented in the UI and DOCS.
-2. Validate large-library traversal completeness, partial API failure boundaries
-   and mutable-library snapshots against an actual server.
-3. Verify state/backup migration and actual Supervisor Ingress on HAOS. HTTP,
-   CSRF, token-refresh, device-denial and fail-closed version fixtures pass locally.
-4. Exercise the scheduled upstream update and manual promotion workflows.
-   GitHub validation and actionlint passed; actual update PR creation remains
-   a separate runtime acceptance check.
-5. Review the development candidate and the separate shared Dev-Store infrastructure
-   PR before any `main` merge. The App remains experimental until acceptance passes.
-6. Native builds and container restart checks passed on amd64/aarch64. Next run
-   disposable HAOS install, Ingress, restart and backup/restore acceptance.
-7. With explicit user approval only, run live-account write acceptance, including
-   unchanged collection/watchlist/favorites and preservation of watched timestamps.
-8. Publish via the generator, attach PR to the chat and report verified URLs.
-   Stable promotion is a later manual decision after all acceptance gates pass.
+1. Actual HAOS install, Supervisor Ingress, upgrade, restart and backup/restore.
+2. Disposable Plex/Trakt fixtures for real sessions, reconnects, overlapping
+   triggers, large-library matching and partial API failures.
+3. Verify optional watchlist/playlist/progress behavior against disposable data;
+   exact replacement diffs are not exposed by upstream preview.
+4. Exercise scheduled upstream update proposals and manual promotion workflows.
+5. Review App and Dev-Store infrastructure PRs before any stable promotion.
+6. Only with explicit approval, perform live-account write acceptance.
 
-## App 0.2.0 configuration expansion
-
-- Native configuration now exposes all supported upstream sync flags except the
-  permanently locked collection flags. Watch settings map ignored clients while
-  username filtering stays mandatory and terminal progress bars remain disabled.
-- Optional watchlist directions, Plex playlist imports, list overrides and reverse
-  playback progress default off. Independent rating directions retain the legacy
-  master switch. Scope, ignored IDs, timeouts, batch delay and XBMC providers are
-  configurable. Every option has English/German labels and descriptions.
-- HTTP policy allows only explicitly enabled directions, keeps collection/favorites
-  blocked, and disables global list writes in playback-event jobs. Preview also
-  blocks Plex GET progress writes. Additional write effects are disclosed in OPTIONS.md.
-- Missing fields migrate to safe defaults without deleting tokens; old approval
-  fingerprints become invalid. 60 App/security/migration tests pass locally, including actual worker routing.
-  YAML and upstream-pin checks pass. Native amd64/aarch64 builds, container checks
-  and GitHub lint passed for feature commit 15dce393570b67f7f084e0fec2b68adc91121778:
-  https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/runs/40361397450
-  A separate test/documentation-only follow-up adds the last worker-routing checks.
+Monitoring synchronizes missing watched state, without direct scrobbling or an
+additional history entry for every rewatch. This remains an experimental candidate.

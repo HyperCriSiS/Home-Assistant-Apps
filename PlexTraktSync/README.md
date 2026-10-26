@@ -3,7 +3,9 @@
 Experimental native Home Assistant App wrapping [PlexTraktSync 0.35.21](https://github.com/Taxel/PlexTraktSync/releases/tag/0.35.21).
 This is a development candidate, **not an accepted or released implementation**.
 
-- Admin-only Ingress onboarding, Plex connection test and Trakt device authorization.
+- Dark, responsive admin-only Ingress UI with a sidebar, all 29 settings,
+  Plex connection test and Trakt device authorization. No native HA configuration form.
+- Changes apply immediately; existing native settings migrate once and survive restarts.
 - Credentials, refreshed OAuth tokens, approval and sync status persist under `/data/pts`.
 - Read-only initial analysis and explicit approval before any media writes.
 - Single-writer periodic/manual watched-history sync; optional reverse sync and ratings.

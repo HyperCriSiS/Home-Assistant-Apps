@@ -26,6 +26,8 @@ jobs:
           version="$(python PlexTraktSync/scripts/upstream.py version)"
           python -m pip install "PlexTraktSync==${version}"
       - run: python -m unittest discover -s PlexTraktSync/tests -v
+      - name: Check Ingress JavaScript syntax
+        run: node --check PlexTraktSync/app/ui.js
   build:
     needs: test
     strategy:
