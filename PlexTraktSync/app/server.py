@@ -17,6 +17,8 @@ import requests
 from policy import fingerprint, config
 from settings import normalize_options
 from storage import read, write
+from backup_service import BackupService
+from backup_store import MAX_ZIP
 
 
 class Controller:
@@ -40,6 +42,7 @@ class Controller:
             raise ValueError("Unsupported state version; refusing unsafe migration")
         self.next_sync = time.time() + 30
         self.error = self.state.get("last_error")
+        self.backups = BackupService(self)
 
     def log(self, event, level="info", **fields):
         levels = {"info": 20, "warning": 30, "error": 40}
@@ -124,17 +127,22 @@ class Controller:
                 self.stop_watch()
                 (self.directory / "approval.json").unlink(missing_ok=True)
                 (self.directory / "analysis.json").unlink(missing_ok=True)
+            else:
+                self.backups.before_sync()
             self.log("job_started", mode=mode)
-            self.process = subprocess.Popen(
-                [sys.executable, str(Path(__file__).with_name("worker.py")), mode, str(self.directory)]
-                + ([json.dumps(ids)] if ids else []),
-                stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-            )
+            with self.action_lock:
+                if self.stop.is_set() or (mode != "analyze" and (self.state["paused"] or not self.approved())):
+                    raise ValueError("Analyze, approve and resume before syncing")
+                self.process = subprocess.Popen(
+                    [sys.executable, str(Path(__file__).with_name("worker.py")), mode, str(self.directory)]
+                    + ([json.dumps(ids)] if ids else []),
+                    stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                )
             code = self.process.wait(timeout=6 * 3600)
             if code:
                 kind = read(self.directory / "worker-error.json", {}).get("type", "WorkerError")
                 raise ValueError(f"{kind}: check Plex connection and Trakt authorization")
-            if self.stop.is_set() or self.state["paused"]:
+            if self.stop.is_set() or (mode != "analyze" and self.state["paused"]):
                 raise ValueError("Job interrupted; no successful completion recorded")
             self.error = None
             if mode in ("sync", "incremental"):
@@ -158,6 +166,8 @@ class Controller:
 
     def schedule(self):
         while not self.stop.wait(1):
+            if self.backups.tick():
+                continue
             self.ensure_watch()
             if (self.options["sync_enabled"] and time.time() >= self.next_sync
                     and self.approved() and not self.state["paused"]):
@@ -242,6 +252,8 @@ class Controller:
 
     def action(self, action, data):
         with self.action_lock:
+            if action.startswith("backup-"):
+                return self.backups.handle(action, data)
             if action in ("analyze", "sync", "pause"):
                 return self._action(action, data)
             if not self.lock.acquire(blocking=False):
@@ -367,10 +379,25 @@ def handler(controller):
                 with controller.action_lock:
                     body = json.dumps(controller.settings()).encode()
                 return self.send(200, body)
+            if path == "/api/backups":
+                with controller.action_lock:
+                    body = json.dumps(controller.backups.status()).encode()
+                return self.send(200, body)
+            if path.startswith("/api/backups/download/"):
+                try:
+                    with controller.backups.mutex:
+                        archive = controller.backups.store.path(path.rsplit("/", 1)[-1])
+                        if archive.stat().st_size > MAX_ZIP:
+                            raise ValueError("Archiv ist zu groß.")
+                        body = archive.read_bytes()
+                    return self.send(200, body, "application/zip")
+                except (ValueError, OSError):
+                    return self.send(404, b'{}')
             assets = {"/": ("index.html", "text/html; charset=utf-8"),
                       "/index.html": ("index.html", "text/html; charset=utf-8"),
                       "/styles.css": ("styles.css", "text/css; charset=utf-8"),
                       "/ui.js": ("ui.js", "text/javascript; charset=utf-8")}
+            assets["/backups-ui.js"] = ("backups-ui.js", "text/javascript; charset=utf-8")
             if path not in assets:
                 return self.send(404, b'{}')
             name, content_type = assets[path]
@@ -382,7 +409,19 @@ def handler(controller):
             try:
                 path = urlsplit(self.path).path
                 allowed = {"settings", "credentials", "plex-test", "trakt-start", "trakt-poll",
-                           "analyze", "approve", "sync", "pause"}
+                           "analyze", "approve", "sync", "pause", "backup-settings", "backup-create",
+                           "backup-preview", "backup-restore", "backup-pin", "backup-delete", "backup-prune", "backup-cancel", "backup-verify"}
+                if path == "/api/backups/import":
+                    length = int(self.headers.get("Content-Length", "0"))
+                    if self.headers.get("Content-Type") != "application/zip" or not 0 < length <= MAX_ZIP:
+                        raise ValueError("Bitte ein ZIP-Archiv mit maximal 128 MiB hochladen.")
+                    self.connection.settimeout(60)
+                    raw = self.rfile.read(length)
+                    if len(raw) != length:
+                        raise ValueError("Upload unvollständig.")
+                    with controller.action_lock:
+                        result = controller.backups.import_archive(raw)
+                    return self.send(200, json.dumps(result).encode())
                 if path not in {"/api/" + action for action in allowed}:
                     return self.send(404, b'{}')
                 length = int(self.headers.get("Content-Length", "0"))

@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="dark"><title>PlexTraktSync</title><link rel="stylesheet" href="styles.css"><script src="ui.js" defer></script></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="dark"><title>PlexTraktSync</title><link rel="stylesheet" href="styles.css"><script src="ui.js" defer></script><script src="backups-ui.js" defer></script></head>
 <body>
 <a class="skip" href="#main">Zum Inhalt</a><div class="sidebar-backdrop" id="backdrop" hidden></div>
 <aside class="sidebar" id="sidebar" aria-label="Hauptnavigation">
@@ -11,8 +11,9 @@
 <a href="#sync" data-page="sync"><span class="nav-icon">↔</span>Synchronisierung</a>
 <a href="#libraries" data-page="libraries"><span class="nav-icon">▤</span>Bibliotheken & Filter</a>
 <a href="#advanced" data-page="advanced"><span class="nav-icon">⚙</span>Erweitert</a>
+<a href="#backups" data-page="backups"><span class="nav-icon">▣</span>Sicherungen</a>
 <a href="#analysis" data-page="analysis"><span class="nav-icon">✓</span>Analyse & Freigabe</a>
-</nav><div class="sidebar-bottom"><span class="version">DEV · 0.3.1</span></div></aside>
+</nav><div class="sidebar-bottom"><span class="version">DEV · 0.4.0</span></div></aside>
 <div class="workspace"><header class="topbar"><div class="crumb"><button type="button" class="icon-button mobile-menu" id="menu" aria-label="Menü öffnen" aria-controls="sidebar" aria-expanded="false">☰</button><span>PlexTraktSync</span><span class="slash">/</span><span id="breadcrumb">Übersicht</span></div><div class="connection-indicator" id="connection"><span class="dot"></span><span>Verbinde …</span></div></header>
 <main id="main" tabindex="-1"><div class="page-heading"><div><div class="eyebrow" id="eyebrow">ALLES IM BLICK</div><h1 id="page-title">Übersicht</h1><p id="page-description">Deine Bibliotheken, verbunden durch einen gemeinsamen Verlauf.</p></div><span class="environment">EXPERIMENTELL</span></div>
 <div id="load-error" class="notice danger" role="alert" hidden>Die App ist nicht erreichbar. <button type="button" id="retry">Erneut versuchen</button></div>

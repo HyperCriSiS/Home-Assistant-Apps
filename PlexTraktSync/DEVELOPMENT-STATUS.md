@@ -2,7 +2,38 @@
 
 This is the current task handoff, not a replacement repository roadmap.
 
-## App 0.3.0: configuration in dark Ingress
+## App 0.4.0: backup and restore workspace
+
+- Implemented full/partial versioned ZIP archives for eight supported categories;
+  seven categories can be restored. Playback positions are archive-only.
+- Archive download/import, checksum verification, pins, filtering, explicit deletion,
+  corrupt-archive visibility and independent backup configuration in dark Ingress.
+- Up to 12 daily/weekly/monthly/interval schedules with IANA timezone handling,
+  persisted due times, missed-run catch-up and bounded retries. Optional required
+  pre-sync snapshots with a configurable minimum interval (including every run).
+- Latest/daily/weekly/monthly/yearly retention, age caps, manual protection,
+  storage/free-space limits and explicit cleanup preview/confirmation.
+- Merge/overwrite/mirror restore with expiring account/data-bound plans, samples,
+  typed approval, mandatory pinned rollback before writes, a bounded journal,
+  post-verification and no automatic replay of ambiguous writes.
+- Normal sync guards remain unchanged. Restore is separately approved and leaves
+  sync paused pending a fresh read-only analysis and explicit sync approval.
+- Local suite: 116 tests run; one DST test is skipped on the Windows runtime
+  lacking IANA files. Linux CI requires that test and native containers verify
+  Europe/Berlin data and archive/settings persistence. JavaScript/YAML/pin checks pass.
+- Browser fixtures verified settings save/reload, complete backup, seven-category
+  restore with rollback/post-verification, desktop and 390px mobile layouts, and
+  no browser console errors. No real Plex/Trakt account data was read or written.
+- See BACKUPS.md for exact scope and limitations. Archives are not encrypted and
+  imports accept this App's format, not Trakt web/GDPR exports. Original internal
+  IDs, insertion times and scrobble sources are not reproduced. Social/comment/
+  general-note/account-settings and collaboration-list backup are outside scope.
+- Actual Trakt/HAOS acceptance remains pending. The latest branch CI and PR #112
+  record native build results; this is not a stable release or live deployment.
+
+## Earlier 0.3.0 baseline
+
+### Configuration in dark Ingress
 
 - All 29 supported options moved into Ingress; the native HA configuration form
   is hidden. Desktop sidebar and mobile drawer provide overview, connections,

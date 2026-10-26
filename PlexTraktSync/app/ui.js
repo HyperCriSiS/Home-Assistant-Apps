@@ -3,6 +3,7 @@
 const $ = id => document.getElementById(id);
 const all = selector => [...document.querySelectorAll(selector)];
 const pages = {
+  backups: ['Sicherungen', 'DEINE TRAKT-DATEN', 'Einzeln oder vollständig sichern, langfristig aufbewahren und gezielt wiederherstellen.'],
   overview: ['Übersicht', 'ALLES IM BLICK', 'Deine Bibliotheken, verbunden durch einen gemeinsamen Verlauf.'],
   connections: ['Verbindungen', 'DEINE KONTEN', 'Plex und Trakt einrichten. Zugangsdaten sicher in der App speichern.'],
   sync: ['Synchronisierung', 'DEINE REGELN', 'Wähle bewusst, welche Daten in welche Richtung fließen.'],
@@ -234,7 +235,7 @@ function renderStatus() {
   $('activity-dot').classList.toggle('active', Boolean(s.busy || s.watch_running));
   $('watch-state').textContent = s.watch_running ? 'Ereignisüberwachung aktiv' : snapshot?.options.watch_enabled ? 'Ereignisüberwachung wartet auf Freigabe' : 'Ereignisüberwachung aus';
   $('server-error').hidden = !s.last_error; $('server-error').textContent = s.last_error ? 'Letzter Auftrag: ' + (errors[s.last_error] || s.last_error) : '';
-  renderAnalysis(s.analysis); updateButtons();
+  renderAnalysis(s.analysis); updateButtons(); document.dispatchEvent(new Event('pts-status-updated'));
 }
 function renderAnalysis(report) {
   const serialized = JSON.stringify(report);
