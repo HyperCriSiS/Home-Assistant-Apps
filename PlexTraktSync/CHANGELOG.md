@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1
+
+- Remove the prominent personal favorite-archive messaging from the overview and
+  sidebar. Describe excluded Trakt changes in a collapsed synchronization detail;
+  SeriesGuide favorites are unrelated. Synchronization policy is unchanged.
+
 ## 0.3.0
 
 - Move all 29 settings into a dark Ingress interface with desktop sidebar and
