@@ -2,6 +2,15 @@
 
 This is the current task handoff, not a replacement repository roadmap.
 
+## App 0.4.2: remove redundant interface chrome
+
+- Removed top breadcrumb/status bar and footer/divider. Status polling still
+  disables actions on connection loss and shows the existing error/retry notice.
+- Mobile drawer button moved into the page heading; desktop sidebar spacing is
+  preserved. The brand uses a local inline SVG circular sync symbol.
+- TESTING.md describes existing automated coverage and acceptance boundaries;
+  no claim of complete live Plex/Trakt/HAOS end-to-end coverage.
+
 ## App 0.4.1: configuration clarity and compact layout
 
 - Removed redundant connection/slogan text; stored credentials are explicitly

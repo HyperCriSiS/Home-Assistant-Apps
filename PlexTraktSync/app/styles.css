@@ -161,49 +161,16 @@ nav a[aria-current=page] {
 .workspace {
   margin-left:240px
 }
-.topbar {
-  height:52px;
-  border-bottom:1px solid var(--line);
-  padding:0 28px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px
-}
-.crumb {
-  display:flex;
-  align-items:center;
-  gap:16px;
-  font-size:12px;
-  color:var(--muted)
-}
-#breadcrumb {
-  color:#c8ced8
-}
-.slash {
-  color:#667184
-}
-.connection-indicator {
-  display:flex;
-  gap:8px;
-  align-items:center;
-  color:var(--muted);
-  font-size:11px;
-  white-space:nowrap
-}
-.dot,.activity-dot {
+.activity-dot {
   width:6px;
   height:6px;
   background:#657082;
   display:inline-block;
   border-radius:50%
 }
-.online .dot,.activity-dot.active {
+.activity-dot.active {
   background:var(--teal);
   box-shadow:0 0 0 4px #77c7b610
-}
-.offline .dot {
-  background:var(--rose)
 }
 main {
   max-width:1480px;
@@ -588,19 +555,6 @@ h1 {
 .protection-strip>.pill {
   margin-left:auto
 }
-.page-footer {
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-  border-top:1px solid #ffffff07;
-  margin-top:14px;
-  padding-top:12px;
-  font-size:10px;
-  color:#8591a2
-}
-.page-footer .muted {
-  margin:0 6px
-}
 .muted {
   color:var(--muted)
 }
@@ -981,7 +935,18 @@ dialog::backdrop {
   font-size:20px
 }
 .mobile-menu {
-  display:none
+  display:none;
+  flex-shrink:0;
+  align-self:flex-start;
+  margin-top:20px
+}
+.page-heading-copy {
+  flex:1;
+  min-width:0
+}
+.brand-mark svg {
+  display:block;
+  flex-shrink:0
 }
 @media(max-width:1100px) {
   .sidebar {
@@ -991,9 +956,6 @@ dialog::backdrop {
   }
   .workspace {
     margin-left:218px
-  }
-  .topbar {
-    padding:0 26px
   }
   main {
     padding:28px 26px 20px
@@ -1052,13 +1014,6 @@ dialog::backdrop {
   .mobile-menu {
     display:block
   }
-  .topbar {
-    height:52px;
-    padding:0 20px
-  }
-  .crumb {
-    gap:10px
-  }
   .toast {
     left:50%
   }
@@ -1079,18 +1034,6 @@ dialog::backdrop {
   }
 }
 @media(max-width:600px) {
-  .topbar {
-    padding:0 16px
-  }
-  .crumb>span:first-of-type,.crumb>.slash {
-    display:none
-  }
-  .connection-indicator {
-    font-size:10px
-  }
-  .crumb {
-    font-size:12px
-  }
   main {
     padding:23px 16px 18px
   }
@@ -1220,13 +1163,6 @@ dialog::backdrop {
   }
   .shield {
     font-size:25px
-  }
-  .page-footer {
-    font-size:9px;
-    margin-top:26px
-  }
-  .page-footer>span:last-child {
-    display:none
   }
   .fields-grid {
     grid-template-columns:1fr

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.2
+
+- Remove the top breadcrumb/status bar and the footer text/divider. Keep status
+  polling and the failure/retry notice; disconnected sessions still block actions.
+- Keep an accessible mobile drawer button within the page heading, without a
+  separate header bar. Replace the brand arrow with an inline circular sync icon.
+- Document automated coverage and remaining live-system/browser acceptance gaps.
+
 ## 0.4.1
 
 - Compact content spacing and the top bar while preserving menu spacing; use
