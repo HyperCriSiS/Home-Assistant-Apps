@@ -198,7 +198,7 @@ function navigate(focus = false) {
   });
   if (page === 'libraries' && snapshot) renderLibraries();
   const [title, eyebrow, description] = pages[page];
-  $('page-title').textContent = title; $('breadcrumb').textContent = title;
+  $('page-title').textContent = title;
   $('eyebrow').textContent = eyebrow; $('page-description').textContent = description;
   document.title = title + ' · PlexTraktSync'; closeMenu();
   if (focus) { window.scrollTo(0, 0); $('main').focus({ preventScroll: true }); }
@@ -210,6 +210,7 @@ function syncDrawer() {
   if (mobile && !open) $('sidebar').setAttribute('aria-hidden', 'true'); else $('sidebar').removeAttribute('aria-hidden');
   $('backdrop').hidden = !mobile || !open;
   $('menu').setAttribute('aria-expanded', String(mobile && open));
+  $('menu').setAttribute('aria-label', open ? 'Menü schließen' : 'Menü öffnen');
 }
 function closeMenu() { $('sidebar').classList.remove('open'); syncDrawer(); }
 function updateButtons() {
@@ -323,9 +324,9 @@ async function refresh(loadSettings = false) {
     const next = await api('status');
     if (loadSettings) fill(await api('settings'));
     status = next; online = true; $('load-error').hidden = true;
-    $('connection').className = 'connection-indicator online'; $('connection').lastElementChild.textContent = 'App erreichbar'; renderStatus();
+    renderStatus();
   } catch (error) {
-    online = false; $('load-error').hidden = false; $('connection').className = 'connection-indicator offline'; $('connection').lastElementChild.textContent = 'Verbindung unterbrochen'; updateButtons();
+    online = false; $('load-error').hidden = false; updateButtons();
   }
 }
 async function perform(fn) {
