@@ -12,13 +12,17 @@ function render(setup, start) {
 (async () => {
   const browser = await chromium.launch({headless:true});
   try {
-    for (const scenario of ['admin', 'reader', 'forbidden', 'save-forbidden', 'restart-failed', 'configured', 'no-login', 'missing-ha', 'normal-de', 'normal-en']) {
+    for (const scenario of ['admin', 'auto-reload', 'reader', 'forbidden', 'save-forbidden', 'restart-failed', 'configured', 'no-login', 'missing-ha', 'normal-de', 'normal-en', 'normal-library-link']) {
       const setup = !scenario.startsWith('normal');
       const language = scenario === 'normal-en' ? 'en' : 'de';
-      const start = scenario === 'normal-en' ? 'shelfmark' : 'library';
+      const start = ['normal-en','normal-library-link'].includes(scenario) ? 'shelfmark' : 'library';
       const context = await browser.newContext({locale:language, viewport:{width:360,height:780}});
       const page = await context.newPage();
       const errors = [];
+      let polls = 0;
+      let shellLoads = 0;
+      let restartReady = false;
+      let libraryChecks = 0;
       page.on('pageerror', e => errors.push(e.message));
       await page.route('https://ha.test/**', route => {
         const url = new URL(route.request().url());
@@ -39,7 +43,22 @@ function render(setup, start) {
             callApi:async()=>{throw new Error('REST proxy does not support these endpoints');}
             } `};
           </script><iframe id="aio" src="/api/hassio_ingress/test/"></iframe>`});
-        if (url.pathname === '/api/hassio_ingress/test/') return route.fulfill({contentType:'text/html',body:render(setup,start)});
+        if (url.pathname === '/api/hassio_ingress/test/') {
+          if (route.request().resourceType() === 'fetch') {
+            polls++;
+            if (scenario === 'auto-reload') {
+              if (polls === 1) return route.fulfill({status:502,body:'Restarting'});
+              restartReady = true;
+              return route.fulfill({contentType:'text/html',body:render(false,start)});
+            }
+          } else shellLoads++;
+          return route.fulfill({contentType:'text/html',body:render(setup && !restartReady,start)});
+        }
+        if (scenario === 'auto-reload' && url.pathname.endsWith('/library/') && route.request().resourceType() === 'fetch') {
+          libraryChecks++;
+          if (libraryChecks === 1) return route.fulfill({status:502,body:'Backend starting'});
+        }
+        if (url.pathname.endsWith('/shelfmark/')) return route.fulfill({contentType:'text/html',body:'<a id="library" href="/api/hassio_ingress/test/library/" target="_blank" rel="noopener noreferrer"><span>Go To Library</span></a><a id="external" href="https://outside.test/" target="_blank">External</a>'});
         return route.fulfill({contentType:'text/html',body:'Native app fixture'});
       });
       await page.goto('https://ha.test/');
@@ -54,6 +73,17 @@ function render(setup, start) {
           assert.deepEqual(await page.evaluate(()=>window.calls),[]);
         } else {
           await page.waitForFunction(()=>window.calls.length >= 1);
+          if (scenario === 'auto-reload') {
+            await frame.locator('body[data-setup-required="false"]').waitFor();
+            assert.equal(shellLoads,2);
+            assert.equal(polls,3);
+            assert.equal(libraryChecks,2);
+            assert.equal(await frame.locator('nav').isVisible(),true);
+            assert.equal((await page.evaluate(()=>window.calls)).length,4);
+            await context.close();
+            console.log('Passed:',scenario);
+            continue;
+          }
           const expected = scenario === 'forbidden' ? 'HA-Anmeldenamen abfragen' : scenario === 'save-forbidden' ? 'Administrator speichern' : scenario === 'restart-failed' ? 'nicht bestätigt' : scenario === 'configured' ? 'bereits konfiguriert' : scenario === 'no-login' ? 'kein unterstützter' : 'startet neu';
           await frame.locator('#status').filter({hasText:expected}).waitFor();
           const calls = await page.evaluate(()=>window.calls);
@@ -78,6 +108,15 @@ function render(setup, start) {
         assert.equal(height,40);
         assert.equal(await frame.locator('body').evaluate(el=>el.scrollWidth<=window.innerWidth),true);
         assert.deepEqual(await page.evaluate(()=>window.calls),[]);
+        if (scenario === 'normal-library-link') {
+          assert.equal(await frame.frameLocator('iframe').locator('#external').getAttribute('target'),'_blank');
+          await frame.frameLocator('iframe').locator('#library span').click();
+          await frame.locator('nav a[data-view="library"][aria-current="page"]').waitFor();
+          assert.equal(await frame.locator('iframe').getAttribute('src'),'https://ha.test/api/hassio_ingress/test/library/');
+          assert.equal(context.pages().length,1);
+          assert.equal(await frame.locator('header').isVisible(),true);
+          assert.equal(new URL(page.url()).pathname,'/');
+        }
       }
       assert.deepEqual(errors,[],scenario);
       await context.close();

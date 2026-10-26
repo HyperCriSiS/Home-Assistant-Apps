@@ -1,3 +1,11 @@
+# 0.1.5
+
+- Keep Shelfmark's native Go To Library link inside the shared AIO workspace,
+  retaining navigation and avoiding an extra browser tab on a normal click.
+- Automatically reload after administrator setup once the configured shell
+  and both applications are reachable. Wait through temporary startup failures
+  and stop polling with a clear message if readiness cannot be confirmed.
+
 # 0.1.4
 
 - Fix administrator setup: use HA's supervisor/api WebSocket transport and its

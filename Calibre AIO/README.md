@@ -28,7 +28,8 @@ https://github.com/HyperCriSiS/Home-Assistant-Apps
 For development builds use the existing repository URL with `#dev-store` and
 install **Calibre AIO (Dev)**. Start the app and open its interface inside HA.
 On an unconfigured installation your signed-in HA administrator is adopted
-automatically and the app restarts. Reopen it afterwards. Existing administrator
+automatically and the app restarts. The interface reloads when both applications
+are ready. Existing administrator
 assignments are preserved.
 Alternatively, set `sso.admin_username` manually to your HA login name.
 Configure search sources and your download service in the

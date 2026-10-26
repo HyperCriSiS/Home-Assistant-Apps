@@ -7,7 +7,8 @@ mit leerem Administratorfeld wird Dein angemeldetes HA-Administratorkonto
 automatisch übernommen und die App neu gestartet. Eine bereits konfigurierte
 Administratorzuweisung wird dabei nicht überschrieben.
 Home Assistant prüft Deine Administratorberechtigung und speichert Deinen
-HA-Anmeldenamen. Öffne die Oberfläche nach dem Neustart erneut. Die App erhält
+HA-Anmeldenamen. Die Oberfläche lädt automatisch neu, sobald beide Anwendungen
+nach dem Neustart bereit sind. Die App erhält
 dafür keinen zusätzlichen HA-API-Zugriff. Falls die direkte Übernahme in Deinem
 Browser nicht verfügbar ist, trage Deinen HA-Anmeldenamen in der
 App-Konfiguration unter **SSO → Administrator** ein und starte die App neu.
@@ -15,6 +16,9 @@ App-Konfiguration unter **SSO → Administrator** ein und starte die App neu.
 **Bibliothek** öffnet Calibre-Web Automated zum Lesen und Verwalten.
 **Entdecken** öffnet Shelfmark für Suche, Anfragen, Downloads und deren
 Einstellungen. Die schmale gemeinsame Navigation bleibt sichtbar.
+
+Auch Shelfmarks „Go To Library“ öffnet die Bibliothek bei einem normalen Klick
+innerhalb dieser Oberfläche; das gemeinsame Menü bleibt sichtbar.
 
 ## Optionen
 

@@ -25,7 +25,8 @@
     manual: 'Alternativ: In der HA-App-Konfiguration unter SSO → Administrator Deinen HA-Anmeldenamen eintragen und die App neu starten.',
     unavailable: 'Bitte diese Seite innerhalb von Home Assistant mit einem HA-Administratorkonto öffnen.',
     saving: 'Home Assistant prüft Deine Berechtigung und speichert die Konfiguration …',
-    restarting: 'Gespeichert. Die App startet neu. Bitte anschließend die Oberfläche erneut öffnen.',
+    restarting: 'Gespeichert. Die App startet neu. Die Oberfläche öffnet sich automatisch, sobald sie bereit ist.',
+    waitError: 'Gespeichert. Die Oberfläche ist noch nicht wieder erreichbar. Bitte später neu laden oder die App-Logs prüfen.',
     error: 'Einrichtung fehlgeschlagen. Bitte erneut versuchen oder die HA-App-Konfiguration verwenden.',
     restartError: 'Gespeichert. Der Neustart konnte nicht bestätigt werden. Bitte die App in Home Assistant neu starten und die Oberfläche erneut öffnen.',
     stages: {identity: 'HA-Anmeldenamen abfragen', info: 'App-Konfiguration lesen', save: 'Administrator speichern', restart: 'App neu starten'},
@@ -41,7 +42,8 @@
     manual: 'Alternatively: Enter your HA login name under SSO → Administrator in the HA app configuration and restart the app.',
     unavailable: 'Open this page inside Home Assistant using an HA administrator account.',
     saving: 'Home Assistant is checking your permission and saving the configuration …',
-    restarting: 'Saved. The app is restarting. Please reopen its interface afterwards.',
+    restarting: 'Saved. The app is restarting. The interface will reopen automatically when ready.',
+    waitError: 'Saved. The interface is not reachable yet. Please reload later or check the app logs.',
     error: 'Setup failed. Please try again or use the HA app configuration.',
     restartError: 'Saved. Restart could not be confirmed. Please restart the app in Home Assistant and reopen its interface.',
     stages: {identity: 'Read HA login name', info: 'Read app configuration', save: 'Save administrator', restart: 'Restart app'},
@@ -65,7 +67,23 @@
   }
   links.forEach(a => a.addEventListener('click', () => select(a.dataset.view)));
   frame.addEventListener('load', () => {
-    try { select(frame.contentWindow.location.pathname.includes('/library/') ? 'library' : 'discover'); }
+    try {
+      select(frame.contentWindow.location.pathname.includes('/library/') ? 'library' : 'discover');
+      // Shelfmark's native library link opens a new tab. Keep only links to
+      // our own CWA deployment inside the shared workspace instead.
+      if (frame.contentWindow.location.pathname.includes('/shelfmark/')) {
+        frame.contentDocument.addEventListener('click', event => {
+          const anchor = event.target.closest?.('a[href]');
+          if (!anchor || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+          const target = new URL(anchor.href);
+          const library = new URL('library/', document.baseURI);
+          if (target.origin !== library.origin || !target.pathname.startsWith(library.pathname)) return;
+          event.preventDefault();
+          frame.src = target.href;
+          select('library');
+        }, true);
+      }
+    }
     catch { /* Native application may still be loading. */ }
   });
   if (document.body.dataset.setupRequired !== 'true') return;
@@ -80,6 +98,28 @@
     return;
   }
   button.hidden = true;
+  async function reopenWhenReady() {
+    // Root may already respond while a backend is still starting. Require a
+    // freshly rendered configured shell and both backends before reloading.
+    for (let attempt = 0; attempt < 90; attempt++) {
+      try {
+        const root = await fetch(document.baseURI, {cache: 'no-store', signal: AbortSignal.timeout(5000)});
+        if (root.ok) {
+          const page = new DOMParser().parseFromString(await root.text(), 'text/html');
+          if (page.body.dataset.setupRequired === 'false' && page.body.dataset.appSlug === slug) {
+            const backends = await Promise.all(['library/', 'shelfmark/'].map(path =>
+              fetch(new URL(path, document.baseURI), {cache: 'no-store', signal: AbortSignal.timeout(5000)})));
+            if (backends.every(response => response.ok)) {
+              window.location.reload();
+              return;
+            }
+          }
+        }
+      } catch { /* Connection failures are expected while the app restarts. */ }
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+    status.textContent = text.waitError;
+  }
   async function configureAdministrator() {
     button.disabled = true;
     button.hidden = true;
@@ -117,6 +157,7 @@
       stage = 'restart';
       await supervisor('/restart', 'post');
       status.textContent = text.restarting;
+      await reopenWhenReady();
     } catch {
       status.textContent = saved ? text.restartError : text.failed + text.stages[stage] + '. ' + text.error;
       button.disabled = saved;
