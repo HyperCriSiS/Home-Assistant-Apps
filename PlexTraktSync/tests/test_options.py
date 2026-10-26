@@ -6,8 +6,9 @@ import os
 from pathlib import Path
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import requests
 import yaml
@@ -18,6 +19,7 @@ from policy import PolicyError, capabilities, check_request, config, fingerprint
 from server import Controller
 from settings import normalize_options
 from storage import write
+from worker import main as run_worker
 
 
 def defaults():
@@ -196,6 +198,52 @@ class OptionalWriteTests(unittest.TestCase):
                 self.assertEqual(transport.call_args.kwargs["timeout"], 70)
             finally:
                 requests.sessions.Session.send = original
+
+
+class WorkerRoutingTests(unittest.TestCase):
+    def run_fixture(self, mode):
+        options = defaults()
+        options.update(plex_username="tester", plex_url="http://plex:32400", ratings=True,
+                       plex_to_trakt_watchlist=True, trakt_to_plex_watchlist=True,
+                       liked_lists=True, batch_delay=17, ignore_ids=["123"], sync_media="movies")
+        credentials = {"plex_token": "fixture-token"}
+        factory = SimpleNamespace(
+            run_config=Mock(), walk_config=Mock(), walker=Mock(),
+            plex_api=SimpleNamespace(account=SimpleNamespace(username="tester")),
+            trakt_api=SimpleNamespace(me=SimpleNamespace(username="trakt-tester")),
+            sync=SimpleNamespace(sync=AsyncMock()),
+        )
+        modules = {"plextraktsync.factory": SimpleNamespace(factory=factory),
+                   "plextraktsync.queue.BackgroundTask": SimpleNamespace(BackgroundTask=type("Task", (), {}))}
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            write(root / "options.json", options)
+            write(root / "credentials.json", credentials)
+            write(root / "approval.json", {"fingerprint": fingerprint(options, credentials)})
+            with patch.dict(os.environ), patch.dict(sys.modules, modules), patch("worker.install_guard", return_value=[]) as guard:
+                run_worker(mode, directory, ["42"] if mode == "incremental" else None)
+            result = json.loads((root / "config.yml").read_text())
+            server = json.loads((root / "servers.yml").read_text())
+            self.assertEqual(server["servers"]["default"]["config"]["ignore_ids"], [123])
+            self.assertEqual(factory.run_config.update.call_args.kwargs["batch_delay"], 17)
+            factory.sync.sync.assert_awaited_once()
+            return factory, guard, result
+
+    def test_full_worker_uses_selected_modes_and_global_list_options(self):
+        factory, guard, result = self.run_fixture("sync")
+        self.assertTrue(result["sync"]["plex_to_trakt"]["watchlist"])
+        self.assertTrue(result["sync"]["trakt_to_plex"]["liked_lists"])
+        self.assertEqual(factory.walk_config.update.call_args.kwargs,
+                         {"movies": True, "shows": False, "watchlist": True})
+
+    def test_incremental_worker_cannot_write_global_lists(self):
+        factory, guard, result = self.run_fixture("incremental")
+        self.assertFalse(result["sync"]["plex_to_trakt"]["watchlist"])
+        self.assertFalse(result["sync"]["trakt_to_plex"]["watchlist"])
+        self.assertFalse(result["sync"]["trakt_to_plex"]["liked_lists"])
+        self.assertFalse(guard.call_args.kwargs["options"]["plex_to_trakt_watchlist"])
+        self.assertFalse(factory.walk_config.update.call_args.kwargs["watchlist"])
+        factory.walk_config.add_id.assert_called_once_with("42")
 
 
 if __name__ == "__main__":
