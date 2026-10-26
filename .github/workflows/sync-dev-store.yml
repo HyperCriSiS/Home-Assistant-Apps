@@ -7,6 +7,7 @@ on:
       - dev-trilium
       - dev-mcphub
       - dev-calibre
+      - dev-plextraktsync
   workflow_dispatch:
 
 permissions:
@@ -39,6 +40,7 @@ jobs:
             dev-trilium \
             dev-mcphub \
             dev-calibre \
+            dev-plextraktsync \
             dev-store
 
           git checkout -B dev-store origin/dev-store
@@ -47,6 +49,7 @@ jobs:
           git checkout origin/dev-trilium -- "TriliumNext Notes"
           git checkout origin/dev-mcphub -- "MCPHub"
           git checkout origin/dev-calibre -- "Calibre AIO"
+          git checkout origin/dev-plextraktsync -- "PlexTraktSync"
           git checkout origin/main -- repository.json
 
       - name: Generate development metadata
@@ -180,6 +183,13 @@ jobs:
               config.write_text(text, encoding="utf-8")
 
           patch_config(
+              "PlexTraktSync/config.yaml",
+              "PlexTraktSync (Dev)",
+              "PlexTraktSync (Dev)",
+              "https://github.com/HyperCriSiS/Home-Assistant-Apps/tree/dev-plextraktsync/PlexTraktSync",
+              app_revision("plextraktsync", "origin/dev-plextraktsync", "PlexTraktSync"),
+          )
+          patch_config(
               "Calibre AIO/config.yaml",
               "Calibre AIO (Dev)",
               "Calibre AIO (Dev)",
@@ -240,6 +250,7 @@ jobs:
             repository.json \
             "MCPHub" \
             "Calibre AIO" \
+            "PlexTraktSync" \
             "TriliumNext Notes"
           if ! git diff --cached --quiet; then
             git commit -m "chore(dev-store): compose current app candidates"

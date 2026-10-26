@@ -1,0 +1,14 @@
+{
+  "plex_url": "",
+  "plex_username": "",
+  "sync_enabled": false,
+  "sync_interval_minutes": 60,
+  "watch_enabled": false,
+  "plex_to_trakt_watched": true,
+  "trakt_to_plex_watched": false,
+  "ratings": false,
+  "rating_priority": "none",
+  "include_libraries": [],
+  "exclude_libraries": [],
+  "log_level": "info"
+}

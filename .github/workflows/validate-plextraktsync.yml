@@ -1,0 +1,56 @@
+name: Validate PlexTraktSync
+on:
+  push:
+    branches: [main, dev-plextraktsync]
+    paths: ['PlexTraktSync/**', '.github/workflows/validate-plextraktsync.yml']
+  pull_request:
+    paths: ['PlexTraktSync/**', '.github/workflows/validate-plextraktsync.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: plextraktsync-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - run: |
+          python PlexTraktSync/scripts/upstream.py check
+          version="$(python PlexTraktSync/scripts/upstream.py version)"
+          python -m pip install "PlexTraktSync==${version}"
+      - run: python -m unittest discover -s PlexTraktSync/tests -v
+  build:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8
+        with:
+          context: PlexTraktSync
+          load: true
+          tags: plextraktsync:test
+          build-args: |
+            BUILD_FROM=ghcr.io/home-assistant/${{ matrix.arch }}-base-debian:bookworm
+            BUILD_ARCH=${{ matrix.arch }}
+            BUILD_VERSION=0.1.0
+      - name: Real startup, source restrictions, stop and persistent restart
+        run: timeout 240 bash PlexTraktSync/tests/container-smoke.sh
