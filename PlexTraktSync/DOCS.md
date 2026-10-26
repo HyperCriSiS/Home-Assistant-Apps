@@ -2,9 +2,11 @@
 
 ## Candidate status
 
-Local adapter tests are available. Docker builds, Home Assistant OS installation,
-actual Ingress and live Plex/Trakt acceptance must pass before release. Both
-architectures have CI jobs but are not yet verified build targets.
+Local adapter tests and GitHub native amd64/aarch64 builds passed, including
+container startup, source restriction, clean stop and persistent restart checks.
+[CI evidence](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/runs/40348133083).
+Real Home Assistant OS installation, actual Ingress and live Plex/Trakt acceptance
+must still pass before stable release.
 
 `watch_enabled` enables a read-only notification adapter using upstream's
 WebSocket listener and username/session validator. The upstream listener does not

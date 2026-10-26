@@ -2,7 +2,7 @@
 
 This file records the current task's handoff, not a replacement repository roadmap.
 
-## Implemented locally
+## Published development candidate
 
 - Dedicated local `dev-plextraktsync` baseline and feature branch.
 - Experimental App metadata, version-pinned upstream installation, unprivileged runtime.
@@ -29,8 +29,13 @@ This file records the current task's handoff, not a replacement repository roadm
 - Existing repository automation suite: 56 tests pass, including the extended
   generated Dev-Store test.
 - Changed YAML files pass yamllint 1.37.1; Git whitespace checks pass.
-- Docker/HAOS execution has **not** been performed. No live Plex/Trakt data was
-  read or written, and no secrets were supplied to tests.
+- GitHub validation passed on source commit `ea882d7745ffd476a0b75e5cb4ff7aaf06761792`:
+  native amd64/aarch64 builds and real container startup, source restriction,
+  clean stop and persistent restart checks. Evidence:
+  https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/runs/40348133083
+- GitHub YAML/Actions lint and repository automation tests passed for that commit.
+- Real HAOS/Supervisor acceptance is still pending. No production Plex/Trakt data
+  was read or written; tests use fixture credentials only.
 
 ## Publication and environment status
 
@@ -38,9 +43,11 @@ This file records the current task's handoff, not a replacement repository roadm
   change. `dev-plextraktsync` now exists on the intended Home-Assistant-Apps repository.
 - Publishing uses the connected GitHub tools. The desktop checkout's `.git` is
   read-only in this execution environment; its existing MCPHub branch is preserved.
-- Docker/HAOS image execution has not been verified. No stable release or completed
-  HAOS acceptance is claimed. The generated Dev-Store needs separate shared
-  infrastructure review on `main`; it is never edited directly.
+- Development review: https://github.com/HyperCriSiS/Home-Assistant-Apps/pull/112
+- Separate Dev-Store infrastructure: https://github.com/HyperCriSiS/Home-Assistant-Apps/pull/113
+- Native container checks passed. No stable release or completed HAOS acceptance
+  is claimed. The generated Dev-Store needs PR #113 reviewed and merged on `main`;
+  it is never edited directly.
 
 ## Required remaining work
 
@@ -53,12 +60,13 @@ This file records the current task's handoff, not a replacement repository roadm
    and mutable-library snapshots against an actual server.
 3. Verify state/backup migration and actual Supervisor Ingress on HAOS. HTTP,
    CSRF, token-refresh, device-denial and fail-closed version fixtures pass locally.
-4. Validate update proposal and manual release workflows on GitHub; actionlint
-   is not installed locally and no remote workflow run is available.
+4. Exercise the scheduled upstream update and manual promotion workflows.
+   GitHub validation and actionlint passed; actual update PR creation remains
+   a separate runtime acceptance check.
 5. Review the development candidate and the separate shared Dev-Store infrastructure
    PR before any `main` merge. The App remains experimental until acceptance passes.
-6. Run both native builds and real container checks, then disposable HAOS install,
-   Ingress, restart and backup/restore acceptance. Verify architecture support.
+6. Native builds and container restart checks passed on amd64/aarch64. Next run
+   disposable HAOS install, Ingress, restart and backup/restore acceptance.
 7. With explicit user approval only, run live-account write acceptance, including
    unchanged collection/watchlist/favorites and preservation of watched timestamps.
 8. Publish via the generator, attach PR to the chat and report verified URLs.
