@@ -293,7 +293,7 @@ class Controller:
             account = server.myPlexAccount()
             if account.username.casefold() != self.options["plex_username"].casefold():
                 raise ValueError("Token account differs from configured Plex username")
-            return {"connected": True, "libraries": [x.title for x in server.library.sections()]}
+            return {"connected": True, "libraries": [x.title for x in server.library.sections() if x.type in {"movie", "show"}]}
         elif action == "trakt-start":
             c = self.credentials()
             response = requests.post("https://api.trakt.tv/oauth/device/code",

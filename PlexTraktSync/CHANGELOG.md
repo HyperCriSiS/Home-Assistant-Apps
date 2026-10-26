@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.1
+
+- Compact content spacing and the top bar while preserving menu spacing; use
+  two columns for sync groups on wide screens. Remove redundant slogans.
+- Disable and dim rating direction/priority controls when the master is off,
+  preserving their saved values for reactivation.
+- Load actual film/series libraries through the authenticated Plex connection
+  check and offer include/exclude checkboxes, with offline manual fallback.
+- Clarify server-side credentials, event triggers, watchlist/playlist and liked
+  list behavior, normal-sync exclusions and legacy XBMC/NFO provider settings.
+
 ## 0.4.0
 
 - Add a dark Ingress backup workspace: full/partial category ZIPs, integrity

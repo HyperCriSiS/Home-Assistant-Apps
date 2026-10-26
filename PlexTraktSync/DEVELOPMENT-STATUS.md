@@ -2,6 +2,24 @@
 
 This is the current task handoff, not a replacement repository roadmap.
 
+## App 0.4.1: configuration clarity and compact layout
+
+- Removed redundant connection/slogan text; stored credentials are explicitly
+  described as server-side values with empty replacement fields.
+- Compact top bar/content without changing sidebar spacing. Wide layouts use
+  two columns for connections, sync and advanced groups.
+- Ratings directions and conflict priority disable/dim under the master switch;
+  their values persist through save/reload and can be reactivated.
+- Authenticated Plex connection checks return film/series library names for
+  include/exclude checkboxes. Offline manual filters and absent saved names
+  remain supported; account verification precedes section access.
+- Added concrete explanations for event triggers, watchlist vs playlist, liked
+  lists, immutable normal-sync rules, separate restore and legacy XBMC providers.
+- Local verification: 119 tests, one Windows-only timezone-data skip; JavaScript,
+  YAML and upstream pin validation pass. Fixture browser checks cover dependency
+  toggling, save/reload, library loading/filter persistence and mobile overflow.
+- Actual Plex/Trakt and HAOS acceptance is still pending.
+
 ## App 0.4.0: backup and restore workspace
 
 - Implemented full/partial versioned ZIP archives for eight supported categories;

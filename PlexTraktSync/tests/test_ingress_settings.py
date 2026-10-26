@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 import unittest
 from unittest.mock import patch
+from types import SimpleNamespace
 
 import requests
 
@@ -56,6 +57,34 @@ class IngressSettingsTests(unittest.TestCase):
         self.c.action('settings', {**self.payload(), 'credentials': {'plex_token': '', 'client_id': '', 'client_secret': ''}})
         self.assertEqual(self.c.credentials(), saved)
         self.assertTrue(response.json()['stored_credentials']['plex_token'])
+
+    def test_library_loading_returns_only_supported_sections_after_account_check(self):
+        self.c.options.update(plex_url='http://plex.invalid:32400', plex_username='Fixture')
+        write(self.directory / 'credentials.json', {'plex_token': 'PRIVATE_LIBRARY_TOKEN'})
+        sections = [SimpleNamespace(title=name, type=kind) for name, kind in
+                    [('Filme', 'movie'), ('Serien', 'show'), ('Musik', 'artist')]]
+        fake = SimpleNamespace(myPlexAccount=lambda: SimpleNamespace(username='fixture'),
+                               library=SimpleNamespace(sections=lambda: sections))
+        url = self.serve(ingress=True)
+        with patch('plexapi.server.PlexServer', return_value=fake) as connect:
+            response = requests.post(url + '/api/plex-test', json={},
+                                     headers={'X-CSRF-Token': self.c.csrf}, timeout=5)
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.json(), {'connected': True, 'libraries': ['Filme', 'Serien']})
+        self.assertNotIn('PRIVATE_LIBRARY_TOKEN', response.text)
+        connect.assert_called_once_with('http://plex.invalid:32400', 'PRIVATE_LIBRARY_TOKEN', timeout=30)
+
+    def test_library_loading_rejects_other_account_before_reading_sections(self):
+        self.c.options.update(plex_url='http://plex.invalid:32400', plex_username='Fixture')
+        write(self.directory / 'credentials.json', {'plex_token': 'fixture'})
+        from unittest.mock import Mock
+        sections = Mock()
+        fake = SimpleNamespace(myPlexAccount=lambda: SimpleNamespace(username='Other'),
+                               library=SimpleNamespace(sections=sections))
+        with patch('plexapi.server.PlexServer', return_value=fake):
+            with self.assertRaisesRegex(ValueError, 'Token account differs'):
+                self.c.action('plex-test', {})
+        sections.assert_not_called()
 
     def test_invalid_input_has_no_side_effects(self):
         self.approve()

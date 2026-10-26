@@ -162,9 +162,9 @@ nav a[aria-current=page] {
   margin-left:240px
 }
 .topbar {
-  height:73px;
+  height:52px;
   border-bottom:1px solid var(--line);
-  padding:0 42px;
+  padding:0 28px;
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -206,9 +206,9 @@ nav a[aria-current=page] {
   background:var(--rose)
 }
 main {
-  max-width:1320px;
+  max-width:1480px;
   margin:0 auto;
-  padding:35px 42px 20px;
+  padding:20px 28px 16px;
   min-width:0
 }
 .page-heading {
@@ -216,7 +216,7 @@ main {
   align-items:center;
   justify-content:space-between;
   gap:20px;
-  margin-bottom:26px
+  margin-bottom:16px
 }
 .eyebrow {
   font-size:10px;
@@ -252,12 +252,12 @@ h1 {
   justify-content:space-between;
   align-items:center;
   gap:20px;
-  min-height:291px;
-  padding:30px 34px;
+  min-height:235px;
+  padding:22px 26px;
   background:radial-gradient(ellipse at 85% 20%,#38302855,transparent 65%),linear-gradient(125deg,#20242c,#1b1e25);
   border:1px solid #353943;
   border-radius:16px;
-  margin-bottom:20px
+  margin-bottom:14px
 }
 .pill {
   display:inline-flex;
@@ -414,7 +414,7 @@ h1 {
   display:grid;
   grid-template-columns:repeat(3,minmax(0,1fr));
   gap:16px;
-  margin-bottom:24px
+  margin-bottom:14px
 }
 .metric {
   background:var(--surface);
@@ -471,14 +471,14 @@ h1 {
   display:grid;
   grid-template-columns:1.2fr 1fr;
   gap:20px;
-  margin-bottom:20px
+  margin-bottom:14px
 }
 .card {
   background:var(--surface);
   border:1px solid var(--line);
   border-radius:16px;
-  padding:25px;
-  margin-bottom:20px;
+  padding:16px;
+  margin-bottom:14px;
   min-width:0
 }
 .overview-grid .card {
@@ -514,7 +514,7 @@ h1 {
   display:flex;
   align-items:center;
   gap:13px;
-  padding:16px 0;
+  padding:10px 0;
   border-bottom:1px solid #ffffff06
 }
 .setup-steps li:last-child {
@@ -593,8 +593,8 @@ h1 {
   justify-content:space-between;
   gap:10px;
   border-top:1px solid #ffffff07;
-  margin-top:34px;
-  padding-top:18px;
+  margin-top:14px;
+  padding-top:12px;
   font-size:10px;
   color:#8591a2
 }
@@ -612,8 +612,8 @@ h1 {
   background:#1c232d;
   color:#b4c1d3;
   border-radius:10px;
-  padding:15px 18px;
-  margin-bottom:22px;
+  padding:10px 14px;
+  margin-bottom:14px;
   font-size:12px;
   line-height:1.7
 }
@@ -632,7 +632,7 @@ h1 {
   display:flex;
   align-items:center;
   gap:13px;
-  margin-bottom:24px
+  margin-bottom:14px
 }
 .section-intro .service-mini {
   height:40px;
@@ -653,7 +653,7 @@ h1 {
   column-gap:24px
 }
 .field {
-  margin:0 0 22px;
+  margin:0 0 12px;
   min-width:0
 }
 .field label {
@@ -682,7 +682,7 @@ input::placeholder,textarea::placeholder {
 }
 textarea {
   resize:vertical;
-  min-height:108px;
+  min-height:68px;
   line-height:1.7
 }
 .secret-wrap {
@@ -718,14 +718,14 @@ textarea {
 .group-description {
   color:var(--muted);
   font-size:12px;
-  margin:5px 0 22px
+  margin:5px 0 12px
 }
 .toggle-row {
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:22px;
-  padding:16px 0;
+  padding:10px 0;
   border-top:1px solid #ffffff07;
   margin:0;
   cursor:pointer
@@ -1053,7 +1053,7 @@ dialog::backdrop {
     display:block
   }
   .topbar {
-    height:63px;
+    height:52px;
     padding:0 20px
   }
   .crumb {
@@ -1063,7 +1063,7 @@ dialog::backdrop {
     left:50%
   }
   main {
-    padding:25px 20px
+    padding:18px 20px
   }
   .page-heading {
     margin-bottom:23px
@@ -1112,7 +1112,7 @@ dialog::backdrop {
     font-size:26px
   }
   .hero {
-    padding:25px 23px;
+    padding:18px 23px;
     min-height:285px
   }
   .hero-copy {
@@ -1312,9 +1312,9 @@ dialog::backdrop {
 }
 .save-bar {
   position:fixed;
-  left:282px;
-  right:42px;
-  max-width:1236px;
+  left:268px;
+  right:28px;
+  max-width:1424px;
   margin:0 auto
 }
 @media(max-width:1100px) {
@@ -1346,10 +1346,10 @@ dialog::backdrop {
 }
 
 /* Backup workspace */
-.backup-tabs { display:flex; gap:6px; padding:5px; margin-bottom:22px; border:1px solid var(--line); background:var(--sidebar); border-radius:10px; flex-wrap:wrap }
+.backup-tabs { display:flex; gap:6px; padding:5px; margin-bottom:14px; border:1px solid var(--line); background:var(--sidebar); border-radius:10px; flex-wrap:wrap }
 .backup-tabs button { border:0; background:transparent; color:var(--muted); border-radius:7px; padding:10px 14px; font-size:12px; font-weight:600 }
 .backup-tabs button[aria-selected=true] { background:#332b1f; color:var(--accent) }
-.backup-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin-bottom:20px }
+.backup-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin-bottom:14px }
 .backup-stats>div { background:var(--surface); padding:17px 20px; border:1px solid var(--line); border-radius:12px }
 .backup-stats span { display:block; color:var(--muted); font-size:11px }
 .backup-stats strong { display:block; font-weight:550; font-size:16px; margin-top:8px; overflow-wrap:anywhere }
@@ -1382,3 +1382,25 @@ dialog::backdrop {
 .upload-label { cursor:pointer }
 @media(max-width:1100px) { .backup-archive { grid-template-columns:1fr } .backup-archive-actions { justify-content:flex-start; max-width:none } .backup-filter { grid-template-columns:1fr 1fr } .backup-filter>input { grid-column:1/-1 } .backup-settings-footer { align-items:flex-start; flex-direction:column } }
 @media(max-width:600px) { .backup-tabs button { font-size:11px; padding:9px 10px } .backup-stats { grid-template-columns:1fr; gap:10px } .backup-stats>div { display:flex; align-items:center; justify-content:space-between; gap:15px; padding:14px 16px } .backup-stats strong { font-size:12px; margin:0; text-align:right } .backup-stats span { font-size:10px } .backup-categories { grid-template-columns:1fr; gap:8px } .backup-category { padding:11px 12px; font-size:12px } .backup-filter { grid-template-columns:1fr } .backup-schedule { padding:16px } .backup-plan-table { font-size:10px } .backup-plan-table td, .backup-plan-table th { padding:10px 4px } .backup-job { align-items:flex-start; flex-direction:column; gap:12px } }
+/* Compact content; sidebar and navigation spacing intentionally unchanged. */
+.option-explanation { margin:10px 0; color:var(--muted); font-size:12px; }
+.option-explanation summary { cursor:pointer; color:#c2cbd7; }
+.option-explanation p { line-height:1.65; margin:9px 0; }
+.option-explanation .fields-grid { margin-top:12px; }
+.option-disabled { opacity:.45; cursor:not-allowed; }
+.option-disabled input, .option-disabled select { cursor:not-allowed; }
+.library-choice { display:flex; align-items:center; gap:20px; padding:10px 0; border-bottom:1px solid var(--line); }
+.library-choice strong { flex:1; min-width:0; overflow-wrap:anywhere; font-size:12px; font-weight:500; }
+#library-choices { margin-top:12px; }
+@media(min-width:1350px) {
+  #sync-fields, #advanced-fields { columns:2; column-gap:14px; }
+  #sync-fields .card, #advanced-fields .card { break-inside:avoid; display:flow-root; margin-bottom:14px; }
+  #page-connections { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; align-items:start; }
+  #page-connections > .notice { grid-column:1/-1; margin:0; }
+  #page-connections > .card { margin:0; }
+  #page-sync > details { margin-top:14px; }
+}
+@media(max-width:600px) {
+  .library-choice { flex-wrap:wrap; gap:10px 18px; }
+  .library-choice strong { flex-basis:100%; }
+}
