@@ -71,3 +71,19 @@ This file records the current task's handoff, not a replacement repository roadm
    unchanged collection/watchlist/favorites and preservation of watched timestamps.
 8. Publish via the generator, attach PR to the chat and report verified URLs.
    Stable promotion is a later manual decision after all acceptance gates pass.
+
+## App 0.2.0 configuration expansion
+
+- Native configuration now exposes all supported upstream sync flags except the
+  permanently locked collection flags. Watch settings map ignored clients while
+  username filtering stays mandatory and terminal progress bars remain disabled.
+- Optional watchlist directions, Plex playlist imports, list overrides and reverse
+  playback progress default off. Independent rating directions retain the legacy
+  master switch. Scope, ignored IDs, timeouts, batch delay and XBMC providers are
+  configurable. Every option has English/German labels and descriptions.
+- HTTP policy allows only explicitly enabled directions, keeps collection/favorites
+  blocked, and disables global list writes in playback-event jobs. Preview also
+  blocks Plex GET progress writes. Additional write effects are disclosed in OPTIONS.md.
+- Missing fields migrate to safe defaults without deleting tokens; old approval
+  fingerprints become invalid. 58 App/security/migration tests pass locally. YAML and upstream-pin checks pass. Native CI for this
+  revision must be checked separately from the earlier 0.1.0 evidence above.

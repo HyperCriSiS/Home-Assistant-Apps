@@ -1,5 +1,15 @@
 # Setup and operations
 
+## Configuration coverage (App 0.2.0)
+
+See [OPTIONS.md](OPTIONS.md) for every supported sync/watch setting, the native
+option names, German/English UI labels, defaults and permanently locked settings.
+Watchlists, liked-list playlists and playback progress are now optional controls;
+all default off. Collection changes, Trakt favorites, direct scrobbles and importing
+other Plex users remain prohibited. The ratings master switch is retained, with
+independent per-direction controls. Upgrading from 0.1.0 preserves credentials and
+safe defaults but requires a fresh analysis/approval.
+
 ## Candidate status
 
 Local adapter tests and GitHub native amd64/aarch64 builds passed, including
@@ -103,6 +113,10 @@ because it updates credentials, not watched history. ID searches returning more
 than one match fail closed. API failures invalidate the analysis run.
 
 The report inventories selected libraries independently of upstream matching.
+Enabled optional features additionally execute upstream's dry-run behind the HTTP
+write guard. The report warns about watchlist removals, managed Plex playlist
+replacement and playback progress overwrites; it does not enumerate their exact
+replacement diffs. See OPTIONS.md before enabling them.
 It includes watched movie/episode counts, matched items already watched or missing
 on Trakt, movie/episode/show rating conflicts, and unresolved titles. Items skipped
 by upstream traversal (for example, an episode whose parent show disappeared)
