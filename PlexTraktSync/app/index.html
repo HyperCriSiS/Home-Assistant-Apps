@@ -3,7 +3,8 @@
 <title>PlexTraktSync</title>
 <style>body{font:16px system-ui;max-width:850px;margin:2rem auto;padding:1rem;color:#163342;background:#f5f8fa}button,input{font:inherit;padding:.6rem;margin:.3rem}section{background:white;padding:1rem;margin:1rem 0;border-radius:10px}pre{white-space:pre-wrap;overflow-wrap:anywhere}label{display:block}</style>
 <h1>PlexTraktSync</h1>
-<p>Die Trakt-Sammlung wird von dieser App nicht verändert, weil sie als Favoritenarchiv verwendet wird. Watchlist und Favoriten bleiben geschützt.</p>
+<p>Die Trakt-Sammlung wird von dieser App nicht verändert, weil sie als Favoritenarchiv verwendet wird. Auch Trakt-Favoriten bleiben unverändert. Watchlist und gelikte Listen sind standardmäßig deaktiviert und können in den HA-App-Optionen ausdrücklich aktiviert werden.</p>
+<section><h2>Dauerhaft geschützt</h2><p>Sammlung hinzufügen/leeren/entfernen: aus. Fremde Plex-Benutzer übernehmen: aus. Trakt-Favoriten verändern: aus. Diese Schutzregeln sind nicht abschaltbar.</p><p>Nach einer Optionsänderung ist eine neue Analyse und Freigabe erforderlich. Der Bericht zeigt die gewählten Richtungen und Warnungen für Watchlist-Löschungen, Playlist-Ersetzungen und Wiedergabefortschritt.</p></section>
 <section><h2>1. Zugangsdaten</h2><p>Plex-Server und Kontoname in der HA-App-Konfiguration eintragen und die App neu starten. Der Token muss genau diesem Konto gehören.</p>
 <label>Plex-Token <input id="plex_token" type="password" autocomplete="off"></label>
 <label>Trakt-Client-ID <input id="client_id" autocomplete="off"></label>

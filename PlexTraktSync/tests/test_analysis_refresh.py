@@ -37,6 +37,8 @@ class AnalysisTests(unittest.TestCase):
             # Item 5 simulates an episode skipped because its parent disappeared.
 
         return SimpleNamespace(
+            walk_config=SimpleNamespace(walk_movies=True, walk_shows=True),
+            server_config=SimpleNamespace(ignore_ids=[]),
             media_factory=mf,
             walker=SimpleNamespace(find_movies=movies, find_episodes=episodes),
             plex_api=SimpleNamespace(library_sections={

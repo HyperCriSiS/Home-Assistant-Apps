@@ -1,0 +1,115 @@
+# Configuration coverage and protected defaults
+
+This table covers the sync, watch and list settings in the pinned PlexTraktSync
+0.35.21 configuration. Native HA options expose supported controls; the Ingress
+status shows effective sync directions and immutable protection. An analysis and
+explicit approval are required again after any option changes.
+
+## Your history-first defaults
+
+| Upstream setting | App control / behavior | Default |
+| --- | --- | --- |
+| `sync.plex_to_trakt.watched_status` | `plex_to_trakt_watched` | true |
+| `sync.trakt_to_plex.watched_status` | `trakt_to_plex_watched` | false |
+| `sync.plex_to_trakt.ratings` | `ratings` AND `plex_to_trakt_ratings` | master false |
+| `sync.trakt_to_plex.ratings` | `ratings` AND `trakt_to_plex_ratings` | master false |
+| `sync.rating_priority` | `rating_priority`: none / plex / trakt | none |
+| `sync.plex_to_trakt.watchlist` | `plex_to_trakt_watchlist` | false |
+| `sync.trakt_to_plex.watchlist` | `trakt_to_plex_watchlist` | false |
+| `sync.trakt_to_plex.watchlist_as_playlist` | `watchlist_as_playlist` (requires the preceding option) | false |
+| `sync.trakt_to_plex.liked_lists` | `liked_lists` | false |
+| `sync.trakt_to_plex.playback_status` | `trakt_to_plex_playback` | false |
+| `liked_lists.keep_watched` | `liked_lists_keep_watched` | true |
+| `liked_list.<name>.keep_watched` | `liked_list_overrides`: name + keep_watched entries | empty |
+| `watch.ignore_clients` | `watch_ignore_clients`: Plex client identifiers | empty |
+| `watch.username_filter` | Always enforced; other Plex users are excluded | true, locked |
+| `watch.add_collection` | Permanently blocked | false, locked |
+| `watch.remove_collection` | Permanently blocked | false, locked |
+| `sync.plex_to_trakt.collection` | Permanently blocked | false, locked |
+| `sync.plex_to_trakt.clear_collected` | Permanently blocked | false, locked |
+| Trakt favorites / history deletion | No write path is exposed | unchanged |
+
+The `ratings` master switch preserves compatibility with 0.1.0. When it is on,
+the two independent direction switches take effect (both default to true, as in
+0.1.0). `rating_priority: none` fills missing ratings while retaining existing
+conflicts; plex/trakt priorities explicitly permit replacement on the other side.
+
+## Optional watchlist/list/progress behavior
+
+**Watchlist directions are real synchronization controls, not add-only export.**
+Upstream may remove entries from the destination when only one direction is
+enabled. With both enabled it combines the lists. The pinned upstream skips its
+normal watchlist synchronization if the Plex watchlist is empty; this wrapper
+preserves that behavior. Watchlist sync uses Plex Discover and can encounter
+matching limitations. Its scope is the account watchlist, not the selected media
+libraries. Keep both switches off for your original history-only plan.
+
+`watchlist_as_playlist` takes effect only with `trakt_to_plex_watchlist`. It imports
+the Trakt watchlist as a managed Plex playlist instead of editing the Plex online
+watchlist. `liked_lists` imports liked Trakt lists into managed Plex playlists;
+it does not change Trakt favorites. These features can replace the contents of
+Plex playlists managed by upstream. `liked_list_overrides` uses exact Trakt list
+names, for example:
+
+```yaml
+liked_list_overrides:
+  - name: "My Films"
+    keep_watched: false
+```
+
+`trakt_to_plex_playback` overwrites Plex resume progress from Trakt. Upstream
+marks an item watched when its Trakt progress is at least 99%, even when the
+separate reverse watched-status switch is off. This side effect is shown in
+the initial analysis warning.
+
+The initial report includes effective switches and explicit warnings. Enabled
+optional features are also passed through upstream's dry-run with HTTP writes
+blocked. The report does **not** enumerate exact watchlist/playlist replacement
+diffs or every resume offset; do not treat the watched-count report as a complete
+preview of those optional features. Leave them off unless these effects are wanted.
+
+Incremental playback-event jobs never synchronize global watchlists or playlists.
+Those operations run only in a full/manual scheduled job. If using monitoring
+without periodic full sync, global list options require manual full runs.
+Upstream also disables liked-list and watchlist-playlist rebuilding during a
+partial media walk: choose `sync_media: all` when using these playlist imports.
+
+## Other supported controls
+
+| App option | Purpose / upstream mapping | Default |
+| --- | --- | --- |
+| `plex_url`, `plex_username` | Server and exact token account | empty |
+| `sync_enabled`, `sync_interval_minutes` | Periodic full sync, independently of monitoring | false / 60 |
+| `watch_enabled` | Read-only upstream notification adapter; no direct scrobbles | false |
+| `sync_media` | `all`, `movies` or `tv` library traversal | all |
+| `include_libraries`, `exclude_libraries` | Per-server library selection; exclusion wins | empty |
+| `ignore_ids` | Per-server `ignore_ids`: numeric Plex metadata IDs | empty |
+| `plex_timeout` | Upstream `plex.timeout` and connection test, seconds | 30 |
+| `request_timeout` | Trakt requests and device OAuth, seconds | 30 |
+| `batch_delay` | Upstream worker batch timer, seconds; 0 disables delay | 5 |
+| `movie_provider` | `xbmc-providers.movies`: imdb/tmdb for legacy XBMC IDs | imdb |
+| `show_provider` | `xbmc-providers.shows`: tvdb/tmdb/imdb for legacy XBMC IDs | tvdb |
+| `log_level` | Sanitized JSON operational log threshold | info |
+
+## Deliberate boundaries
+
+This is coverage of the App's supported **configuration**, not an unrestricted
+front end for every upstream CLI command. Interactive console login, collection
+clearing, arbitrary history deletion, IMDb import, self-update and raw scrobbling
+are not exposed. They could bypass the App's intended data protection or versioned
+update process. Rewatches do not create additional history entries in this adapter.
+
+Terminal progress bars remain disabled in HA. Raw upstream debug logs and its
+logger/file/filter knobs are intentionally not exposed because errors may contain
+token-bearing URLs. Cache, config and log paths stay under `/data`; HTTP caching
+is disabled to avoid stale watched-state decisions. Environment-file overrides
+are disabled. Favorites, collection locks and username filtering cannot be
+overridden through native options or an arbitrary upstream YAML block.
+
+## Upgrade from 0.1.0
+
+Missing new fields are merged with the safe defaults above. Tokens and files are
+preserved, and the legacy ratings switch retains its old behavior. The expanded
+configuration changes the approval fingerprint: perform another analysis and
+explicitly approve before writes resume. No new optional write mode is enabled
+by the migration.

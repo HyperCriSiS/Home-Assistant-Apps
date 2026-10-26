@@ -13,14 +13,15 @@ import time
 
 import requests
 
-from policy import fingerprint
+from policy import fingerprint, config
+from settings import normalize_options
 from storage import read, write
 
 
 class Controller:
     def __init__(self, directory):
         self.directory = Path(directory)
-        self.options = read(self.directory / "options.json")
+        self.options = normalize_options(read(self.directory / "options.json"))
         self.lock = threading.Lock()
         self.action_lock = threading.Lock()
         self.stop = threading.Event()
@@ -64,6 +65,10 @@ class Controller:
                 "plex_configured": bool(self.credentials().get("plex_token")),
                 "analysis": read(self.directory / "analysis.json"),
                 "watch_running": self.watch_process is not None and self.watch_process.poll() is None,
+                "sync_options": config(self.options)["sync"],
+                "protected_settings": {"collection": False, "clear_collected": False,
+                                       "watch_add_collection": False, "watch_remove_collection": False,
+                                       "username_filter": True, "trakt_favorites": "unchanged"},
                 "csrf": self.csrf}
 
     def run(self, mode, ids=None):
@@ -235,7 +240,8 @@ class Controller:
             write(self.directory / "credentials.json", credentials)
         elif action == "plex-test":
             from plexapi.server import PlexServer
-            server = PlexServer(self.options["plex_url"], self.credentials()["plex_token"], timeout=20)
+            server = PlexServer(self.options["plex_url"], self.credentials()["plex_token"],
+                                timeout=self.options["plex_timeout"])
             account = server.myPlexAccount()
             if account.username.casefold() != self.options["plex_username"].casefold():
                 raise ValueError("Token account differs from configured Plex username")
@@ -243,7 +249,7 @@ class Controller:
         elif action == "trakt-start":
             c = self.credentials()
             response = requests.post("https://api.trakt.tv/oauth/device/code",
-                                     json={"client_id": c["client_id"]}, timeout=20)
+                                     json={"client_id": c["client_id"]}, timeout=self.options["request_timeout"])
             response.raise_for_status()
             self.device = {**response.json(), "started": time.time(), "last_poll": 0}
             return {k: self.device[k] for k in ("user_code", "verification_url", "expires_in", "interval")}
@@ -257,7 +263,8 @@ class Controller:
             payload = {"code": d["device_code"], "client_id": c["client_id"]}
             if c.get("client_secret"):
                 payload["client_secret"] = c["client_secret"]
-            response = requests.post("https://api.trakt.tv/oauth/device/token", json=payload, timeout=20)
+            response = requests.post("https://api.trakt.tv/oauth/device/token", json=payload,
+                                     timeout=self.options["request_timeout"])
             if response.status_code in (400, 429):
                 if response.status_code == 429:
                     d["interval"] += 5

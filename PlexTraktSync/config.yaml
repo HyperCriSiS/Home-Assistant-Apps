@@ -1,6 +1,6 @@
 name: "PlexTraktSync (Dev)"
 description: "Protected Plex and Trakt watched-history synchronisation"
-version: "0.1.0-dev.151"
+version: "0.2.0-dev.152"
 slug: "plextraktsync"
 stage: experimental
 init: false
@@ -23,9 +23,26 @@ options:
   plex_to_trakt_watched: true
   trakt_to_plex_watched: false
   ratings: false
+  plex_to_trakt_ratings: true
+  trakt_to_plex_ratings: true
   rating_priority: "none"
+  plex_to_trakt_watchlist: false
+  trakt_to_plex_watchlist: false
+  watchlist_as_playlist: false
+  liked_lists: false
+  liked_lists_keep_watched: true
+  liked_list_overrides: []
+  trakt_to_plex_playback: false
+  sync_media: "all"
   include_libraries: []
   exclude_libraries: []
+  ignore_ids: []
+  watch_ignore_clients: []
+  plex_timeout: 30
+  request_timeout: 30
+  batch_delay: 5
+  movie_provider: "imdb"
+  show_provider: "tvdb"
   log_level: "info"
 schema:
   plex_url: "str"
@@ -36,7 +53,26 @@ schema:
   plex_to_trakt_watched: "bool"
   trakt_to_plex_watched: "bool"
   ratings: "bool"
+  plex_to_trakt_ratings: "bool"
+  trakt_to_plex_ratings: "bool"
   rating_priority: "list(none|plex|trakt)"
+  plex_to_trakt_watchlist: "bool"
+  trakt_to_plex_watchlist: "bool"
+  watchlist_as_playlist: "bool"
+  liked_lists: "bool"
+  liked_lists_keep_watched: "bool"
+  liked_list_overrides:
+    - name: "str"
+      keep_watched: "bool"
+  trakt_to_plex_playback: "bool"
+  sync_media: "list(all|movies|tv)"
   include_libraries: ["str"]
   exclude_libraries: ["str"]
+  ignore_ids: ["str"]
+  watch_ignore_clients: ["str"]
+  plex_timeout: "int(5,300)"
+  request_timeout: "int(5,300)"
+  batch_delay: "int(0,300)"
+  movie_provider: "list(imdb|tmdb)"
+  show_provider: "list(tvdb|tmdb|imdb)"
   log_level: "list(info|warning|error)"

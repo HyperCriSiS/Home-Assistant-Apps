@@ -10,6 +10,7 @@ import sys
 
 from policy import config, fingerprint, install_guard
 from storage import read, write
+from settings import normalize_options
 
 
 async def analyze(factory):
@@ -21,7 +22,13 @@ async def analyze(factory):
     for section in factory.plex_api.library_sections.values():
         if section.type not in ("movie", "show"):
             continue
+        if section.type == "movie" and not factory.walk_config.walk_movies:
+            continue
+        if section.type == "show" and not factory.walk_config.walk_shows:
+            continue
         for item in section.pager("episode") if section.type == "show" else section.pager():
+            if item.key in factory.server_config.ignore_ids:
+                continue
             inventory[item.key] = item
     for item in inventory.values():
         if item.is_watched:
@@ -31,6 +38,8 @@ async def analyze(factory):
     original = factory.media_factory.resolve_any
 
     def resolve(item, *args, **kwargs):
+        if item.key in factory.server_config.ignore_ids:
+            return None
         visited.add(item.key)
         media = original(item, *args, **kwargs)
         if media is None:
@@ -46,19 +55,25 @@ async def analyze(factory):
         return media
 
     factory.media_factory.resolve_any = resolve
-    for iterator in (factory.walker.find_movies(), factory.walker.find_episodes()):
+    iterators = []
+    if factory.walk_config.walk_movies:
+        iterators.append(factory.walker.find_movies())
+    if factory.walk_config.walk_shows:
+        iterators.append(factory.walker.find_episodes())
+    for iterator in iterators:
         async for media in iterator:
             if media.watched_on_plex:
                 counts["already_in_trakt" if media.watched_on_trakt else "missing_in_trakt"] += 1
                 counts["existing_titles" if media.watched_on_trakt else "missing_titles"].append(str(media.plex.title))
     counts["not_traversed"] = [str(item.title) for key, item in inventory.items() if key not in visited]
     counts["unmatched"].extend(counts["not_traversed"])
+    factory.media_factory.resolve_any = original
     return counts
 
 
 def main(mode, directory, ids=None):
     directory = Path(directory)
-    options = read(directory / "options.json")
+    options = normalize_options(read(directory / "options.json"))
     credentials = read(directory / "credentials.json", {})
     current = fingerprint(options, credentials)
     preview = mode == "analyze"
@@ -66,10 +81,16 @@ def main(mode, directory, ids=None):
         raise ValueError("Unsupported worker mode")
     if not preview and read(directory / "approval.json", {}).get("fingerprint") != current:
         raise ValueError("Initial analysis and explicit approval required")
-    failures = install_guard(preview, options["ratings"])
+    effective = dict(options)
+    if mode == "incremental":
+        # An item event must never replace an entire global list/playlist.
+        for key in ("plex_to_trakt_watchlist", "trakt_to_plex_watchlist", "liked_lists"):
+            effective[key] = False
+    failures = install_guard(preview, options["ratings"], options=effective)
     # Regenerate the policy every run; never merge editable or inherited sync options.
-    write(directory / "config.yml", config(options))  # JSON is valid YAML.
-    server_config = {"excluded-libraries": options["exclude_libraries"]}
+    write(directory / "config.yml", config(effective))  # JSON is valid YAML.
+    server_config = {"excluded-libraries": options["exclude_libraries"],
+                     "ignore_ids": [int(value) for value in options["ignore_ids"]]}
     if options["include_libraries"]:
         server_config["libraries"] = options["include_libraries"]
     write(directory / "servers.yml", {"servers": {"default": {
@@ -79,8 +100,10 @@ def main(mode, directory, ids=None):
     os.environ["PLEX_SERVER"] = "default"
     os.environ["PLEX_USERNAME"] = options["plex_username"]
     from plextraktsync.factory import factory
-    factory.run_config.update(progressbar=False, cache=False)
-    factory.walk_config.update(movies=True, shows=True, watchlist=False)
+    factory.run_config.update(progressbar=False, cache=False, batch_delay=options["batch_delay"])
+    factory.walk_config.update(movies=options["sync_media"] in ("all", "movies"),
+                               shows=options["sync_media"] in ("all", "tv"),
+                               watchlist=mode != "incremental")
     if mode == "incremental":
         if not ids or any(not key.isdecimal() or len(key) > 12 for key in ids):
             raise ValueError("Invalid Plex item IDs")
@@ -94,6 +117,21 @@ def main(mode, directory, ids=None):
     factory.trakt_api.me  # Validate OAuth; never enter an interactive login path.
     if preview:
         report = asyncio.run(analyze(factory))
+        optional = any(options[key] for key in ("plex_to_trakt_watchlist", "trakt_to_plex_watchlist",
+                                                "liked_lists", "trakt_to_plex_playback"))
+        if optional:
+            # Exercise the actual upstream plan, additionally protected at HTTP
+            # level. List replacements are disclosed; exact playlist diffs aren't
+            # available in upstream's preview API.
+            asyncio.run(factory.sync.sync(factory.walker, dry_run=True))
+        report["sync_options"] = config(options)["sync"]
+        report["warnings"] = []
+        if options["plex_to_trakt_watchlist"] or options["trakt_to_plex_watchlist"]:
+            report["warnings"].append("Watchlist sync can add AND REMOVE entries; one-way mode mirrors the selected source.")
+        if options["liked_lists"] or (options["trakt_to_plex_watchlist"] and options["watchlist_as_playlist"]):
+            report["warnings"].append("Managed Plex playlist contents can be replaced. Exact playlist differences are not included in this report.")
+        if options["trakt_to_plex_playback"]:
+            report["warnings"].append("Trakt playback progress overwrites Plex progress and marks items watched at >=99%, even when reverse watched sync is off.")
         if failures:
             raise RuntimeError("Analysis had API errors; approval refused")
         report.update(fingerprint=current)

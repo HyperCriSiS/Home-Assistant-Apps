@@ -10,6 +10,7 @@ import time
 
 from policy import install_guard
 from storage import read
+from settings import normalize_options
 
 
 class PlaybackEvents:
@@ -54,9 +55,9 @@ class PlaybackEvents:
 
 def main(directory, output):
     directory = Path(directory)
-    options = read(directory / "options.json")
+    options = normalize_options(read(directory / "options.json"))
     credentials = read(directory / "credentials.json", {})
-    install_guard(preview=True, ratings=False)
+    install_guard(preview=True, ratings=False, options=options)
     os.environ["PLEX_SERVER"] = "default"
     os.environ["PLEX_USERNAME"] = options["plex_username"]
     from plextraktsync.factory import factory
@@ -67,8 +68,17 @@ def main(directory, output):
         raise ValueError("Plex account mismatch")
     if factory.server_config.token != credentials["plex_token"]:
         raise ValueError("Plex configuration changed; restart listener")
-    adapter = PlaybackEvents(factory.watch_state_updater,
-                             lambda key: print(json.dumps({"key": key}), file=output, flush=True))
+    def enqueue(key):
+        item = factory.plex_api.fetch_item(key)
+        if not item or item.library is None or int(key) in factory.server_config.ignore_ids:
+            return
+        if options["sync_media"] == "movies" and item.type != "movie":
+            return
+        if options["sync_media"] == "tv" and item.type != "episode":
+            return
+        print(json.dumps({"key": key}), file=output, flush=True)
+
+    adapter = PlaybackEvents(factory.watch_state_updater, enqueue)
     listener = factory.web_socket_listener
     listener.on(PlaySessionStateNotification, adapter.on_play, state=["playing", "paused", "stopped"])
     listener.on(Error, adapter.reset)
