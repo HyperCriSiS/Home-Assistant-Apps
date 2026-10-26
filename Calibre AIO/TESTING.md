@@ -38,6 +38,10 @@ checks both applications after first boot and restart with persistent volumes.
    login-name fallback and that an existing administrator is never replaced.
    In Shelfmark, click Go To Library and confirm CWA opens inside the shared
    workspace with the AIO navigation still visible and no new tab.
+   Upload a permitted ebook larger than 16 MiB (for example 25 MiB) through
+   the real HA Ingress path; it must not fail with Supervisor's 16 MiB limit.
+   CI checks the streaming manifest flag and byte-for-byte proxy delivery;
+   the real HA Supervisor upload remains part of this operator check.
 3. Check a normal HA user gets its own Shelfmark request account and CWA
    reader account. Try a second HA admin (a normal app user unless selected)
    and a same-browser user switch. Change `sso.admin_username`, restart the app
