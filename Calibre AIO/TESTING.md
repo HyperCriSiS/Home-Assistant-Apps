@@ -29,9 +29,12 @@ checks both applications after first boot and restart with persistent volumes.
 1. Add the repository (or the PR branch for pre-merge tests), install
    **Calibre AIO** and verify the app
    name/version. Use the default separate `calibre-aio/` test folders.
-2. Set `sso.admin_username` to the test administrator's HA login name and start
-   the app. Open the interface with that account. Both tabs must work without
-   another login; confirm Shelfmark settings and CWA admin access.
+2. Leave `sso.admin_username` empty and start the app. A normal HA user must
+   not trigger setup writes. Open the interface inside HA with the test HA
+   administrator: setup must save that account's login name and restart without
+   a button click. Reopen the interface. Both tabs must work without another
+   login; confirm Shelfmark settings and CWA admin access. Also verify the manual
+   login-name fallback and that an existing administrator is never replaced.
 3. Check a normal HA user gets its own Shelfmark request account and CWA
    reader account. Try a second HA admin (a normal app user unless selected)
    and a same-browser user switch. Change `sso.admin_username`, restart the app

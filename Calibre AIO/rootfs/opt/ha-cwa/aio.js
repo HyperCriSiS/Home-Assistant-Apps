@@ -20,26 +20,34 @@
     library: 'Bibliothek', discover: 'Entdecken', navigation: 'Bereich auswählen',
     hint: 'Bücher finden. Bibliothek genießen.', frame: 'Bücher entdecken und Bibliothek verwalten',
     setupTitle: 'Administrator einrichten',
-    setupHelp: 'Übernimm Deinen angemeldeten Home-Assistant-Administrator für Calibre AIO. Andere Benutzer erhalten normale Rechte.',
-    adopt: 'Angemeldeten Administrator übernehmen und neu starten',
+    setupHelp: 'Dein angemeldetes HA-Administratorkonto wird automatisch für Calibre AIO eingerichtet. Andere HA-Benutzer erhalten eigene Konten ohne Administratorrechte für die gemeinsame Bibliothek.',
+    adopt: 'Einrichtung erneut versuchen',
     manual: 'Alternativ: In der HA-App-Konfiguration unter SSO → Administrator Deinen HA-Anmeldenamen eintragen und die App neu starten.',
     unavailable: 'Bitte diese Seite innerhalb von Home Assistant mit einem HA-Administratorkonto öffnen.',
     saving: 'Home Assistant prüft Deine Berechtigung und speichert die Konfiguration …',
     restarting: 'Gespeichert. Die App startet neu. Bitte anschließend die Oberfläche erneut öffnen.',
     error: 'Einrichtung fehlgeschlagen. Bitte erneut versuchen oder die HA-App-Konfiguration verwenden.',
-    restartError: 'Gespeichert. Der Neustart konnte nicht bestätigt werden. Bitte die App in Home Assistant neu starten und die Oberfläche erneut öffnen.'
+    restartError: 'Gespeichert. Der Neustart konnte nicht bestätigt werden. Bitte die App in Home Assistant neu starten und die Oberfläche erneut öffnen.',
+    stages: {identity: 'HA-Anmeldenamen abfragen', info: 'App-Konfiguration lesen', save: 'Administrator speichern', restart: 'App neu starten'},
+    failed: 'Dieser Schritt ist fehlgeschlagen: ',
+    noLogin: 'Für Dein HA-Konto wurde kein unterstützter Anmeldename gefunden. Bitte die manuelle Konfiguration verwenden.',
+    configured: 'Ein Administrator ist bereits konfiguriert. Die vorhandene Zuordnung bleibt erhalten. Bitte die App neu starten und die Oberfläche erneut öffnen.'
   } : {
     library: 'Library', discover: 'Discover', navigation: 'Choose section',
     hint: 'Find books. Enjoy your library.', frame: 'Discover books and manage your library',
     setupTitle: 'Set up administrator',
-    setupHelp: 'Use your signed-in Home Assistant administrator for Calibre AIO. Other users receive standard permissions.',
-    adopt: 'Use signed-in administrator and restart',
+    setupHelp: 'Your signed-in HA administrator is being configured automatically for Calibre AIO. Other HA users receive their own accounts without administrator permissions for the shared library.',
+    adopt: 'Retry setup',
     manual: 'Alternatively: Enter your HA login name under SSO → Administrator in the HA app configuration and restart the app.',
     unavailable: 'Open this page inside Home Assistant using an HA administrator account.',
     saving: 'Home Assistant is checking your permission and saving the configuration …',
     restarting: 'Saved. The app is restarting. Please reopen its interface afterwards.',
     error: 'Setup failed. Please try again or use the HA app configuration.',
-    restartError: 'Saved. Restart could not be confirmed. Please restart the app in Home Assistant and reopen its interface.'
+    restartError: 'Saved. Restart could not be confirmed. Please restart the app in Home Assistant and reopen its interface.',
+    stages: {identity: 'Read HA login name', info: 'Read app configuration', save: 'Save administrator', restart: 'Restart app'},
+    failed: 'This step failed: ',
+    noLogin: 'No supported login name was found for your HA account. Please use manual configuration.',
+    configured: 'An administrator is already configured. The existing assignment is preserved. Please restart the app and reopen its interface.'
   };
   document.querySelectorAll('[data-text]').forEach(el => { el.textContent = text[el.dataset.text]; });
   const frame = document.querySelector('iframe');
@@ -71,30 +79,52 @@
     status.textContent = text.unavailable;
     return;
   }
-  button.disabled = false;
-  button.addEventListener('click', async () => {
+  button.hidden = true;
+  async function configureAdministrator() {
     button.disabled = true;
+    button.hidden = true;
     status.textContent = text.saving;
     let saved = false;
+    let stage = 'identity';
     try {
       // Both calls are authorized by HA itself. No app-held HA token or
       // client-supplied role flag grants permission to change app options.
       const users = await hass.callWS({type: 'config/auth/list'});
       const user = users.find(u => u.id === hass.user.id && u.is_active && u.username);
-      if (!user) throw new Error('HA login unavailable');
-      const endpoint = 'hassio/addons/' + slug;
-      const info = await hass.callApi('GET', endpoint + '/info');
-      if (info?.result !== 'ok' || !info.data?.options) throw new Error('App options unavailable');
-      const options = {...info.data.options, sso: {...info.data.options.sso, admin_username: user.username}};
-      const result = await hass.callApi('POST', endpoint + '/options', {options});
-      if (result?.result !== 'ok') throw new Error('Options rejected');
+      if (!user) {
+        status.textContent = text.noLogin;
+        return;
+      }
+      const endpoint = '/addons/' + slug;
+      // Match HA's own frontend: supervisor/api unwraps data and rejects on
+      // errors. Successful writes may resolve to an empty object or null.
+      const supervisor = (suffix, method, data) => hass.callWS({
+        type: 'supervisor/api', endpoint: endpoint + suffix, method,
+        ...(data === undefined ? {} : {data}),
+        ...(suffix === '/restart' ? {timeout: null} : {})
+      });
+      stage = 'info';
+      const info = await supervisor('/info', 'get');
+      if (!info?.options || typeof info.options !== 'object') throw new Error('App options unavailable');
+      if (info.options.sso?.admin_username?.trim()) {
+        status.textContent = text.configured;
+        return;
+      }
+      const options = {...info.options, sso: {...info.options.sso, admin_username: user.username}};
+      stage = 'save';
+      await supervisor('/options', 'post', {options});
       saved = true;
-      const restart = await hass.callApi('POST', endpoint + '/restart');
-      if (restart?.result !== 'ok') throw new Error('Restart rejected');
+      stage = 'restart';
+      await supervisor('/restart', 'post');
       status.textContent = text.restarting;
     } catch {
-      status.textContent = saved ? text.restartError : text.error;
+      status.textContent = saved ? text.restartError : text.failed + text.stages[stage] + '. ' + text.error;
       button.disabled = saved;
+      button.hidden = saved;
     }
-  });
+  }
+  button.addEventListener('click', configureAdministrator);
+  // HA authorizes both identity lookup and configuration writes server-side.
+  // Only an unconfigured installation and a signed-in HA admin reach this path.
+  configureAdministrator();
 })();

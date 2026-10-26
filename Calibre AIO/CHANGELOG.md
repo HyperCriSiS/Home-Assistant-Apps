@@ -1,3 +1,13 @@
+# 0.1.4
+
+- Fix administrator setup: use HA's supervisor/api WebSocket transport and its
+  unwrapped responses, matching the native HA app configuration interface.
+- Automatically configure the signed-in HA administrator on first opening an
+  unconfigured installation; preserve existing administrator assignments.
+- Show the failed setup step and offer retry after an error. No new API permission.
+- Cover denied writes, empty successful responses, existing configuration and
+  missing login names in browser regression tests.
+
 # 0.1.3
 
 - Add German and English HA option labels, navigation and setup.

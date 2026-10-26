@@ -12,7 +12,7 @@ function render(setup, start) {
 (async () => {
   const browser = await chromium.launch({headless:true});
   try {
-    for (const scenario of ['admin', 'reader', 'forbidden', 'restart-failed', 'missing-ha', 'normal-de', 'normal-en']) {
+    for (const scenario of ['admin', 'reader', 'forbidden', 'save-forbidden', 'restart-failed', 'configured', 'no-login', 'missing-ha', 'normal-de', 'normal-en']) {
       const setup = !scenario.startsWith('normal');
       const language = scenario === 'normal-en' ? 'en' : 'de';
       const start = scenario === 'normal-en' ? 'shelfmark' : 'library';
@@ -26,12 +26,18 @@ function render(setup, start) {
           window.calls=[];
           document.querySelector('home-assistant').hass=${scenario === 'missing-ha' ? 'null' : `{
             locale:{language:'${language}'},user:{id:'current',is_admin:${scenario !== 'reader'}},
-            callWS:async args=>{window.calls.push(args);${scenario === 'forbidden' ? "throw new Error('403');" : "return [{id:'other',username:'wrong',is_active:true},{id:'current',username:'login_name',is_active:true}];"}},
-            callApi:async(method,url,body)=>{window.calls.push({method,url,body});
-              if(method==='GET')return {result:'ok',data:{options:{start_page:'shelfmark',network_share_mode:true,shelfmark:{external_bypass_url:'http://example.test'},sso:{enabled:true,admin_username:'',admin_account:'custom',auto_create_users:false}}}};
-              ${scenario === 'restart-failed' ? "if(url.endsWith('/restart'))throw new Error('restart');" : ''}
-              return {result:'ok'};
-            }} `};
+            callWS:async args=>{window.calls.push(args);
+              if(args.type==='config/auth/list') {
+                ${scenario === 'forbidden' ? "throw new Error('403');" : `return [{id:'other',username:'wrong',is_active:true},{id:'current',username:${scenario === 'no-login' ? 'null' : "'login_name'"},is_active:true}];`}
+              }
+              if(args.type!=='supervisor/api')throw new Error('Wrong transport');
+              if(args.method==='get')return {options:{start_page:'shelfmark',network_share_mode:true,shelfmark:{external_bypass_url:'http://example.test'},sso:{enabled:true,admin_username:'${scenario === 'configured' ? 'existing_admin' : ''}',admin_account:'custom',auto_create_users:false}}};
+              ${scenario === 'save-forbidden' ? "if(args.endpoint.endsWith('/options'))throw new Error('403');" : ''}
+              ${scenario === 'restart-failed' ? "if(args.endpoint.endsWith('/restart'))throw new Error('restart');" : ''}
+              return null;
+            },
+            callApi:async()=>{throw new Error('REST proxy does not support these endpoints');}
+            } `};
           </script><iframe id="aio" src="/api/hassio_ingress/test/"></iframe>`});
         if (url.pathname === '/api/hassio_ingress/test/') return route.fulfill({contentType:'text/html',body:render(setup,start)});
         return route.fulfill({contentType:'text/html',body:'Native app fixture'});
@@ -47,16 +53,22 @@ function render(setup, start) {
           assert.equal(await button.isDisabled(),true);
           assert.deepEqual(await page.evaluate(()=>window.calls),[]);
         } else {
-          await button.click();
           await page.waitForFunction(()=>window.calls.length >= 1);
-          await frame.locator('#status').filter({hasText:scenario === 'forbidden' ? 'fehlgeschlagen' : scenario === 'restart-failed' ? 'nicht bestätigt' : 'startet neu'}).waitFor();
+          const expected = scenario === 'forbidden' ? 'HA-Anmeldenamen abfragen' : scenario === 'save-forbidden' ? 'Administrator speichern' : scenario === 'restart-failed' ? 'nicht bestätigt' : scenario === 'configured' ? 'bereits konfiguriert' : scenario === 'no-login' ? 'kein unterstützter' : 'startet neu';
+          await frame.locator('#status').filter({hasText:expected}).waitFor();
           const calls = await page.evaluate(()=>window.calls);
-          if (scenario === 'forbidden') assert.equal(calls.length,1);
+          if (['forbidden','no-login'].includes(scenario)) assert.equal(calls.length,1);
+          else if (scenario === 'configured') assert.equal(calls.length,2);
           else {
-            assert.equal(calls[2].url,'hassio/addons/repo_calibre-aio/options');
-            assert.deepEqual(calls[2].body.options,{start_page:'shelfmark',network_share_mode:true,shelfmark:{external_bypass_url:'http://example.test'},sso:{enabled:true,admin_username:'login_name',admin_account:'custom',auto_create_users:false}});
-            assert.equal(calls[3].url,'hassio/addons/repo_calibre-aio/restart');
+            assert.equal(calls[2].endpoint,'/addons/repo_calibre-aio/options');
+            assert.deepEqual(calls[2].data.options,{start_page:'shelfmark',network_share_mode:true,shelfmark:{external_bypass_url:'http://example.test'},sso:{enabled:true,admin_username:'login_name',admin_account:'custom',auto_create_users:false}});
+            if (scenario === 'save-forbidden') assert.equal(calls.length,3);
+            else {
+              assert.equal(calls[3].endpoint,'/addons/repo_calibre-aio/restart');
+              assert.equal(calls[3].timeout,null);
+            }
           }
+          if (['forbidden','save-forbidden'].includes(scenario)) assert.equal(await button.isEnabled(),true);
         }
       } else {
         assert.equal(await frame.locator('html').getAttribute('lang'),language);
@@ -65,6 +77,7 @@ function render(setup, start) {
         const height=await frame.locator('header').evaluate(el=>el.getBoundingClientRect().height);
         assert.equal(height,40);
         assert.equal(await frame.locator('body').evaluate(el=>el.scrollWidth<=window.innerWidth),true);
+        assert.deepEqual(await page.evaluate(()=>window.calls),[]);
       }
       assert.deepEqual(errors,[],scenario);
       await context.close();
