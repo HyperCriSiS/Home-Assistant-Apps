@@ -1,15 +1,15 @@
 {
   "cwa": {
     "repository": "crocodilestick/Calibre-Web-Automated",
-    "version": "v4.0.6",
-    "commit": "1b80f9a74b3db1fe9b35978e38d2e62fcb6a7246",
-    "sha256": "19a5d0825d28f5fba9310b415c0eda91e76038e3534fb4c5d8189070876eb342"
+    "version": "v4.0.8",
+    "commit": "3ce7bf80c8c66485eec7218c6b6c3fef8e6e6ba5",
+    "sha256": "a4364ed3a07058c253bccd6271db856b7fbadd67fbdbb46009a25a200757c1b5"
   },
   "shelfmark": {
     "repository": "calibrain/shelfmark",
-    "version": "v1.4.0",
-    "commit": "d2b4a0290ec118c541803f31329d6e89e5fe9701",
-    "sha256": "6a45e9401b438860a82b99c39a747bcefd8258be7305669ab4497a71c2eb699a"
+    "version": "v1.5.1",
+    "commit": "b8e466cc645eb4216fed6541d1edece4a6feb252",
+    "sha256": "5836a5e0155e44be34ebc511b85926358acd220fef5de769fc25095a6c8b05e3"
   },
   "calibre": "9.1.0",
   "kepubify": "v4.0.4",
