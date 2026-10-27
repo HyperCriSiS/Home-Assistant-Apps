@@ -1,3 +1,7 @@
+# 0.1.7
+
+- Update CWA to v4.0.8 and Shelfmark to v1.5.1; integration checks required.
+
 # 0.1.6
 
 - Enable Supervisor ingress streaming so POST uploads larger than 16 MiB reach

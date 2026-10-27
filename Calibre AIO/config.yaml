@@ -1,6 +1,6 @@
 name: "Calibre AIO (Dev)"
 description: "Shelfmark book discovery and Calibre library management in one interface"
-version: "0.1.6-dev.150"
+version: "0.1.7-dev.151"
 stage: experimental
 slug: "calibre-aio"
 init: false
