@@ -7,7 +7,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 import yaml
 
@@ -36,6 +36,34 @@ def load_module(name: str):
 
 
 class GroupedConfigurationTests(unittest.TestCase):
+    def test_removed_groups_are_deleted_through_supervisor(self):
+        module = load_module("prepare_config")
+        opener = MagicMock()
+        options = {"cloudflare": {"token": "old"}, "tailscale": {},
+                   "github": {"github_token": "keep"}, "logging": {}}
+        responses = [
+            {"result": "ok", "data": {"options": options}},
+            {"result": "ok"},
+            {"result": "ok", "data": {"options": {"github": options["github"]}}},
+        ]
+        with patch.dict(module.os.environ, {"SUPERVISOR_TOKEN": "test"}), \
+                patch.object(module, "build_opener", return_value=opener), \
+                patch.object(module.json, "load", side_effect=responses):
+            module.migrate_removed_options()
+            module.migrate_removed_options()
+        self.assertEqual(opener.open.call_count, 3)
+        request = opener.open.call_args_list[1].args[0]
+        self.assertEqual(request.full_url, "http://supervisor/addons/self/options")
+        self.assertEqual(json.loads(request.data), {"options": {
+            "github": {"github_token": "keep"}, "logging": {}}})
+
+    def test_migration_api_failure_does_not_prevent_startup(self):
+        module = load_module("prepare_config")
+        with patch.dict(module.os.environ, {"SUPERVISOR_TOKEN": "test"}), \
+                patch.object(module, "build_opener") as factory:
+            factory.return_value.open.side_effect = OSError("unavailable")
+            module.migrate_removed_options()
+
     def test_manifest_options_schema_and_translations_match(self):
         config = yaml.safe_load((ADDON / "config.yaml").read_text(encoding="utf-8"))
         self.assertEqual(list(config["options"]), list(GROUPS))

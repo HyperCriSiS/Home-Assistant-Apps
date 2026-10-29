@@ -1,5 +1,11 @@
 # Changelog
 
+## v2026.10.29
+
+### Fixed
+
+- Remove obsolete `cloudflare` and `tailscale` option groups from Supervisor storage on startup to prevent schema warnings after upgrading from the bundled remote-access implementation.
+
 ## v2026.10.24-1
 
 ### Changed

@@ -11,6 +11,46 @@ import sys
 import uuid
 from pathlib import Path
 from urllib.parse import urlsplit
+from urllib.request import Request, build_opener, HTTPRedirectHandler
+
+
+class _NoSupervisorRedirect(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def migrate_removed_options() -> None:
+    """Remove obsolete groups from Supervisor storage, preserving other options."""
+    token = os.environ.get("SUPERVISOR_TOKEN", "")
+    if not token:
+        return
+    opener = build_opener(_NoSupervisorRedirect())
+
+    def request(path, payload=None):
+        data = json.dumps(payload).encode() if payload is not None else None
+        req = Request("http://supervisor/addons/self/" + path, data=data,
+                      headers={"Authorization": "Bearer " + token,
+                               "Content-Type": "application/json"})
+        with opener.open(req, timeout=5) as response:
+            body = json.load(response)
+        if body.get("result") != "ok":
+            raise ValueError("Supervisor rejected option migration")
+        return body.get("data", {})
+
+    try:
+        options = request("info")["options"]
+        if not isinstance(options, dict):
+            raise ValueError("Invalid Supervisor options")
+        if not any(key in options for key in ("cloudflare", "tailscale")):
+            return
+        cleaned = {key: value for key, value in options.items()
+                   if key not in ("cloudflare", "tailscale")}
+        request("options", {"options": cleaned})
+        print("[INFO] Removed obsolete Cloudflare/Tailscale option groups")
+    except (OSError, ValueError, KeyError, TypeError):
+        # Do not expose response bodies, which may contain credentials.
+        print("[WARN] Could not migrate obsolete Supervisor options; will retry next start",
+              file=sys.stderr)
 
 
 DATA_DIR = Path("/data/mcphub")
@@ -254,6 +294,7 @@ def previous_managed_home_assistant_name(mcp_servers: dict) -> str | None:
 
 
 def main() -> None:
+    migrate_removed_options()
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     SECRET_DIR.mkdir(parents=True, exist_ok=True)
     os.chmod(SECRET_DIR, 0o700)
