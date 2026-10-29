@@ -62,7 +62,11 @@ class DevelopmentStoreTest(unittest.TestCase):
         self.assertEqual(steps[0]['with']['ref'], 'dev-calibre')
         proposal = next(step for step in steps if step.get('id') == 'proposal')
         self.assertEqual(proposal['with']['base'], 'dev-calibre')
-        self.assertTrue(proposal['with']['draft'])
+        # Ready for review: merge-due-updates.yml only merges non-draft bot PRs whose
+        # branch and title name both upstream versions.
+        self.assertNotIn('draft', proposal['with'])
+        self.assertTrue(proposal['with']['branch'].startswith('automation/calibre-aio-cwa-'))
+        self.assertIn('Shelfmark to', proposal['with']['title'])
         workflow = (ROOT / '.github/workflows/sync-dev-store.yml').read_text()
         self.assertIn('git checkout origin/dev-calibre -- "Calibre AIO"', workflow)
         self.assertIn('- dev-calibre', workflow)

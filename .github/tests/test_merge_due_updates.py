@@ -34,6 +34,8 @@ class ClassifyTests(unittest.TestCase):
             ("automation/mcphub-1.1.10", "dev-mcphub"): ("mcphub-upstream", "1.1.10"),
             ("automation/mcphub-tunnel-clients-v0_0_17", "dev-mcphub"): ("mcphub-tunnel", "v0.0.17"),
             ("automation/trilium-v0.106.1", "dev-trilium"): ("trilium", "v0.106.1"),
+            ("automation/calibre-aio-cwa-v4.0.8-shelfmark-v1.5.1", "dev-calibre"):
+                ("calibre", "v4.0.8 v1.5.1"),
         }
         for (branch, base), expected in cases.items():
             with self.subTest(branch=branch):
@@ -46,6 +48,8 @@ class ClassifyTests(unittest.TestCase):
             pr("automation/trilium-v0.106.1", "dev-mcphub"),
             pr("automation/trilium-v0.107.0-beta", "dev-trilium"),
             pr("feature/x", "dev-trilium"),
+            pr("automation/calibre-aio-cwa-v4.0.8-shelfmark-v1.5.1", "main"),
+            pr("automation/calibre-aio-cwa-v4.0.8-shelfmark-v1.5.1-rc1", "dev-calibre"),
             pr("automation/trilium-v0.106.1", "dev-trilium", user={"login": "someone"}),
             pr("automation/trilium-v0.106.1", "dev-trilium",
                head={"ref": "automation/trilium-v0.106.1", "sha": "a" * 40,
@@ -63,6 +67,16 @@ class ClassifyTests(unittest.TestCase):
             with self.subTest(change=change), self.assertRaises(mod.Hold):
                 mod.check_identity({**good, **change}, kind, version)
 
+
+    def test_calibre_identity_names_both_upstreams(self):
+        branch = "automation/calibre-aio-cwa-v4.0.8-shelfmark-v1.5.1"
+        kind, version = mod.classify(pr(branch, "dev-calibre"), REPO)
+        good = pr(branch, "dev-calibre",
+                  title="chore(calibre-aio): update CWA to v4.0.8 and Shelfmark to v1.5.1")
+        mod.check_identity(good, kind, version)
+        with self.assertRaises(mod.Hold):
+            mod.check_identity({**good, "title": "chore(calibre-aio): update pinned upstream sources"},
+                               kind, version)
 
 class DecisionTests(unittest.TestCase):
     def test_twelve_hour_delay(self):

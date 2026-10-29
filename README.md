@@ -31,7 +31,7 @@ https://github.com/HyperCriSiS/Home-Assistant-Apps
 | --- | --- | --- | --- |
 | **MCPHub** | Central management for local and remote Model Context Protocol servers | Stable | [README](MCPHub/README.md) · [Documentation](MCPHub/DOCS.md) |
 | **Trilium Notes** | Self-hosted hierarchical notes and personal knowledge base | Stable | [README](TriliumNext%20Notes/README.md) |
-| **Calibre AIO** | Shelfmark book discovery/downloads and Calibre-Web Automated library in one interface | Experimental | [README](Calibre%20AIO/README.md) · [Documentation](Calibre%20AIO/DOCS.md) |
+| **Calibre AIO** | Shelfmark book discovery/downloads and Calibre-Web Automated library in one interface | Stable | [README](Calibre%20AIO/README.md) · [Documentation](Calibre%20AIO/DOCS.md) |
 
 ### MCPHub
 

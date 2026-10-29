@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Merge automated App update pull requests into their development branch.
 
-Bot update PRs (MCPHub upstream, MCPHub OpenAI tunnel-client, Trilium) are
-merged into dev-mcphub / dev-trilium only when all of the following hold:
+Bot update PRs (MCPHub upstream, MCPHub OpenAI tunnel-client, Trilium, Calibre
+AIO upstreams) are merged into dev-mcphub / dev-trilium / dev-calibre only when
+all of the following hold:
 
 * the PR was opened by github-actions[bot] from this repository for a known
   automation branch, carries the expected title and is not labelled "hold";
@@ -39,6 +40,7 @@ DELAY = 12 * HOUR  # minimum time an update PR stays open before it reaches dev
 BOT = "github-actions[bot]"
 HOLD = "hold"
 SCRIPTS = Path(__file__).resolve().parent
+ROOT = SCRIPTS.parents[1]
 
 
 def load(name: str, filename: str):
@@ -60,6 +62,9 @@ class Kind(NamedTuple):
     files: tuple[str, ...]
 
     def title(self, version: str) -> str:
+        if self.name == "calibre":
+            cwa, shelfmark = version.split(" ")
+            return f"chore(calibre-aio): update CWA to {cwa} and Shelfmark to {shelfmark}"
         return {
             "mcphub-upstream": f"chore(mcphub): update upstream to {version}",
             "mcphub-tunnel": tunnel.TITLE,
@@ -70,6 +75,8 @@ class Kind(NamedTuple):
         match = self.branch.fullmatch(branch)
         if not match:
             return None
+        if self.name == "calibre":
+            return " ".join(match.groups())  # "<CWA version> <Shelfmark version>"
         return match.group(1).replace("_", ".") if self.name == "mcphub-tunnel" else match.group(1)
 
 
@@ -83,6 +90,13 @@ MCPHUB_UPSTREAM_FILES = (
     "MCPHub/patch_home_assistant_auth.py",
     "MCPHub/run.sh",
 )
+CALIBRE_FILES = (
+    "Calibre AIO/CHANGELOG.md",
+    "Calibre AIO/build.yaml",
+    "Calibre AIO/config.yaml",
+    "Calibre AIO/upstream.json",
+)
+CALIBRE_VERSION = r"(v?[0-9]+\.[0-9]+\.[0-9]+)"
 KINDS = (
     Kind("mcphub-upstream", "dev-mcphub", re.compile(r"automation/mcphub-([0-9]+\.[0-9]+\.[0-9]+)"),
          "validate-mcphub.yml", MCPHUB_UPSTREAM_FILES),
@@ -90,6 +104,9 @@ KINDS = (
          tuple(sorted(tunnel.ALLOWED_FILES))),
     Kind("trilium", "dev-trilium", re.compile(r"automation/trilium-(v[0-9]+\.[0-9]+\.[0-9]+)"),
          "validate.yml", trilium.UPDATE_FILES),
+    Kind("calibre", "dev-calibre",
+         re.compile(rf"automation/calibre-aio-cwa-{CALIBRE_VERSION}-shelfmark-{CALIBRE_VERSION}"),
+         "validate-calibre-aio.yml", CALIBRE_FILES),
 )
 
 
@@ -178,6 +195,17 @@ def write_update(kind: Kind, version: str, today: date, worktree: str) -> None:
             run(sys.executable, str(target), "--version", version,
                 "--release-url", f"https://github.com/samanhappy/mcphub/releases/tag/v{version}",
                 "--date", today.isoformat(), cwd=worktree)
+        finally:
+            target.unlink()
+    elif kind.name == "calibre":
+        # Main's trusted updater resolves exactly these releases (commit and
+        # archive checksum) again; it rejects downgrades and changed provenance.
+        cwa, shelfmark = version.split(" ")
+        target = Path(worktree, "Calibre AIO/scripts/_trusted_upstreams.py")
+        shutil.copyfile(ROOT / "Calibre AIO/scripts/upstreams.py", target)
+        try:
+            run(sys.executable, str(target), "update",
+                "--cwa-version", cwa, "--shelfmark-version", shelfmark, cwd=worktree)
         finally:
             target.unlink()
     else:

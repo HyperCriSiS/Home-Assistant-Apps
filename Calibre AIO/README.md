@@ -1,5 +1,12 @@
 # Calibre AIO
 
+**Book discovery and your Calibre library in one Home Assistant App.**
+
+[![Validate Calibre AIO](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate-calibre-aio.yml/badge.svg?branch=main)](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate-calibre-aio.yml)
+![Architecture amd64](https://img.shields.io/badge/amd64-supported-success)
+![Architecture aarch64](https://img.shields.io/badge/aarch64-supported-success)
+![Home Assistant](https://img.shields.io/badge/Home%20Assistant-App-41BDF5?logo=homeassistant&logoColor=white)
+
 Find books with **Shelfmark** and manage/read them with **Calibre-Web Automated**
 in one Home Assistant App. A shared navigation bar switches between
 **Library** and **Discover** (downloads). The compact
@@ -14,8 +21,12 @@ App options to start with Discover instead.
 - Separate persistent databases and separate Python environments
 - Pinned upstream sources, checksums and automated update proposals
 
-This is a new experimental app. Its private state is independent of the
-previous CWA test app. Installation does not migrate or delete existing data.
+Its private state is independent of other CWA apps. Installation does not
+migrate or delete existing data.
+
+> [!IMPORTANT]
+> You are responsible for only downloading books you are legally entitled
+> to access. This App does not ship or configure any download source.
 
 ## Install
 
@@ -39,7 +50,7 @@ not automatically change it. No additional HA API permission is required.
 
 Existing settings, accounts and library data are retained on upgrades.
 HA option labels and the AIO shell follow your German or English language.
-CWA has its own user language; Shelfmark 1.4.0 uses English.
+CWA has its own user language; Shelfmark uses English.
 [Deutsche Anleitung](DOCS.de.md).
 
 The initial image contains Shelfmark's core download stack. Browser-challenge

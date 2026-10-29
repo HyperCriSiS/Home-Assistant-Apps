@@ -17,8 +17,9 @@ Long-lived release-candidate branch for **MCPHub only**. MCPHub changes are vali
 ## `dev-calibre`
 
 Long-lived release-candidate branch for **Calibre AIO only**. App changes and
-upstream update proposals target this branch. Promotion to `main` remains a
-separate manual release after testing.
+upstream update proposals target this branch. Bot-only upstream updates are
+promoted to `main` automatically (see below); everything else is a separate
+manual release after testing.
 
 Development branches periodically merge the latest `main` so they inherit already released changes from the other Apps without inheriting their unreleased work.
 
@@ -75,6 +76,24 @@ folders under `/share/calibre-aio-dev`. Never run stable and development apps
 against the same writable library/import paths. Existing configured paths are
 not migrated. The regular Calibre app on `main` changes only on a separate release.
 
-The scheduled Calibre updater opens draft PRs against `dev-calibre`, never
-directly against `main`. `promote.yml` can prepare a manual release PR after
-validation of the exact development commit; it never merges Calibre automatically.
+The daily Calibre updater opens ready-for-review PRs against `dev-calibre`,
+never directly against `main`. `merge-due-updates.yml` merges them after 12
+hours with passing validation, exactly like MCPHub and Trilium updates.
+
+### Automatic Calibre AIO update releases
+
+`auto-promote-calibre.yml` merges `dev-calibre` into `main` without manual
+review only when every gate in `.github/scripts/auto_promote_calibre.py` passes:
+`dev-calibre` holds nothing but GitHub-signed squash merges of bot PRs titled
+`chore(calibre-aio): update CWA to … and Shelfmark to …` plus clean merges of
+`main`; the diff changes only the CWA/Shelfmark pins, the generated build
+arguments, the App patch version and generated changelog lines; major upstream
+versions stay manual; each new upstream release is stable and at least 48 hours
+old; the newest update has been on `dev-calibre` for 48 hours; and
+`validate-calibre-aio.yml` passed for that exact commit. A failing stable
+validation after the merge opens a revert PR and an issue.
+
+Any other change keeps the manual release PR prepared by `promote.yml` (app
+`calibre`) after live HAOS testing. Enable with the repository variable
+`CALIBRE_AUTO_PROMOTE=true`; pause by setting it to `false` or by labelling the
+release PR `hold`.
