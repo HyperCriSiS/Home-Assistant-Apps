@@ -33,15 +33,18 @@ jobs:
           python3 'Calibre AIO/scripts/upstreams.py' check
           python3 'Calibre AIO/scripts/upstreams.py' versions >> "$GITHUB_OUTPUT"
           if git diff --quiet; then echo changed=false; else echo changed=true; fi >> "$GITHUB_OUTPUT"
+          eval "$(python3 'Calibre AIO/scripts/upstreams.py' versions)"
+          echo "branch=automation/calibre-aio-cwa-${cwa}-shelfmark-${shelfmark}" >> "$GITHUB_OUTPUT"
+          echo "title=chore(calibre-aio): update CWA to ${cwa} and Shelfmark to ${shelfmark}" >> "$GITHUB_OUTPUT"
       - name: Propose version and checksum updates
         id: proposal
         if: steps.versions.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1
         with:
           base: dev-calibre
-          branch: automation/calibre-aio-cwa-${{ steps.versions.outputs.cwa }}-shelfmark-${{ steps.versions.outputs.shelfmark }}
-          commit-message: 'chore(calibre-aio): update CWA to ${{ steps.versions.outputs.cwa }} and Shelfmark to ${{ steps.versions.outputs.shelfmark }}'
-          title: 'chore(calibre-aio): update CWA to ${{ steps.versions.outputs.cwa }} and Shelfmark to ${{ steps.versions.outputs.shelfmark }}'
+          branch: ${{ steps.versions.outputs.branch }}
+          commit-message: ${{ steps.versions.outputs.title }}
+          title: ${{ steps.versions.outputs.title }}
           body: |
             Updates only the central upstream manifest, generated build arguments,
             app revision and changelog. Integration adapters remain separate.
@@ -57,7 +60,7 @@ jobs:
             Calibre AIO/config.yaml
             Calibre AIO/CHANGELOG.md
       - name: Validate the proposed combination on both architectures
-        if: steps.proposal.outputs.pull-request-operation == 'created' || steps.proposal.outputs.pull-request-operation == 'updated'
+        if: contains(fromJSON('["created", "updated"]'), steps.proposal.outputs.pull-request-operation)
         env:
           GH_TOKEN: ${{ github.token }}
           BRANCH: ${{ steps.proposal.outputs.pull-request-branch }}
