@@ -12,11 +12,11 @@
     .brand{font-weight:750;font-size:16px;white-space:nowrap}.brand span{color:#7dd3c7}
     nav{display:flex;gap:4px}a{color:#c3cfdd;text-decoration:none;padding:5px 12px;border-radius:6px;font-size:14px;font-weight:600}
     a[aria-current=page]{background:#284b4a;color:#a6f2df}a:hover{background:#2b3541}a:focus-visible{outline:2px solid #a6f2df}
-    .hint{margin-left:auto;color:#91a1b5;font-size:12px}iframe{width:100%;flex:1;border:0;min-height:0;background:#10151b}
+    iframe{width:100%;flex:1;border:0;min-height:0;background:#10151b}
     [hidden]{display:none!important}.setup{max-width:640px;margin:10vh auto;padding:24px;line-height:1.6}
     button{background:#a6f2df;color:#10151b;border:0;border-radius:8px;padding:12px 18px;font:inherit;cursor:pointer}
     button:disabled{opacity:.5;cursor:default}#status{white-space:pre-wrap}
-    @media(max-width:540px){header{gap:8px;padding:4px 8px}.brand{font-size:14px}a{padding:5px 8px}.hint{display:none}}
+    @media(max-width:540px){header{gap:8px;padding:4px 8px}.brand{font-size:14px}a{padding:5px 8px}}
   </style>
 </head>
 <body data-setup-required="__SETUP_REQUIRED__" data-app-slug="__APP_SLUG__">
@@ -26,7 +26,6 @@
       <a href="library/" target="workspace" data-view="library"__LIBRARY_CURRENT__>Bibliothek</a>
       <a href="shelfmark/" target="workspace" data-view="discover"__SHELFMARK_CURRENT__>Entdecken</a>
     </nav>
-    <span class="hint">Bücher finden. Bibliothek genießen.</span>
   </header>
   <section class="setup" hidden>
     <h1 data-text="setupTitle"></h1><p data-text="setupHelp"></p>
