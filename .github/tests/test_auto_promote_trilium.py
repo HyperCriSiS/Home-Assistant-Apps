@@ -91,8 +91,8 @@ class GateTests(unittest.TestCase):
         self.assertEqual(self.run_gate({"validate.yml": "success"})["action"], "promote")
 
     def test_soak_of_48_hours(self):
-        with self.assertRaisesRegex(mod.Skip, "48 hours"):
-            self.run_gate({"validate.yml": "success"}, newest=NOW - 47 * 3600)
+        with self.assertRaisesRegex(mod.Skip, "36 hours"):
+            self.run_gate({"validate.yml": "success"}, newest=NOW - 35 * 3600)
 
     def test_haos_gate_keeps_release_manual(self):
         with self.assertRaisesRegex(mod.Skip, "HAOS"):
