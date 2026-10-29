@@ -2,7 +2,7 @@
 """Fail-closed gates for promoting bot-only Trilium updates from dev-trilium to main.
 
 Only Trilium version bumps produced by the trusted Update Trilium workflow may
-be promoted automatically, 48 hours after the newest one reached dev-trilium.
+be promoted automatically, 36 hours after the newest one reached dev-trilium.
 Anything else on dev-trilium keeps the manual release pull request flow.
 
 Invoked only by the trusted main-branch workflow. Never execute this helper
@@ -31,7 +31,7 @@ Skip, api, ci_state, gh, git, show, wait_for = (
 DEV, MAIN, APP = "dev-trilium", "main", "TriliumNext Notes"
 HOUR = 3600
 RELEASE_AGE = 48 * HOUR  # minimum age of a new Trilium release
-SOAK = 48 * HOUR  # newest update must have been on dev-trilium this long
+SOAK = 36 * HOUR  # newest update must have been on dev-trilium this long
 WORKFLOW = "validate.yml"
 TITLE = "release(trilium): automated update release"
 ALLOWED_FILES = frozenset({
@@ -161,7 +161,7 @@ def merge(repository: str, main_sha: str, dev_sha: str, upstream: str) -> str:
     if pr is None:
         url = gh("pr", "create", "--repo", repository, "--base", MAIN, "--head", DEV,
                  "--title", TITLE, "--body",
-                 f"Bot-only Trilium update to {upstream}, merged automatically 48 hours after it "
+                 f"Bot-only Trilium update to {upstream}, merged automatically 36 hours after it "
                  "reached dev-trilium once all gates pass. Label: hold stops it.")
         pr = api(f"repos/{repository}/pulls/{url.rstrip('/').rsplit('/', 1)[-1]}")
         if pr.get("head", {}).get("sha") != dev_sha:
