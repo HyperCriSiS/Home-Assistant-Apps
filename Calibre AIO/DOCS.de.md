@@ -45,7 +45,7 @@ Die technischen YAML-Schlüssel bleiben für bestehende Konfigurationen gleich.
 Die Beschriftungen folgen Deiner HA-Profilsprache (Deutsch oder Englisch).
 Die gemeinsame Navigation und Einrichtung verwenden die HA-Sprache, ersatzweise
 die Browsersprache. CWA bietet eine eigene Spracheinstellung pro Benutzer.
-Die hier verwendete Shelfmark-Version 1.4.0 hat eine englische Oberfläche;
+Shelfmark hat eine englische Oberfläche;
 Buch-Sprachfilter ändern deren Sprache nicht. Die statische Dokumentation hat
 separate deutsche und englische Seiten.
 

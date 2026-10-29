@@ -138,7 +138,7 @@ before a real installation is upgraded.
 
 HA displays option labels in your profile language (German or English). AIO
 navigation and setup use HA's language, with the browser language as fallback.
-CWA has its own per-user language setting. The pinned Shelfmark 1.4.0 interface
+CWA has its own per-user language setting. The Shelfmark interface
 is English; book-language filters do not translate it. Static documentation
 uses separate language files.
 

@@ -17,15 +17,40 @@ generated HA build arguments, bumps the app patch version and adds release
 notes. It refuses prereleases, downgrades and changed provenance for an
 already-pinned release. Network/provenance failures stop the proposal.
 
-The scheduled `update-calibre-aio.yml` runs weekly after this app is merged
-to the default branch and creates/updates a draft PR. The script can also be
-run manually on a development branch. Since GitHub does not normally trigger
-new workflows from PRs created with its own `GITHUB_TOKEN`, the update workflow
-explicitly dispatches `validate-calibre-aio.yml` on the proposal branch. This
-starts the tests and both architecture builds automatically. A failed dispatch
-fails the updater; never assume an update is tested merely because the PR
-exists. Verify the validation run belongs to the proposal's current commit
-before promotion. Automatic merge is disabled.
+`update --cwa-version vX.Y.Z --shelfmark-version vX.Y.Z` pins exact releases
+instead of the latest ones; the automation uses it to reproduce a proposal.
+
+### Automated update releases
+
+Like MCPHub and Trilium, upstream updates move to stable without manual work
+when every gate passes:
+
+1. `update-calibre-aio.yml` runs daily against `dev-calibre`. For a new stable
+   CWA or Shelfmark release it opens a ready-for-review PR from
+   `automation/calibre-aio-cwa-<version>-shelfmark-<version>` titled
+   `chore(calibre-aio): update CWA to … and Shelfmark to …`, and dispatches
+   `validate-calibre-aio.yml` (tests, native amd64/aarch64 builds, container
+   acceptance and real s6 boot/restart) on that branch.
+2. `merge-due-updates.yml` squash-merges the PR into `dev-calibre` once it has
+   been open for 12 hours, the validation dispatched by the bot passed for its
+   exact HEAD, and its content is byte for byte what main's trusted updater
+   produces for those two versions. A PR that fell behind is regenerated and
+   validated again; anything unexpected gets the `hold` label. The merged
+   candidate appears as **Calibre AIO (Dev)** in `#dev-store`.
+3. `auto-promote-calibre.yml` merges `dev-calibre` into `main` when
+   `dev-calibre` contains only such bot updates (plus clean merges of `main`),
+   the diff changes only the CWA/Shelfmark pins, the generated `build.yaml`,
+   the App patch version and the generated changelog lines, each new upstream
+   release is a stable release at least 48 hours old, the newest update has
+   been on `dev-calibre` for 36 hours, and validation passed for that exact
+   commit. A failing stable validation after the merge opens a revert PR and an
+   issue; the revert is never merged automatically.
+
+Major upstream versions and any other change (adapters, Dockerfile, Calibre,
+kepubify or Python pins) stay on the manual release PR (`promote.yml`, app
+`calibre`) after the live HAOS checks in [TESTING.md](TESTING.md). Enable
+automatic promotion with the repository variable `CALIBRE_AUTO_PROMOTE=true`;
+pause it with `false` or by labelling the release PR or an update PR `hold`.
 
 Our adapters, nginx routes, s6 services and navigation shell live under
 `rootfs/`; upstream sources are fetched during the image build and remain
@@ -42,8 +67,9 @@ so versions and provenance stay aligned with the manifest.
 The validation workflow checks the manifest, auth/permission tests and real
 nginx routing, then builds on native amd64 and arm64 runners and exercises
 both applications inside the final image. New pins must pass those checks.
-Live HAOS acceptance remains required for releases; unit/container checks
-cannot validate your Supervisor version, mount layout or private providers.
+Live HAOS acceptance remains required for manual releases; unit/container
+checks cannot validate your Supervisor version, mount layout or private
+providers.
 
 Python/runtime and container-build infrastructure pins are maintained
 separately when required by an upstream change. `uv.lock` is respected for
