@@ -89,7 +89,7 @@ review only when every gate in `.github/scripts/auto_promote_calibre.py` passes:
 `main`; the diff changes only the CWA/Shelfmark pins, the generated build
 arguments, the App patch version and generated changelog lines; major upstream
 versions stay manual; each new upstream release is stable and at least 48 hours
-old; the newest update has been on `dev-calibre` for 48 hours; and
+old; the newest update has been on `dev-calibre` for 36 hours; and
 `validate-calibre-aio.yml` passed for that exact commit. A failing stable
 validation after the merge opens a revert PR and an issue.
 

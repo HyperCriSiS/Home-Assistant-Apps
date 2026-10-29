@@ -120,8 +120,8 @@ class GateTests(unittest.TestCase):
         self.assertEqual(self.run_gate("success")["action"], "promote")
 
     def test_soak_of_48_hours(self):
-        with self.assertRaisesRegex(mod.Skip, "48 hours"):
-            self.run_gate("success", newest=NOW - 47 * 3600)
+        with self.assertRaisesRegex(mod.Skip, "36 hours"):
+            self.run_gate("success", newest=NOW - 35 * 3600)
 
     def test_other_files_keep_the_release_manual(self):
         with self.assertRaisesRegex(mod.Skip, "manually"):

@@ -4,7 +4,7 @@
 - Add store icon and logo.
 - Upstream updates are now proposed daily, merged into the development
   branch after 12 hours with passing validation and released to stable
-  after another 48 hours. Major upstream versions stay manual.
+  after another 36 hours. Major upstream versions stay manual.
 - Upgrading from 0.1.2: an empty administrator setting is now filled
   automatically with the signed-in HA administrator when the interface is
   first opened; an existing assignment is kept.

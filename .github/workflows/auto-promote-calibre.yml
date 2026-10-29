@@ -2,7 +2,7 @@ name: Auto-promote Calibre AIO updates
 
 # Promotes dev-calibre to main only when it contains nothing but automated
 # CWA/Shelfmark pin updates that passed every gate in
-# .github/scripts/auto_promote_calibre.py, 48 hours after the newest one
+# .github/scripts/auto_promote_calibre.py, 36 hours after the newest one
 # reached dev-calibre. Everything else stays manual.
 # Pause at any time: set the repository variable CALIBRE_AUTO_PROMOTE=false
 # or label the Calibre AIO release pull request "hold".

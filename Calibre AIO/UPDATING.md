@@ -42,7 +42,7 @@ when every gate passes:
    the diff changes only the CWA/Shelfmark pins, the generated `build.yaml`,
    the App patch version and the generated changelog lines, each new upstream
    release is a stable release at least 48 hours old, the newest update has
-   been on `dev-calibre` for 48 hours, and validation passed for that exact
+   been on `dev-calibre` for 36 hours, and validation passed for that exact
    commit. A failing stable validation after the merge opens a revert PR and an
    issue; the revert is never merged automatically.
 

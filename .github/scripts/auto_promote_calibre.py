@@ -2,7 +2,7 @@
 """Fail-closed gates for promoting bot-only Calibre AIO updates from dev-calibre to main.
 
 Only CWA/Shelfmark pin updates produced by the trusted Calibre AIO updater may
-be promoted automatically, 48 hours after the newest one reached dev-calibre.
+be promoted automatically, 36 hours after the newest one reached dev-calibre.
 Anything else on dev-calibre keeps the manual release pull request flow.
 
 Invoked only by the trusted main-branch workflow. Never execute this helper
@@ -37,7 +37,7 @@ Skip, api, ci_state, gh, git, show, wait_for = (
 
 DEV, MAIN, APP = "dev-calibre", "main", "Calibre AIO"
 HOUR = 3600
-SOAK = 48 * HOUR  # newest update must have been on dev-calibre this long
+SOAK = 36 * HOUR  # newest update must have been on dev-calibre this long
 WORKFLOW = "validate-calibre-aio.yml"
 TITLE = "release(calibre): automated update release"
 COMPONENTS = {"cwa": "CWA", "shelfmark": "Shelfmark"}
@@ -186,7 +186,7 @@ def merge(repository: str, main_sha: str, dev_sha: str, update: str) -> str:
     if pr is None:
         url = gh("pr", "create", "--repo", repository, "--base", MAIN, "--head", DEV,
                  "--title", TITLE, "--body",
-                 f"Bot-only Calibre AIO update ({update}), merged automatically 48 hours after it "
+                 f"Bot-only Calibre AIO update ({update}), merged automatically 36 hours after it "
                  "reached dev-calibre once all gates pass. Label: hold stops it.")
         pr = api(f"repos/{repository}/pulls/{url.rstrip('/').rsplit('/', 1)[-1]}")
         if pr.get("head", {}).get("sha") != dev_sha:
