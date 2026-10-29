@@ -8,7 +8,7 @@ Trilium uses a dedicated release-candidate branch, `dev-trilium`. MCPHub uses `d
 | --- | --- | --- |
 | Detect new upstream release | daily 04:17 UTC (`Update Trilium`) | daily 04:17 UTC (upstream) and 05:37 UTC (OpenAI tunnel-client) |
 | Bot PR → `dev-*` | **12 hours** after the PR was opened, once full CI passed for the exact commit (`Merge due App updates`, hourly) | same |
-| `dev-*` → `main` | **48 hours** after the newest update reached `dev-trilium` (`Auto-promote Trilium updates`, every 3 hours) | **48 hours** after the newest update reached `dev-mcphub` (`Auto-promote MCPHub updates`, every 3 hours), plus a Home Assistant OS QEMU test and at least 24 hours since the previous stable release |
+| `dev-*` → `main` | **36 hours** after the newest update reached `dev-trilium` (`Auto-promote Trilium updates`, every 3 hours) | **36 hours** after the newest update reached `dev-mcphub` (`Auto-promote MCPHub updates`, every 3 hours), plus a Home Assistant OS QEMU test and at least 24 hours since the previous stable release |
 
 ## Bot update pull requests → development branch
 
@@ -23,7 +23,7 @@ Trilium uses a dedicated release-candidate branch, `dev-trilium`. MCPHub uses `d
 
 ## Development branch → `main`
 
-Both Apps are promoted automatically only when the development branch contains nothing but bot version bumps (plus clean merges of `main`) since the last release, the newest update has been on the development branch for 48 hours, the upstream release is at least 48 hours old and the exact development commit passed validation. Major upstream versions, any manual change and the optional HAOS gate keep the manual release PR flow.
+Both Apps are promoted automatically only when the development branch contains nothing but bot version bumps (plus clean merges of `main`) since the last release, the newest update has been on the development branch for 36 hours (12 hours as an open PR plus 36 hours on the branch, about 48 hours in total), the upstream release is at least 48 hours old and the exact development commit passed validation. Major upstream versions, any manual change and the optional HAOS gate keep the manual release PR flow.
 
 - Releases are **squash-merged** into `main` (the only method the `main` ruleset allows). A clean sync merge of `main` back into the development branch marks everything before it as released.
 - After a merge the workflows start `main` validation, `Sync development branch bases` and the development store. If `main` validation fails, a revert PR and an issue are opened; nothing is reverted automatically.
