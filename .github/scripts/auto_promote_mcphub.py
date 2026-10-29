@@ -24,7 +24,7 @@ DEV, MAIN, RELEASE = "dev-mcphub", "main", "release/mcphub-candidate"
 BOT = "github-actions[bot]"
 HOUR = 3600
 RELEASE_AGE = 48 * HOUR  # minimum age of a new upstream or tunnel-client release
-SOAK = 48 * HOUR  # newest update must have been on the development store this long
+SOAK = 36 * HOUR  # newest update must have been on the development store this long
 COOLDOWN = 24 * HOUR  # minimum distance to the previous stable MCPHub release
 ALLOWED_FILES = frozenset({
     "MCPHub/CHANGELOG.md",
