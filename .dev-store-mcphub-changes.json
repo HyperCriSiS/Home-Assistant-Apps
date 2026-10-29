@@ -1,5 +1,17 @@
 [
   {
+    "revision": 133,
+    "version": "v2026.10.29-dev.133",
+    "source_sha": "1a855c55ca0effa3eb0f8f2254936c18caa61624",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "1a855c55ca0effa3eb0f8f2254936c18caa61624",
+        "subject": "fix(mcphub): obsolete option cleanup and ingress auth for newer MCPHub (#121)"
+      }
+    ]
+  },
+  {
     "revision": 132,
     "version": "v2026.10.24-1-dev.132",
     "source_sha": "5f002ef78968f3157dc2bfefe9793ed08e3ee9aa",
