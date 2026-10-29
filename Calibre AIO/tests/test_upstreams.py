@@ -42,6 +42,26 @@ class UpstreamUpdateTest(unittest.TestCase):
         self.assertIn(f'version: "{expected}"', (self.root / 'config.yaml').read_text())
         self.assertEqual((self.root / 'build.yaml').read_text(), upstreams.render(updated))
 
+    def test_pinned_versions_reproduce_a_proposal(self):
+        data = upstreams.load_manifest()
+        def release(name, tag):
+            return dict(data[name], version=tag, commit='f' * 40, sha256='e' * 64)
+        argv = ['upstreams', 'update', '--cwa-version', 'v9.0.0',
+                '--shelfmark-version', data['shelfmark']['version']]
+        with (patch.object(upstreams, 'release', release), patch.object(sys, 'argv', argv),
+              self.assertRaisesRegex(ValueError, 'provenance')):
+            upstreams.main()
+        with (patch.object(upstreams, 'release', lambda name, tag: dict(data[name], version=tag)
+                           if tag != data[name]['version'] else data[name]),
+              patch.object(sys, 'argv', argv)):
+            upstreams.main()
+        updated = upstreams.load_manifest()
+        self.assertEqual(updated['cwa']['version'], 'v9.0.0')
+        self.assertEqual(updated['shelfmark'], data['shelfmark'])
+        version = re.search(r'^version: "(.+)"$', (self.root / 'config.yaml').read_text(), re.M)[1]
+        self.assertTrue((self.root / 'CHANGELOG.md').read_text().startswith(
+            f'# {version}\n\n- Update CWA to v9.0.0 and Shelfmark to {data["shelfmark"]["version"]}.\n\n'))
+
     def test_unchanged_release_provenance_must_match_without_file_changes(self):
         data = upstreams.load_manifest()
         with (patch.object(upstreams, 'latest', lambda name: dict(data[name], sha256='e' * 64)),

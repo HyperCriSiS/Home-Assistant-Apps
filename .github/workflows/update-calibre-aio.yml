@@ -1,7 +1,13 @@
 name: Propose Calibre AIO upstream updates
+
+# Opens one pull request per CWA/Shelfmark combination against dev-calibre.
+# merge-due-updates.yml merges it after 12 hours once it matches the trusted
+# updater byte for byte and the full validation passed; auto-promote-calibre.yml
+# releases it to main after another 48 hours. Label a PR "hold" to stop it.
+
 on:
   schedule:
-    - cron: '23 7 * * 2'
+    - cron: '23 7 * * *'
   workflow_dispatch:
 permissions:
   contents: write
@@ -19,33 +25,43 @@ jobs:
           ref: dev-calibre
           persist-credentials: false
       - name: Resolve stable upstream releases and verify provenance
+        id: versions
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           python3 'Calibre AIO/scripts/upstreams.py' update
           python3 'Calibre AIO/scripts/upstreams.py' check
+          python3 'Calibre AIO/scripts/upstreams.py' versions >> "$GITHUB_OUTPUT"
+          if git diff --quiet; then echo changed=false; else echo changed=true; fi >> "$GITHUB_OUTPUT"
+          eval "$(python3 'Calibre AIO/scripts/upstreams.py' versions)"
+          echo "branch=automation/calibre-aio-cwa-${cwa}-shelfmark-${shelfmark}" >> "$GITHUB_OUTPUT"
+          echo "title=chore(calibre-aio): update CWA to ${cwa} and Shelfmark to ${shelfmark}" >> "$GITHUB_OUTPUT"
       - name: Propose version and checksum updates
         id: proposal
-        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676
+        if: steps.versions.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1
         with:
           base: dev-calibre
-          branch: chore/calibre-aio-upstreams
-          commit-message: 'chore(calibre-aio): update pinned upstream sources'
-          title: 'chore(calibre-aio): update pinned upstream sources'
+          branch: ${{ steps.versions.outputs.branch }}
+          commit-message: ${{ steps.versions.outputs.title }}
+          title: ${{ steps.versions.outputs.title }}
           body: |
             Updates only the central upstream manifest, generated build arguments,
             app revision and changelog. Integration adapters remain separate.
-            The Calibre AIO validation workflow is dispatched automatically
-            for this branch and must pass before promotion.
-            No automatic merge is enabled.
-          draft: true
+
+            The Calibre AIO validation (both architectures, container boot and
+            restart) is dispatched for this branch. Once it passed and the PR has
+            been open for 12 hours, it is merged into dev-calibre automatically.
+            A major upstream version is never released to main automatically.
+            Label this PR `hold` to stop the automation.
           add-paths: |
             Calibre AIO/upstream.json
             Calibre AIO/build.yaml
             Calibre AIO/config.yaml
             Calibre AIO/CHANGELOG.md
       - name: Validate the proposed combination on both architectures
-        if: steps.proposal.outputs.pull-request-number
+        if: contains(fromJSON('["created", "updated"]'), steps.proposal.outputs.pull-request-operation)
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run validate-calibre-aio.yml --ref chore/calibre-aio-upstreams
+          BRANCH: ${{ steps.proposal.outputs.pull-request-branch }}
+        run: gh workflow run validate-calibre-aio.yml --repo "$GITHUB_REPOSITORY" --ref "$BRANCH"

@@ -64,4 +64,6 @@ checks both applications after first boot and restart with persistent volumes.
 
 Real provider accounts and live HAOS behavior cannot be certified by unit
 tests. Record HAOS/Supervisor versions, architecture and results in the PR.
-The initial release remains experimental until these checks have passed.
+Run these checks before every manual release of non-automated changes.
+Automated upstream pin updates are released after the gates described in
+[UPDATING.md](UPDATING.md).

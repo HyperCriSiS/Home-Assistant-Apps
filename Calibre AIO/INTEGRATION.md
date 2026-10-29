@@ -12,7 +12,8 @@ Supervisor options permission fix. Original add-on attribution is retained.
 
 1. Give the new app its own `calibre-aio` slug, version, data directories and
    store entry. Existing CWA installations are not migrated or overwritten.
-2. Pin CWA v4.0.6 and Shelfmark v1.4.0. Build their frontends/dependencies at
+2. Pin CWA and Shelfmark releases in `upstream.json` (initially CWA v4.0.6
+   and Shelfmark v1.4.0; see the manifest for the current pins). Build their frontends/dependencies at
    image build time. Keep CWA's Python environment and Shelfmark's Python 3.14
    environment independent on the official HA Debian base.
 3. Supervise CWA and Shelfmark independently with s6. Bind both backends to

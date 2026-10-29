@@ -50,11 +50,20 @@ def request(url, github=False):
 
 
 def latest(name):
+    return release(name, None)
+
+
+def release(name, tag):
+    """Resolve the latest (or the given) stable release to a commit and archive checksum."""
     repository = REPOSITORIES[name]
-    with request(f'https://api.github.com/repos/{repository}/releases/latest', True) as response:
-        release = json.load(response)
-    version = release['tag_name']
-    if release.get('draft') or release.get('prerelease') or not re.fullmatch(r'v?\d+\.\d+\.\d+', version):
+    endpoint = 'latest' if tag is None else 'tags/' + tag
+    if tag is not None and not re.fullmatch(r'v?\d+\.\d+\.\d+', tag):
+        raise ValueError('Only stable version tags are eligible')
+    with request(f'https://api.github.com/repos/{repository}/releases/{endpoint}', True) as response:
+        info = json.load(response)
+    version = info['tag_name']
+    if (info.get('draft') or info.get('prerelease') or tag not in (None, version)
+            or not re.fullmatch(r'v?\d+\.\d+\.\d+', version)):
         raise ValueError('Only stable version tags are eligible')
     with request(f'https://api.github.com/repos/{repository}/commits/{version}', True) as response:
         commit = json.load(response)['sha']
@@ -69,10 +78,15 @@ def latest(name):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['check', 'render', 'args', 'update'])
+    parser.add_argument('command', choices=['check', 'render', 'args', 'update', 'versions'])
     parser.add_argument('--component', choices=['all', 'cwa', 'shelfmark'], default='all')
+    parser.add_argument('--cwa-version', help='pin this CWA release instead of the latest')
+    parser.add_argument('--shelfmark-version', help='pin this Shelfmark release instead of the latest')
     args = parser.parse_args()
     data = load_manifest()
+    if args.command == 'versions':
+        print('\n'.join(f'{name}={data[name]["version"]}' for name in REPOSITORIES))
+        return
     if args.command == 'args':
         config = (ROOT / 'config.yaml').read_text()
         version = re.search(r'^version: "([0-9.]+)"$', config, re.M)
@@ -85,7 +99,8 @@ def main():
         updated = dict(data)
         for name in REPOSITORIES:
             if args.component in ('all', name):
-                candidate = latest(name)
+                tag = getattr(args, name + '_version')
+                candidate = release(name, tag) if tag else latest(name)
                 # Never silently replace the contents of an already-pinned release.
                 if candidate['version'] == data[name]['version']:
                     if candidate != data[name]:
@@ -108,7 +123,7 @@ def main():
         (ROOT / 'config.yaml').write_text(config.replace(match[0], f'version: "{version}"', 1))
         changelog = ROOT / 'CHANGELOG.md'
         changelog.write_text(f'# {version}\n\n- Update CWA to {data["cwa"]["version"]} and '
-                             f'Shelfmark to {data["shelfmark"]["version"]}; integration checks required.\n\n'
+                             f'Shelfmark to {data["shelfmark"]["version"]}.\n\n'
                              + changelog.read_text())
     generated = render(data)
     if args.command == 'check':
