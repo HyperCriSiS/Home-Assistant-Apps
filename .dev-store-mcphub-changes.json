@@ -1,5 +1,21 @@
 [
   {
+    "revision": 134,
+    "version": "v2026.10.29-1-dev.134",
+    "source_sha": "5e5eda4329ed830dcdb827daafceee9a91f8ca42",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "5e5eda4329ed830dcdb827daafceee9a91f8ca42",
+        "subject": "chore(mcphub): update upstream to 1.1.13 (#119)"
+      },
+      {
+        "sha": "d83702f50d9b028fc746db344d499fac419fdd1e",
+        "subject": "Merge remote-tracking branch 'origin/main' into dev-mcphub"
+      }
+    ]
+  },
+  {
     "revision": 133,
     "version": "v2026.10.29-dev.133",
     "source_sha": "1a855c55ca0effa3eb0f8f2254936c18caa61624",
