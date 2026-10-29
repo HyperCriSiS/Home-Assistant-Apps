@@ -1,5 +1,12 @@
 # Changelog
 
+## v2026.10.29
+
+### Fixed
+
+- Remove obsolete `cloudflare` and `tailscale` option groups from Supervisor storage on startup to prevent schema warnings after upgrading from the bundled remote-access implementation.
+- Use a self-contained constant-time check for the Home Assistant Ingress proxy secret instead of an internal MCPHub helper that newer MCPHub releases removed (sign-in failed with HTTP 500 on MCPHub 1.1.13).
+
 ## v2026.10.24-1
 
 ### Changed
