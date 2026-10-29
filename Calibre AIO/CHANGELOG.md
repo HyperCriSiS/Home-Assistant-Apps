@@ -1,3 +1,7 @@
+# 1.0.1
+
+- Remove the tagline from the navigation bar.
+
 # 1.0.0
 
 - First stable release; the experimental designation is removed.

@@ -18,7 +18,7 @@
   document.documentElement.lang = de ? 'de' : 'en';
   const text = de ? {
     library: 'Bibliothek', discover: 'Entdecken', navigation: 'Bereich auswählen',
-    hint: 'Bücher finden. Bibliothek genießen.', frame: 'Bücher entdecken und Bibliothek verwalten',
+    frame: 'Bücher entdecken und Bibliothek verwalten',
     setupTitle: 'Administrator einrichten',
     setupHelp: 'Dein angemeldetes HA-Administratorkonto wird automatisch für Calibre AIO eingerichtet. Andere HA-Benutzer erhalten eigene Konten ohne Administratorrechte für die gemeinsame Bibliothek.',
     adopt: 'Einrichtung erneut versuchen',
@@ -35,7 +35,7 @@
     configured: 'Ein Administrator ist bereits konfiguriert. Die vorhandene Zuordnung bleibt erhalten. Bitte die App neu starten und die Oberfläche erneut öffnen.'
   } : {
     library: 'Library', discover: 'Discover', navigation: 'Choose section',
-    hint: 'Find books. Enjoy your library.', frame: 'Discover books and manage your library',
+    frame: 'Discover books and manage your library',
     setupTitle: 'Set up administrator',
     setupHelp: 'Your signed-in HA administrator is being configured automatically for Calibre AIO. Other HA users receive their own accounts without administrator permissions for the shared library.',
     adopt: 'Retry setup',
@@ -57,7 +57,6 @@
   const links = [...nav.querySelectorAll('a')];
   nav.setAttribute('aria-label', text.navigation);
   frame.title = text.frame;
-  document.querySelector('.hint').textContent = text.hint;
   links.forEach(a => { a.textContent = text[a.dataset.view]; });
   function select(view) {
     links.forEach(a => {
@@ -88,7 +87,6 @@
   });
   if (document.body.dataset.setupRequired !== 'true') return;
   frame.hidden = nav.hidden = true;
-  document.querySelector('.hint').hidden = true;
   document.querySelector('.setup').hidden = false;
   const button = document.querySelector('#adopt');
   const status = document.querySelector('#status');
