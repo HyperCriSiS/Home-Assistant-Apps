@@ -4,6 +4,7 @@ Home Assistant Apps maintained by HyperCriSiS.
 
 [![Validate Trilium](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate.yml/badge.svg?branch=main)](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate.yml)
 [![Validate MCPHub](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate-mcphub.yml/badge.svg?branch=main)](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate-mcphub.yml)
+[![Validate Calibre AIO](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate-calibre-aio.yml/badge.svg?branch=main)](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate-calibre-aio.yml)
 
 ## 📦 Install the repository
 
@@ -33,7 +34,7 @@ https://github.com/HyperCriSiS/Home-Assistant-Apps
 | :---: | --- | --- | --- | --- |
 | <img src="MCPHub/icon.png" alt="" width="32"> | **MCPHub** | Central management for local and remote Model Context Protocol servers | ✅ Stable | [README](MCPHub/README.md) · [Documentation](MCPHub/DOCS.md) |
 | <img src="TriliumNext%20Notes/icon.png" alt="" width="32"> | **Trilium Notes** | Self-hosted hierarchical notes and personal knowledge base | ✅ Stable | [README](TriliumNext%20Notes/README.md) |
-| 📚 | **Calibre AIO** | Shelfmark book discovery/downloads and Calibre-Web Automated library in one interface | 🧪 Experimental | [README](Calibre%20AIO/README.md) · [Documentation](Calibre%20AIO/DOCS.md) |
+| <img src="Calibre%20AIO/icon.png" alt="" width="32"> | **Calibre AIO** | Shelfmark book discovery/downloads and Calibre-Web Automated library in one interface | 🧪 Experimental | [README](Calibre%20AIO/README.md) · [Documentation](Calibre%20AIO/DOCS.md) |
 
 &nbsp;
 
