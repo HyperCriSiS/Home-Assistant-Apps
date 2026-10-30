@@ -9,3 +9,5 @@ This repository does not currently have a dedicated root `ROADMAP.md`; this inde
 - [Current work and handoff](engineering/CURRENT-WORK.md)
 - [Calibre AIO integration design](../Calibre%20AIO/INTEGRATION.md)
 - [Calibre AIO upstream maintenance](../Calibre%20AIO/UPDATING.md)
+- [PlexTraktSync development candidate](../PlexTraktSync/README.md)
+- [PlexTraktSync setup and acceptance limits](../PlexTraktSync/DOCS.md)

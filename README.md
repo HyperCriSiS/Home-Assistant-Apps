@@ -79,6 +79,10 @@ See [TriliumNext Notes/README.md](TriliumNext%20Notes/README.md) for installatio
 
 ## 🧪 Development builds
 
+PlexTraktSync is being developed as a separate source candidate; it is not yet
+released on stable or accepted for HAOS. See [candidate documentation](PlexTraktSync/README.md)
+and [setup and remaining acceptance work](PlexTraktSync/DOCS.md).
+
 A shared development repository is available for testing upcoming releases of both Apps:
 
 [![Add development repository to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FHyperCriSiS%2FHome-Assistant-Apps%23dev-store)

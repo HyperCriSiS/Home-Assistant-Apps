@@ -1,0 +1,90 @@
+configuration:
+  plex_url:
+    name: Plex server URL
+    description: Reachable Plex server, e.g. http://server:32400.
+  plex_username:
+    name: Plex account
+    description: Must match the account owning the saved token.
+  sync_enabled:
+    name: Periodic full sync
+    description: Requires initial analysis and approval.
+  sync_interval_minutes:
+    name: Full sync interval
+    description: Minutes after completion, 15–1440.
+  watch_enabled:
+    name: Playback monitoring
+    description: Read-only events trigger targeted sync; no extra rewatch entries.
+  plex_to_trakt_watched:
+    name: 'Watched: Plex to Trakt'
+    description: Add missing watched status to Trakt.
+  trakt_to_plex_watched:
+    name: 'Watched: Trakt to Plex'
+    description: Optional reverse sync; clearing watched status is prohibited.
+  ratings:
+    name: Enable rating sync
+    description: Master switch; the two rating-direction switches apply only when enabled.
+  plex_to_trakt_ratings:
+    name: 'Ratings: Plex to Trakt'
+    description: Requires the rating master switch.
+  trakt_to_plex_ratings:
+    name: 'Ratings: Trakt to Plex'
+    description: Requires the rating master switch.
+  rating_priority:
+    name: Rating conflict priority
+    description: none preserves existing conflicting ratings; plex/trakt permits overwriting the other side.
+  plex_to_trakt_watchlist:
+    name: 'Watchlist: Plex to Trakt'
+    description: Off by default. One-way sync can remove destination entries. Requires new analysis and approval.
+  trakt_to_plex_watchlist:
+    name: 'Watchlist: Trakt to Plex'
+    description: Off by default. One-way sync can remove destination entries; playlist mode imports a Plex
+      playlist instead.
+  watchlist_as_playlist:
+    name: Import watchlist as Plex playlist
+    description: Requires Trakt-to-Plex watchlist. Managed playlist contents may be replaced.
+  liked_lists:
+    name: Import liked Trakt lists
+    description: Creates/updates managed Plex playlists; does not change Trakt favorites.
+  liked_lists_keep_watched:
+    name: Keep watched items in imported lists
+    description: Global default for imported liked lists.
+  liked_list_overrides:
+    name: Per-list keep-watched overrides
+    description: Entries require exact name and boolean keep_watched; see OPTIONS.md.
+  trakt_to_plex_playback:
+    name: 'Resume progress: Trakt to Plex'
+    description: Overwrites Plex progress; at ≥99% upstream marks the item watched, even if reverse watched
+      sync is off.
+  sync_media:
+    name: Library media scope
+    description: all, movies or tv. Account watchlists are independent of library scope.
+  include_libraries:
+    name: Include libraries
+    description: Empty means all accessible libraries.
+  exclude_libraries:
+    name: Exclude libraries
+    description: Exclusion wins over inclusion.
+  ignore_ids:
+    name: Ignore Plex item IDs
+    description: Numeric Plex metadata IDs as strings, not IMDb/Trakt IDs.
+  watch_ignore_clients:
+    name: Ignore playback clients
+    description: Plex client identifiers; session ownership filtering always remains active.
+  plex_timeout:
+    name: Plex connection timeout
+    description: Seconds, 5–300.
+  request_timeout:
+    name: Trakt request timeout
+    description: Seconds for Trakt API and device authorization, 5–300.
+  batch_delay:
+    name: Upstream batch delay
+    description: Seconds, 0–300; zero disables the delay.
+  movie_provider:
+    name: Legacy XBMC movie ID provider
+    description: imdb or tmdb; affects legacy XBMC GUID interpretation.
+  show_provider:
+    name: Legacy XBMC show ID provider
+    description: tvdb, tmdb or imdb; affects legacy XBMC GUID interpretation.
+  log_level:
+    name: Operational log level
+    description: Sanitized JSON logs; raw token-bearing upstream debug logs stay disabled.

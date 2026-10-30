@@ -1,0 +1,49 @@
+name: Propose PlexTraktSync upstream updates
+on:
+  schedule:
+    - cron: '41 7 * * 2'
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+concurrency:
+  group: plextraktsync-upstream-updates
+  cancel-in-progress: false
+jobs:
+  update:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: dev-plextraktsync
+          persist-credentials: false
+      - name: Verify stable release tag and wheel checksum
+        run: |
+          python3 PlexTraktSync/scripts/upstream.py update
+          python3 PlexTraktSync/scripts/upstream.py check
+      - name: Propose reviewed version changes
+        id: proposal
+        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676
+        with:
+          base: dev-plextraktsync
+          branch: chore/plextraktsync-upstream
+          commit-message: 'chore(plextraktsync): update pinned upstream'
+          title: 'chore(plextraktsync): update pinned upstream'
+          body: |
+            Proposes a stable upstream release with a verified universal wheel.
+            Major and pre-1.0 minor upgrades require manual maintenance.
+            Native builds and wrapper contracts must pass for this commit.
+            No automatic merge or stable publication is enabled.
+          draft: true
+          add-paths: |
+            PlexTraktSync/upstream.json
+            PlexTraktSync/Dockerfile
+            PlexTraktSync/build.yaml
+            PlexTraktSync/config.yaml
+            PlexTraktSync/CHANGELOG.md
+      - name: Validate proposed version
+        if: steps.proposal.outputs.pull-request-number
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run validate-plextraktsync.yml --ref chore/plextraktsync-upstream
