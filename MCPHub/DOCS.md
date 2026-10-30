@@ -77,7 +77,7 @@ does not automatically enable that extra infrastructure.
 
 Enable `ha_mcp_enabled` to run the community server
 [ha-mcp](https://homeassistant-ai.github.io/ha-mcp/) inside this App. MCPHub
-lists it as `ha-home-assistant-unofficial`, next to the official server.
+lists it as `HomeAssistant MCP (unofficial)`, next to the official server.
 
 - The App starts `uvx ha-mcp@latest` over Streamable HTTP on `127.0.0.1:8096`.
   It is never published; clients reach it only through MCPHub.
@@ -94,7 +94,7 @@ lists it as `ha-home-assistant-unofficial`, next to the official server.
 ## Home Assistant MCP Server
 
 The wrapper registers its managed MCPHub server under
-`home_assistant_mcp_server_name` (default: `ha-home-assistant`). When enabled,
+`home_assistant_mcp_server_name` (default: `HomeAssistant MCP (official)`; existing installations keep their saved name). When enabled,
 MCPHub connects to a loopback-only Nginx
 bridge on `127.0.0.1:8097`; that bridge forwards Streamable HTTP requests to
 Home Assistant and injects the selected Home Assistant credential.
@@ -162,7 +162,7 @@ and injects the `SUPERVISOR_TOKEN` supplied by Home Assistant.
 
 ### Managed-server behavior
 
-- The default MCPHub server name is `ha-home-assistant`; configure a distinct name
+- The default MCPHub server name is `HomeAssistant MCP (official)`; configure a distinct name
   with `home_assistant_mcp_server_name` using 1-64 letters, digits, dots,
   underscores, or hyphens, beginning with a letter or digit.
 - Renaming or disabling removes the previous managed entry, including entries

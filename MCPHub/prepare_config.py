@@ -88,11 +88,12 @@ OBSOLETE_KEY_NAMES = (
     "Home Assistant Tailscale MCP Gateway",
 )
 GITHUB_CLI_SERVER_NAME = "ha-github-cli"
-HOME_ASSISTANT_MCP_DEFAULT_NAME = "ha-home-assistant"
+HOME_ASSISTANT_MCP_DEFAULT_NAME = "HomeAssistant MCP (official)"
+HOME_ASSISTANT_MCP_LEGACY_NAME = "ha-home-assistant"
 HOME_ASSISTANT_MCP_DESCRIPTION = (
     "Home Assistant MCP Server managed by the Home Assistant MCPHub App wrapper"
 )
-HA_MCP_SERVER_NAME = "ha-home-assistant-unofficial"
+HA_MCP_SERVER_NAME = "HomeAssistant MCP (unofficial)"
 HA_MCP_SERVER_URL = "http://127.0.0.1:8096/mcp"
 HA_MCP_DESCRIPTION = (
     "Unofficial Home Assistant MCP server (ha-mcp) managed by the "
@@ -100,7 +101,7 @@ HA_MCP_DESCRIPTION = (
 )
 HA_MCP_TOKEN_PATTERN = re.compile(r"^[A-Za-z0-9._~-]{20,4096}$")
 MANAGED_HOME_ASSISTANT_NAME_FILE = DATA_DIR / ".managed_home_assistant_mcp_name"
-HOME_ASSISTANT_MCP_NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
+HOME_ASSISTANT_MCP_NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._ ()-]{0,63}$")
 
 MCP_PATH_PATTERN = re.compile(r"^/mcp(?:/[A-Za-z0-9._$-]+){0,2}$")
 EXTERNAL_HOST_PATTERN = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$")
@@ -343,9 +344,9 @@ def previous_managed_home_assistant_name(mcp_servers: dict) -> str | None:
             raise ValueError("Stored managed Home Assistant MCP name is invalid")
         return name if is_managed_home_assistant_server(mcp_servers.get(name)) else None
 
-    legacy = mcp_servers.get(HOME_ASSISTANT_MCP_DEFAULT_NAME)
-    if is_managed_home_assistant_server(legacy):
-        return HOME_ASSISTANT_MCP_DEFAULT_NAME
+    for name in (HOME_ASSISTANT_MCP_LEGACY_NAME, HOME_ASSISTANT_MCP_DEFAULT_NAME):
+        if is_managed_home_assistant_server(mcp_servers.get(name)):
+            return name
     return None
 
 
@@ -450,7 +451,7 @@ def main() -> None:
         ):
             raise ValueError(
                 "home_assistant_mcp_server_name must be a unique 1-64 character "
-                "name using letters, digits, dots, underscores, or hyphens "
+                "name using letters, digits, spaces, dots, underscores, hyphens, or parentheses "
                 "(and must not equal ha-github-cli)"
             )
         if name in mcp_servers and name != previous_name:

@@ -145,7 +145,7 @@ jobs:
 
           home_assistant = config["options"]["home_assistant"]
           assert home_assistant["home_assistant_mcp_enabled"] is False
-          assert home_assistant["home_assistant_mcp_server_name"] == "ha-home-assistant"
+          assert home_assistant["home_assistant_mcp_server_name"] == "HomeAssistant MCP (official)"
           assert (
               config["schema"]["home_assistant"]["home_assistant_mcp_auth_mode"]
               == "list(supervisor|restricted_user)"
@@ -347,7 +347,7 @@ jobs:
                 /usr/local/bin/prepare_proxy_config.py &&
                 grep -q "listen 127.0.0.1:8097" /etc/nginx/conf.d/mcphub.conf &&
                 grep -q "proxy_pass http://127.0.0.1:8123/api/mcp" /etc/nginx/conf.d/mcphub.conf &&
-                grep -q "ha-home-assistant" /data/mcphub/mcp_settings.json'
+                grep -q "HomeAssistant MCP (official)" /data/mcphub/mcp_settings.json'
 
           cat > "${data_dir}/options.json" <<'EOF'
           {

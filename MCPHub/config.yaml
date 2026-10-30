@@ -48,7 +48,7 @@ options:
     external_url: ""
   home_assistant:
     home_assistant_mcp_enabled: false
-    home_assistant_mcp_server_name: "ha-home-assistant"
+    home_assistant_mcp_server_name: "HomeAssistant MCP (official)"
     home_assistant_mcp_auth_mode: "restricted_user"
     home_assistant_mcp_user_token: ""
     home_assistant_mcp_url: "http://homeassistant:8123/api/mcp"

@@ -377,7 +377,7 @@ fi
 token_before="$(docker exec "${CONTAINER}" cat /data/secrets/mcphub_tunnel_token)"
 [[ -n "${token_before}" ]]
 
-if docker exec "${CONTAINER}" grep -q '"ha-home-assistant"' /data/mcphub/mcp_settings.json; then
+if docker exec "${CONTAINER}" grep -q '"HomeAssistant MCP (official)"' /data/mcphub/mcp_settings.json; then
   echo "Managed Home Assistant MCP server exists while the option is disabled" >&2
   exit 1
 fi
