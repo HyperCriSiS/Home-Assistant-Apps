@@ -92,6 +92,13 @@ HOME_ASSISTANT_MCP_DEFAULT_NAME = "ha-home-assistant"
 HOME_ASSISTANT_MCP_DESCRIPTION = (
     "Home Assistant MCP Server managed by the Home Assistant MCPHub App wrapper"
 )
+HA_MCP_SERVER_NAME = "ha-home-assistant-unofficial"
+HA_MCP_SERVER_URL = "http://127.0.0.1:8096/mcp"
+HA_MCP_DESCRIPTION = (
+    "Unofficial Home Assistant MCP server (ha-mcp) managed by the "
+    "Home Assistant MCPHub App wrapper"
+)
+HA_MCP_TOKEN_PATTERN = re.compile(r"^[A-Za-z0-9._~-]{20,4096}$")
 MANAGED_HOME_ASSISTANT_NAME_FILE = DATA_DIR / ".managed_home_assistant_mcp_name"
 HOME_ASSISTANT_MCP_NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 
@@ -119,7 +126,7 @@ def ensure_secret(path: Path, factory) -> str:
 def flatten_grouped_options(data: dict) -> dict:
     """Read legacy flat and grouped options."""
     result = dict(data)
-    for group in ("openai", "remote_access", "home_assistant", "github", "logging"):
+    for group in ("openai", "remote_access", "home_assistant", "ha_mcp", "github", "logging"):
         section = data.get(group)
         if isinstance(section, dict):
             result.update(section)
@@ -277,6 +284,55 @@ def is_managed_home_assistant_server(server: object) -> bool:
     )
 
 
+def validate_ha_mcp_options(options: dict) -> None:
+    """Fail early on options the ha-mcp process could not start with."""
+    mode = str(options.get("ha_mcp_auth_mode", "supervisor")).strip()
+    if mode == "supervisor":
+        return
+    if mode != "restricted_user":
+        raise ValueError("ha_mcp_auth_mode must be supervisor or restricted_user")
+    token = str(options.get("ha_mcp_user_token", "")).strip()
+    if not HA_MCP_TOKEN_PATTERN.fullmatch(token):
+        raise ValueError("ha_mcp_user_token is missing or contains unexpected characters")
+    parsed = urlsplit(str(options.get("ha_mcp_url", "")).strip())
+    if (parsed.scheme not in {"http", "https"} or not parsed.hostname
+            or parsed.username or parsed.password or parsed.query or parsed.fragment
+            or parsed.path not in {"", "/"}):
+        raise ValueError(
+            "ha_mcp_url must be a Home Assistant address without a path, "
+            "such as http://homeassistant:8123"
+        )
+
+
+def apply_ha_mcp_server(mcp_servers: dict, options: dict) -> None:
+    """Add or remove the loopback entry of the App-started ha-mcp process."""
+    current = mcp_servers.get(HA_MCP_SERVER_NAME)
+    managed = (
+        isinstance(current, dict)
+        and current.get("url") == HA_MCP_SERVER_URL
+        and current.get("description") == HA_MCP_DESCRIPTION
+    )
+    if not bool(options.get("ha_mcp_enabled", False)):
+        if managed:
+            del mcp_servers[HA_MCP_SERVER_NAME]
+        return
+
+    validate_ha_mcp_options(options)
+    if current is not None and not managed:
+        raise ValueError(
+            f"Cannot enable ha-mcp: a non-managed server is named {HA_MCP_SERVER_NAME!r}"
+        )
+    mcp_servers[HA_MCP_SERVER_NAME] = {
+        "type": "streamable-http",
+        "url": HA_MCP_SERVER_URL,
+        "enabled": True,
+        "enableKeepAlive": True,
+        "keepAliveInterval": 5000,
+        "owner": "admin",
+        "description": HA_MCP_DESCRIPTION,
+    }
+
+
 def previous_managed_home_assistant_name(mcp_servers: dict) -> str | None:
     """Find the previously managed entry, including pre-rename installations."""
     if MANAGED_HOME_ASSISTANT_NAME_FILE.exists():
@@ -416,6 +472,8 @@ def main() -> None:
         }
     elif previous_name:
         mcp_servers.pop(previous_name, None)
+
+    apply_ha_mcp_server(mcp_servers, options)
 
     github_cli_enabled = bool(options.get("github_cli_mcp_enabled", False))
     github_token = str(options.get("github_token", "")).strip()

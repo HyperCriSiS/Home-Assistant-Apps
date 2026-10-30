@@ -18,6 +18,12 @@ GROUPS = {
         "tunnel_enabled", "openai_runtime_api_key", "tunnel_id", "tunnel_mcp_path",
     ),
     "remote_access": ("external_url",),
+    "ha_mcp": (
+        "ha_mcp_enabled",
+        "ha_mcp_auth_mode",
+        "ha_mcp_user_token",
+        "ha_mcp_url",
+    ),
     "home_assistant": (
         "home_assistant_mcp_enabled", "home_assistant_mcp_server_name",
         "home_assistant_mcp_auth_mode", "home_assistant_mcp_user_token",

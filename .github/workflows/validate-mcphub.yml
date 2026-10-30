@@ -136,7 +136,7 @@ jobs:
           datetime.strptime(match.group(1), "v%Y.%m.%d")
           assert changelog.startswith(f"# Changelog\n\n## {version}\n")
 
-          groups = ["openai", "remote_access", "home_assistant", "github", "logging"]
+          groups = ["openai", "remote_access", "home_assistant", "ha_mcp", "github", "logging"]
           assert list(config["options"]) == groups
           assert list(config["schema"]) == groups
           for group in groups:
