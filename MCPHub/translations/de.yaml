@@ -48,7 +48,7 @@ configuration:
         name: "Authentifizierung"
         description: >-
           restricted_user: Token eines eigenen, eingeschränkten Benutzers (empfohlen).
-          supervisor: automatischer Supervisor-Token.
+          supervisor: System-Admin ohne eigenen Token, kein Supervisor-Benutzer.
       home_assistant_mcp_user_token:
         name: "Token des eingeschränkten Benutzers"
         description: "Langlebiger Zugriffstoken dieses Benutzers. Nur für restricted_user."

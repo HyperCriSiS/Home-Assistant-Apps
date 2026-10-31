@@ -49,7 +49,7 @@ configuration:
         name: "Authentication"
         description: >-
           restricted_user: token of a dedicated, limited user (recommended).
-          supervisor: automatic Supervisor token.
+          supervisor: system admin without a separate token, not a Supervisor user.
       home_assistant_mcp_user_token:
         name: "Token of the limited user"
         description: "Long-lived access token of that user. Only for restricted_user."
