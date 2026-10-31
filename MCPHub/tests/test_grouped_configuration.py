@@ -25,6 +25,7 @@ GROUPS = {
     ),
     "ha_mcp": (
         "ha_mcp_enabled",
+        "ha_mcp_server_name",
         "ha_mcp_auth_mode",
         "ha_mcp_user_token",
         "ha_mcp_url",
@@ -62,6 +63,24 @@ class GroupedConfigurationTests(unittest.TestCase):
         self.assertEqual(request.full_url, "http://supervisor/addons/self/options")
         self.assertEqual(json.loads(request.data), {"options": {
             "github": {"github_token": "keep"}, "logging": {}}})
+
+    def test_old_default_name_is_renamed_through_supervisor(self):
+        module = load_module("prepare_config")
+        opener = MagicMock()
+        options = {"home_assistant": {
+            "home_assistant_mcp_server_name": "ha-home-assistant",
+            "home_assistant_mcp_user_token": "keep",
+        }}
+        responses = [{"result": "ok", "data": {"options": options}}, {"result": "ok"}]
+        with patch.dict(module.os.environ, {"SUPERVISOR_TOKEN": "test"}), \
+                patch.object(module, "build_opener", return_value=opener), \
+                patch.object(module.json, "load", side_effect=responses):
+            module.migrate_removed_options()
+        request = opener.open.call_args_list[1].args[0]
+        self.assertEqual(json.loads(request.data), {"options": {"home_assistant": {
+            "home_assistant_mcp_server_name": "HomeAssistant MCP (official)",
+            "home_assistant_mcp_user_token": "keep",
+        }}})
 
     def test_migration_api_failure_does_not_prevent_startup(self):
         module = load_module("prepare_config")
