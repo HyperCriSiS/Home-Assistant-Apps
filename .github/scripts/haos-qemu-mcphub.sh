@@ -254,7 +254,7 @@ log "List the tools of both servers from inside the App"
 probe="$(base64 -w0 "$(dirname "${BASH_SOURCE[0]}")/haos-mcp-probe.py")"
 result=""
 for _ in $(seq 1 30); do
-  output="$(console "echo ${probe} | base64 -d | docker exec -i addon_${SLUG} python3 -")"
+  output="$(console "echo ${probe} | base64 -d | docker exec -i app_${SLUG} python3 -")"
   result="$(grep -oE 'MCP_PROBE_OK official=[0-9]+ unofficial=[0-9]+' <<<"${output}" | tail -1 || true)"
   [[ -n "${result}" ]] && break
   grep -E 'MCP_PROBE_(WAIT|ERROR) ' <<<"${output}" | grep -v 'base64' || true
