@@ -4,7 +4,8 @@
 # The official HAOS QEMU image is booted with KVM. MCPHub is copied into the
 # image's local add-on folder before the first boot, a disposable admin is
 # created through onboarding, and the App is installed, built, started,
-# restarted and probed through Supervisor, Ingress and its LAN MCP port.
+# restarted and probed through Supervisor, Ingress and its LAN MCP port. Both
+# Home Assistant MCP servers are then enabled and must list real tools.
 #
 # Usage: haos-qemu-mcphub.sh <MCPHub source dir> <tested commit SHA>
 set -Eeuo pipefail
@@ -56,21 +57,22 @@ console() {
 trap 'diagnose' ERR
 
 supervisor() {
-  # supervisor METHOD PATH [TIMEOUT]: Supervisor API through Core's
+  # supervisor METHOD PATH [TIMEOUT] [JSON]: Supervisor API through Core's
   # "supervisor/api" WebSocket command, as the HA frontend calls it. The REST
   # proxy under /api/hassio only allows a few endpoints.
-  TOKEN="${TOKEN}" python3 - "$1" "$2" "${3:-120}" <<'PY'
+  TOKEN="${TOKEN}" python3 - "$1" "$2" "${3:-120}" "${4:-}" <<'PY'
 import json, os, sys
 from websockets.sync.client import connect
 
 method, path, timeout = sys.argv[1].lower(), "/" + sys.argv[2], int(sys.argv[3])
+extra = {"data": json.loads(sys.argv[4])} if sys.argv[4] else {}
 with connect("ws://127.0.0.1:8123/api/websocket", open_timeout=30, max_size=None) as ws:
     ws.recv()
     ws.send(json.dumps({"type": "auth", "access_token": os.environ["TOKEN"]}))
     if json.loads(ws.recv()).get("type") != "auth_ok":
         sys.exit("WebSocket authentication failed")
     ws.send(json.dumps({"id": 1, "type": "supervisor/api", "endpoint": path,
-                        "method": method, "timeout": timeout}))
+                        "method": method, "timeout": timeout, **extra}))
     while True:
         message = json.loads(ws.recv(timeout=timeout + 60))
         if message.get("id") == 1:
@@ -225,5 +227,40 @@ code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 -X POST \
   -H "Content-Type: application/json" -d '{}' "http://127.0.0.1:3001/mcp" || true)"
 [[ "${code}" =~ ^[234][0-9][0-9]$ ]] || { echo "LAN MCP port answered ${code}" >&2; false; }
 echo "Installed ${installed}, state started after restart, Ingress HTTP 200, LAN /mcp HTTP ${code}"
+
+log "Enable Home Assistant's MCP Server integration"
+flow() {
+  curl -sS --fail-with-body -X POST -H "Authorization: Bearer ${TOKEN}" \
+    -H "Content-Type: application/json" -d "$2" "${HA}/api/config/config_entries/flow$1"
+}
+flow_json="$(flow "" '{"handler":"mcp_server"}')"
+echo "${flow_json}"
+if [[ "$(field type <<<"${flow_json}")" == "form" ]]; then
+  flow "/$(field flow_id <<<"${flow_json}")" '{"llm_hass_api":["assist"]}'
+fi
+
+log "Enable both Home Assistant MCP servers through Supervisor authentication"
+options="$(supervisor GET "addons/${SLUG}/info" | python3 -c '
+import json, sys
+options = json.load(sys.stdin)["data"]["options"]
+options["home_assistant"].update(home_assistant_mcp_enabled=True, home_assistant_mcp_auth_mode="supervisor")
+options["ha_mcp"].update(ha_mcp_enabled=True, ha_mcp_auth_mode="supervisor")
+print(json.dumps({"options": options}))')"
+supervisor POST "addons/${SLUG}/options" 60 "${options}"
+supervisor POST "addons/${SLUG}/restart" 600
+wait_started
+
+log "List the tools of both servers from inside the App"
+probe="$(base64 -w0 "$(dirname "${BASH_SOURCE[0]}")/haos-mcp-probe.py")"
+result=""
+for _ in $(seq 1 30); do
+  output="$(console "echo ${probe} | base64 -d | docker exec -i addon_${SLUG} python3 -")"
+  result="$(grep -oE 'MCP_PROBE_OK official=[0-9]+ unofficial=[0-9]+' <<<"${output}" | tail -1 || true)"
+  [[ -n "${result}" ]] && break
+  grep -E 'MCP_PROBE_(WAIT|ERROR) ' <<<"${output}" | grep -v 'base64' || true
+  sleep 10
+done
+[[ -n "${result}" ]] || { echo "Home Assistant MCP servers did not list tools" >&2; false; }
+echo "${result}"
 
 log "MCPHub ${expected} (${SOURCE_SHA}) works on Home Assistant OS ${HAOS_VERSION}"
