@@ -22,6 +22,12 @@ separate manual release after testing.
 
 Development branches periodically merge the latest `main` so they inherit already released changes from the other Apps without inheriting their unreleased work.
 
+## `dev-plextraktsync`
+
+PlexTraktSync source candidates target this dedicated development branch.
+HAOS acceptance and stable publication are still pending. Stable promotion requires
+manual approval; no automatic stable release is enabled for this App.
+
 ## `dev-store`
 
 `dev-store` is a generated Home Assistant testing repository. It is composed from:
@@ -29,6 +35,7 @@ Development branches periodically merge the latest `main` so they inherit alread
 - `TriliumNext Notes/` from `dev-trilium`
 - `MCPHub/` from `dev-mcphub`
 - `Calibre AIO/` from `dev-calibre`
+- `PlexTraktSync/` from `dev-plextraktsync` once the new branch and generator are published
 - shared repository content from `main`
 
 Home Assistant development repository URL:

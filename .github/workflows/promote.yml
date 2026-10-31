@@ -22,6 +22,7 @@ on:
           - trilium
           - both
           - calibre
+          - plextraktsync
 
 permissions:
   actions: read
@@ -33,6 +34,39 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  promote-plextraktsync:
+    name: Prepare manual PlexTraktSync release pull request
+    if: github.event_name == 'workflow_dispatch' && inputs.app == 'plextraktsync'
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ secrets.AUTOMATION_TOKEN || github.token }}
+    steps:
+      - name: Verify exact candidate validation and prepare draft PR
+        run: |
+          sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/dev-plextraktsync" --jq '.object.sha')"
+          conclusion="$(gh run list --repo "${GITHUB_REPOSITORY}" \
+            --workflow validate-plextraktsync.yml --branch dev-plextraktsync --commit "${sha}" \
+            --status completed --limit 1 --json conclusion --jq '.[0].conclusion // empty')"
+          [[ "${conclusion}" == "success" ]] || {
+            echo "PlexTraktSync validation is not successful for ${sha}" >&2
+            exit 1
+          }
+          existing="$(gh pr list --repo "${GITHUB_REPOSITORY}" --base main \
+            --head dev-plextraktsync --state open --json number --jq '.[0].number // empty')"
+          [[ -z "${existing}" ]] || exit 0
+          cat > /tmp/plextraktsync-release.md <<EOF
+          Proposes PlexTraktSync candidate ${sha} for manual review.
+
+          Native image builds and adapter tests passed for this commit. HAOS
+          installation, Ingress and restart acceptance must be verified separately.
+          Live account write tests require explicit user approval. Review collection,
+          watchlist and favorite protection before release. This draft does not
+          authorize publication; a human must approve and merge the stable release.
+          EOF
+          gh pr create --repo "${GITHUB_REPOSITORY}" --base main --head dev-plextraktsync \
+            --draft --title "release(plextraktsync): candidate for manual acceptance" \
+            --body-file /tmp/plextraktsync-release.md
+
   promote-calibre:
     name: Prepare manual Calibre AIO release pull request
     if: github.event_name == 'workflow_dispatch' && inputs.app == 'calibre'

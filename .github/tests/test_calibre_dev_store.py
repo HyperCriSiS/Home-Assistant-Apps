@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class DevelopmentStoreTest(unittest.TestCase):
-    def test_three_app_generation_and_calibre_revision_isolation(self):
+    def test_four_app_generation_and_independent_revisions(self):
         workflow = yaml.safe_load((ROOT / '.github/workflows/sync-dev-store.yml').read_text())
         steps = workflow['jobs']['sync']['steps']
         block = next(step['run'] for step in steps if step['name'] == 'Generate development metadata')
@@ -27,9 +27,12 @@ class DevelopmentStoreTest(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as directory:
             temp = Path(directory)
-            for folder in ('Calibre AIO', 'MCPHub', 'TriliumNext Notes'):
+            for folder in ('Calibre AIO', 'MCPHub', 'TriliumNext Notes', 'PlexTraktSync'):
                 (temp / folder).mkdir()
-                shutil.copyfile(ROOT / folder / 'config.yaml', temp / folder / 'config.yaml')
+                source = ROOT / folder / 'config.yaml'
+                if not source.exists() and folder == 'PlexTraktSync':
+                    source = ROOT / '.github/tests/fixtures/plextraktsync-config.yaml'
+                shutil.copyfile(source, temp / folder / 'config.yaml')
             shutil.copyfile(ROOT / 'repository.json', temp / 'repository.json')
             original = Path.cwd()
             try:
@@ -38,7 +41,11 @@ class DevelopmentStoreTest(unittest.TestCase):
                     exec(code, {})
                     first = json.loads(Path('.dev-store-revisions.json').read_text())
                     calibre = yaml.safe_load(Path('Calibre AIO/config.yaml').read_text())
-                    self.assertEqual(set(first), {'calibre', 'mcphub', 'trilium'})
+                    self.assertEqual(set(first), {'calibre', 'mcphub', 'trilium', 'plextraktsync'})
+                    plex = yaml.safe_load(Path('PlexTraktSync/config.yaml').read_text())
+                    self.assertEqual(plex['name'], 'PlexTraktSync (Dev)')
+                    self.assertTrue(plex['version'].endswith('-dev.100'))
+                    self.assertEqual(plex['stage'], 'experimental')
                     self.assertEqual(calibre['name'], 'Calibre AIO (Dev)')
                     self.assertTrue(calibre['version'].endswith('-dev.100'))
                     self.assertEqual(calibre['options']['library_dir'], 'calibre-aio-dev/library')
@@ -53,6 +60,12 @@ class DevelopmentStoreTest(unittest.TestCase):
                     self.assertEqual(updated['calibre']['revision'], 101)
                     self.assertEqual(updated['mcphub'], first['mcphub'])
                     self.assertEqual(updated['trilium'], first['trilium'])
+                    self.assertEqual(updated['plextraktsync'], first['plextraktsync'])
+                    trees['origin/dev-plextraktsync:PlexTraktSync'] = 'new-plex-tree'
+                    exec(code, {})
+                    newest = json.loads(Path('.dev-store-revisions.json').read_text())
+                    self.assertEqual(newest['plextraktsync']['revision'], 101)
+                    self.assertEqual(newest['calibre'], updated['calibre'])
             finally:
                 os.chdir(original)
 
