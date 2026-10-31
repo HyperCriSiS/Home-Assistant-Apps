@@ -35,7 +35,7 @@ configuration:
           Ohne Pfad, z. B. https://mcp.example.com oder http://192.168.1.10:3001.
           Gilt für „Copy client config“ und die Adressprüfung unter „Remote access“.
   home_assistant:
-    name: "Home Assistant MCP"
+    name: "Home Assistant MCP (offiziell)"
     description: "Bindet den MCP-Server von Home Assistant in MCPHub ein."
     fields:
       home_assistant_mcp_enabled:
@@ -58,6 +58,31 @@ configuration:
       home_assistant_mcp_ca_file:
         name: "CA-Datei für HTTPS (optional)"
         description: "Nur bei eigener CA, z. B. /ssl/home-assistant-ca.pem. Sonst leer lassen."
+  ha_mcp:
+    name: "Home Assistant MCP (inoffiziell)"
+    description: >-
+      Führt den Community-Server ha-mcp in dieser App aus und bindet ihn in MCPHub ein.
+      https://homeassistant-ai.github.io/ha-mcp/
+    fields:
+      ha_mcp_enabled:
+        name: "Inoffizielles Home Assistant MCP aktivieren"
+        description: >-
+          Volle Kontrolle über Home Assistant, auch die Konfiguration.
+          Nutzt immer die neueste Version; Update durch Neustart der App.
+      ha_mcp_server_name:
+        name: "Servername in MCPHub"
+        description: "Muss eindeutig sein. Umbenennen kann bestehende MCPHub-Gruppen betreffen."
+      ha_mcp_auth_mode:
+        name: "Authentifizierung"
+        description: >-
+          supervisor: automatischer Supervisor-Token (empfohlen).
+          restricted_user: Token eines Benutzers; ohne Admin-Rechte weniger Funktionen.
+      ha_mcp_user_token:
+        name: "Benutzer-Token"
+        description: "Langlebiger Zugriffstoken. Nur für restricted_user."
+      ha_mcp_url:
+        name: "Home Assistant-URL"
+        description: "Nur für restricted_user. Adresse ohne Pfad."
   github:
     name: "GitHub CLI MCP"
     description: "Stellt GitHub-Befehle (gh) als MCP-Server in MCPHub bereit."

@@ -73,10 +73,28 @@ Smart Routing is also supported by MCPHub through `/mcp/$smart`, but it requires
 additional PostgreSQL/pgvector and embedding-service setup. This Home Assistant wrapper
 does not automatically enable that extra infrastructure.
 
+## Unofficial Home Assistant MCP (ha-mcp)
+
+Enable `ha_mcp_enabled` to run the community server
+[ha-mcp](https://homeassistant-ai.github.io/ha-mcp/) inside this App. MCPHub
+lists it as `HomeAssistant MCP (unofficial)`, next to the official server.
+
+- The App starts `uvx ha-mcp@latest` over Streamable HTTP on `127.0.0.1:8096`.
+  It is never published; clients reach it only through MCPHub.
+- Updates need no App update: every App restart uses the latest ha-mcp release.
+  New releases therefore run without review by this App.
+- `ha_mcp_auth_mode` `supervisor` needs no token. `restricted_user` uses
+  `ha_mcp_user_token` and `ha_mcp_url`; ha-mcp has fewer features without
+  administrator rights.
+- ha-mcp can change your Home Assistant configuration. `/mcp` includes it, also
+  for the OpenAI tunnel, so use MCPHub groups and limited keys for clients that
+  should not have it.
+- Do not also connect a separate ha-mcp installation to the same clients.
+
 ## Home Assistant MCP Server
 
 The wrapper registers its managed MCPHub server under
-`home_assistant_mcp_server_name` (default: `ha-home-assistant`). When enabled,
+`home_assistant_mcp_server_name` (default: `HomeAssistant MCP (official)`; the old default `ha-home-assistant` is renamed to it automatically). When enabled,
 MCPHub connects to a loopback-only Nginx
 bridge on `127.0.0.1:8097`; that bridge forwards Streamable HTTP requests to
 Home Assistant and injects the selected Home Assistant credential.
@@ -144,7 +162,7 @@ and injects the `SUPERVISOR_TOKEN` supplied by Home Assistant.
 
 ### Managed-server behavior
 
-- The default MCPHub server name is `ha-home-assistant`; configure a distinct name
+- The default MCPHub server name is `HomeAssistant MCP (official)`; configure a distinct name
   with `home_assistant_mcp_server_name` using 1-64 letters, digits, dots,
   underscores, or hyphens, beginning with a letter or digit.
 - Renaming or disabling removes the previous managed entry, including entries
