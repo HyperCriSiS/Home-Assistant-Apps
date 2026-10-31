@@ -94,7 +94,7 @@ lists it as `HomeAssistant MCP (unofficial)`, next to the official server.
 ## Home Assistant MCP Server
 
 The wrapper registers its managed MCPHub server under
-`home_assistant_mcp_server_name` (default: `HomeAssistant MCP (official)`; existing installations keep their saved name). When enabled,
+`home_assistant_mcp_server_name` (default: `HomeAssistant MCP (official)`; the old default `ha-home-assistant` is renamed to it automatically). When enabled,
 MCPHub connects to a loopback-only Nginx
 bridge on `127.0.0.1:8097`; that bridge forwards Streamable HTTP requests to
 Home Assistant and injects the selected Home Assistant credential.

@@ -20,7 +20,7 @@ class _NoSupervisorRedirect(HTTPRedirectHandler):
 
 
 def migrate_removed_options() -> None:
-    """Remove obsolete groups from Supervisor storage, preserving other options."""
+    """Remove obsolete groups and the old default server name from Supervisor storage."""
     token = os.environ.get("SUPERVISOR_TOKEN", "")
     if not token:
         return
@@ -41,12 +41,23 @@ def migrate_removed_options() -> None:
         options = request("info")["options"]
         if not isinstance(options, dict):
             raise ValueError("Invalid Supervisor options")
-        if not any(key in options for key in ("cloudflare", "tailscale")):
-            return
         cleaned = {key: value for key, value in options.items()
                    if key not in ("cloudflare", "tailscale")}
+        home_assistant = cleaned.get("home_assistant")
+        renamed = (
+            isinstance(home_assistant, dict)
+            and home_assistant.get("home_assistant_mcp_server_name")
+            == HOME_ASSISTANT_MCP_LEGACY_NAME
+        )
+        if renamed:
+            cleaned["home_assistant"] = {
+                **home_assistant,
+                "home_assistant_mcp_server_name": HOME_ASSISTANT_MCP_DEFAULT_NAME,
+            }
+        if cleaned == options:
+            return
         request("options", {"options": cleaned})
-        print("[INFO] Removed obsolete Cloudflare/Tailscale option groups")
+        print("[INFO] Migrated obsolete App options")
     except (OSError, ValueError, KeyError, TypeError):
         # Do not expose response bodies, which may contain credentials.
         print("[WARN] Could not migrate obsolete Supervisor options; will retry next start",
@@ -305,25 +316,44 @@ def validate_ha_mcp_options(options: dict) -> None:
         )
 
 
-def apply_ha_mcp_server(mcp_servers: dict, options: dict) -> None:
-    """Add or remove the loopback entry of the App-started ha-mcp process."""
-    current = mcp_servers.get(HA_MCP_SERVER_NAME)
-    managed = (
-        isinstance(current, dict)
-        and current.get("url") == HA_MCP_SERVER_URL
-        and current.get("description") == HA_MCP_DESCRIPTION
+def is_managed_ha_mcp_server(server: object) -> bool:
+    """Only entries with our exact ha-mcp identity may be renamed or removed."""
+    return (
+        isinstance(server, dict)
+        and server.get("url") == HA_MCP_SERVER_URL
+        and server.get("description") == HA_MCP_DESCRIPTION
     )
+
+
+def apply_ha_mcp_server(mcp_servers: dict, options: dict) -> None:
+    """Add, rename or remove the loopback entry of the App-started ha-mcp process."""
+    managed = [
+        key for key, server in mcp_servers.items()
+        if is_managed_ha_mcp_server(server)
+    ]
     if not bool(options.get("ha_mcp_enabled", False)):
-        if managed:
-            del mcp_servers[HA_MCP_SERVER_NAME]
+        for key in managed:
+            del mcp_servers[key]
         return
 
     validate_ha_mcp_options(options)
-    if current is not None and not managed:
+    name = str(options.get("ha_mcp_server_name") or "").strip() or HA_MCP_SERVER_NAME
+    if (
+        not HOME_ASSISTANT_MCP_NAME_PATTERN.fullmatch(name)
+        or name == GITHUB_CLI_SERVER_NAME
+    ):
         raise ValueError(
-            f"Cannot enable ha-mcp: a non-managed server is named {HA_MCP_SERVER_NAME!r}"
+            "ha_mcp_server_name must be a unique 1-64 character "
+            "name using letters, digits, spaces, dots, underscores, hyphens, or parentheses "
+            "(and must not equal ha-github-cli)"
         )
-    mcp_servers[HA_MCP_SERVER_NAME] = {
+    if name in mcp_servers and name not in managed:
+        raise ValueError(
+            f"Cannot enable ha-mcp: a non-managed server is named {name!r}"
+        )
+    for key in managed:
+        del mcp_servers[key]
+    mcp_servers[name] = {
         "type": "streamable-http",
         "url": HA_MCP_SERVER_URL,
         "enabled": True,
@@ -445,6 +475,8 @@ def main() -> None:
                 HOME_ASSISTANT_MCP_DEFAULT_NAME,
             )
         ).strip()
+        if name == HOME_ASSISTANT_MCP_LEGACY_NAME:
+            name = HOME_ASSISTANT_MCP_DEFAULT_NAME
         if (
             not HOME_ASSISTANT_MCP_NAME_PATTERN.fullmatch(name)
             or name == GITHUB_CLI_SERVER_NAME

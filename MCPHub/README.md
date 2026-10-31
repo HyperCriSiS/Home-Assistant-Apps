@@ -217,6 +217,7 @@ The Home Assistant App configuration contains Home Assistant MCP and remote-acce
 | --- | --- | --- |
 | `home_assistant_mcp_enabled` | `false` | Adds the managed Home Assistant MCP Server to MCPHub |
 | `home_assistant_mcp_server_name` | `HomeAssistant MCP (official)` | Unique MCPHub server name; renaming migrates the managed entry |
+| `ha_mcp_server_name` | `HomeAssistant MCP (unofficial)` | Unique MCPHub server name of ha-mcp; renaming migrates the managed entry |
 | `home_assistant_mcp_auth_mode` | `restricted_user` | Uses either the Supervisor token or a dedicated user token |
 | `home_assistant_mcp_user_token` | empty | Dedicated Home Assistant user's Long-Lived Access Token |
 | `home_assistant_mcp_url` | `http://homeassistant:8123/api/mcp` | Direct MCP endpoint used by `restricted_user` mode |

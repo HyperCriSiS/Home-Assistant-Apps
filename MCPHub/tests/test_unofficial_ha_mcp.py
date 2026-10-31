@@ -30,6 +30,28 @@ class UnofficialHaMcpTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             MODULE.apply_ha_mcp_server(own, {"ha_mcp_enabled": True})
 
+    def test_custom_name_renames_only_managed_entry(self):
+        servers = {"mine": {"command": "echo"}}
+        MODULE.apply_ha_mcp_server(servers, {"ha_mcp_enabled": True})
+        MODULE.apply_ha_mcp_server(
+            servers, {"ha_mcp_enabled": True, "ha_mcp_server_name": "ha-full"}
+        )
+        self.assertEqual(sorted(servers), ["ha-full", "mine"])
+        with self.assertRaises(ValueError):
+            MODULE.apply_ha_mcp_server(
+                servers, {"ha_mcp_enabled": True, "ha_mcp_server_name": "mine"}
+            )
+        self.assertIn("ha-full", servers)
+        for name in ("/bad", "ha-github-cli", "x" * 65):
+            with self.subTest(name=name), self.assertRaises(ValueError):
+                MODULE.apply_ha_mcp_server(
+                    servers, {"ha_mcp_enabled": True, "ha_mcp_server_name": name}
+                )
+        MODULE.apply_ha_mcp_server(
+            servers, {"ha_mcp_enabled": False, "ha_mcp_server_name": "ignored"}
+        )
+        self.assertEqual(list(servers), ["mine"])
+
     def test_restricted_user_needs_token_and_plain_address(self):
         good = {
             "ha_mcp_auth_mode": "restricted_user",

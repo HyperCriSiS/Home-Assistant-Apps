@@ -1,5 +1,17 @@
 [
   {
+    "revision": 139,
+    "version": "v2026.10.31-1-dev.139",
+    "source_sha": "0ed4f8ae89cceb994bd2c525200e42fd2af2c5c2",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "0ed4f8ae89cceb994bd2c525200e42fd2af2c5c2",
+        "subject": "feat(mcphub): configurable ha-mcp name and official name migration (#131)"
+      }
+    ]
+  },
+  {
     "revision": 138,
     "version": "v2026.10.31-1-dev.138",
     "source_sha": "bad7d02b8af237f8405190ed28ba9685fe5a6e23",

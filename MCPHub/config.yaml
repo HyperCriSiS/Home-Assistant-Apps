@@ -1,6 +1,6 @@
 ---
 name: "MCPHub (Dev)"
-version: "v2026.10.31-1-dev.138"
+version: "v2026.10.31-1-dev.139"
 slug: mcphub
 description: >-
   MCPHub 1.1.15 - central MCP server management with optional Home Assistant,
@@ -56,6 +56,7 @@ options:
     home_assistant_mcp_ca_file: ""
   ha_mcp:
     ha_mcp_enabled: false
+    ha_mcp_server_name: "HomeAssistant MCP (unofficial)"
     ha_mcp_auth_mode: "supervisor"
     ha_mcp_user_token: ""
     ha_mcp_url: "http://homeassistant:8123"
@@ -81,6 +82,7 @@ schema:
     home_assistant_mcp_ca_file: str?
   ha_mcp:
     ha_mcp_enabled: bool
+    ha_mcp_server_name: str?
     ha_mcp_auth_mode: "list(supervisor|restricted_user)"
     ha_mcp_user_token: password
     ha_mcp_url: str
