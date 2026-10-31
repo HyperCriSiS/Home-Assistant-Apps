@@ -91,6 +91,22 @@ lists it as `HomeAssistant MCP (unofficial)`, next to the official server.
   should not have it.
 - Do not also connect a separate ha-mcp installation to the same clients.
 
+### Full Supervisor rights with the ha-mcp App
+
+`ha_mcp_auth_mode: supervisor` is a system admin in Home Assistant, not a Supervisor
+user: it cannot manage Apps or the App store or read their logs. The
+[ha-mcp App](https://github.com/homeassistant-ai/ha-mcp) has these rights, and this
+App intentionally does not. To use it:
+
+1. Install it from its own repository, start it and copy the secret path from its log
+   line `MCP Server URL`.
+2. Turn off `ha_mcp_enabled` in this App.
+3. In MCPHub, add a Streamable HTTP server with the URL
+   `http://homeassistant:9583/private_...`, using your secret path.
+
+Everyone with access to this server can manage your Apps, so limit it with MCPHub
+groups and keys. The URL contains a secret; treat it like a password.
+
 ## Home Assistant MCP Server
 
 The wrapper registers its managed MCPHub server under

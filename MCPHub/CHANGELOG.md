@@ -1,7 +1,8 @@
 # Changelog
 
-## v2026.10.31-1-dev.139
+## v2026.10.31-1-dev.140
 
 ### Commits in this Dev build
 
-- [`0ed4f8a`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/0ed4f8ae89cceb994bd2c525200e42fd2af2c5c2) feat(mcphub): configurable ha-mcp name and official name migration (#131)
+- [`01a942a`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/01a942a52026de4c43edb000f867561cb659cc52) docs(mcphub): explain the ha-mcp supervisor mode limits (#135)
+- [`93a8ece`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/93a8eced8fc814a39d7e5e9dc40fc58720b01ec2) test(mcphub): list Home Assistant MCP tools on real HAOS (#132)

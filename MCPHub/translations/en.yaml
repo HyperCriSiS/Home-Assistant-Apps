@@ -49,7 +49,7 @@ configuration:
         name: "Authentication"
         description: >-
           restricted_user: token of a dedicated, limited user (recommended).
-          supervisor: automatic Supervisor token.
+          supervisor: system admin without a separate token, not a Supervisor user.
       home_assistant_mcp_user_token:
         name: "Token of the limited user"
         description: "Long-lived access token of that user. Only for restricted_user."
@@ -76,7 +76,9 @@ configuration:
       ha_mcp_auth_mode:
         name: "Authentication"
         description: >-
-          supervisor: automatic Supervisor token (recommended).
+          supervisor: system admin without a separate token (recommended), not a Supervisor user.
+          Full rights in Home Assistant, but no management of Apps and the App store.
+          For full Supervisor rights use the separate ha-mcp App: https://github.com/homeassistant-ai/ha-mcp
           restricted_user: token of a user; a non-admin user has fewer features.
       ha_mcp_user_token:
         name: "User token"
