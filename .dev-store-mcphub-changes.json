@@ -1,5 +1,17 @@
 [
   {
+    "revision": 138,
+    "version": "v2026.10.31-1-dev.138",
+    "source_sha": "bad7d02b8af237f8405190ed28ba9685fe5a6e23",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "bad7d02b8af237f8405190ed28ba9685fe5a6e23",
+        "subject": "chore(mcphub): update upstream to 1.1.15 (#129)"
+      }
+    ]
+  },
+  {
     "revision": 137,
     "version": "v2026.10.31-1-dev.137",
     "source_sha": "d53214e234f1d1dff961666f22c964bb567c5966",

@@ -1,9 +1,9 @@
 ---
 name: "MCPHub (Dev)"
-version: "v2026.10.31-1-dev.137"
+version: "v2026.10.31-1-dev.138"
 slug: mcphub
 description: >-
-  MCPHub 1.1.14 - central MCP server management with optional Home Assistant,
+  MCPHub 1.1.15 - central MCP server management with optional Home Assistant,
   OpenAI and remote access integrations
 url: "https://github.com/HyperCriSiS/Home-Assistant-Apps/tree/dev-mcphub/MCPHub"
 startup: application
