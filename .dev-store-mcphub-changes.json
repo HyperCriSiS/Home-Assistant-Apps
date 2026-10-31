@@ -1,5 +1,29 @@
 [
   {
+    "revision": 135,
+    "version": "v2026.10.31-dev.135",
+    "source_sha": "18230e5bf74c4a75b43c9ee26125c9c31ded9fe7",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "18230e5bf74c4a75b43c9ee26125c9c31ded9fe7",
+        "subject": "feat(mcphub): add optional unofficial Home Assistant MCP server (#128)"
+      },
+      {
+        "sha": "5354280099ac3d7df9fe5cf47c07f5e329594516",
+        "subject": "Merge remote-tracking branch 'origin/main' into dev-mcphub"
+      },
+      {
+        "sha": "542ffb32f4f113de881dfe49cf3f25b3ad72fcef",
+        "subject": "Merge remote-tracking branch 'origin/main' into dev-mcphub"
+      },
+      {
+        "sha": "e7df7099c58ff8279dae78fdd4a9c1cec3e0a3fe",
+        "subject": "Merge remote-tracking branch 'origin/main' into dev-mcphub"
+      }
+    ]
+  },
+  {
     "revision": 134,
     "version": "v2026.10.29-1-dev.134",
     "source_sha": "5e5eda4329ed830dcdb827daafceee9a91f8ca42",
