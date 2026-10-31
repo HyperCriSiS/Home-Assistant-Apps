@@ -8,11 +8,9 @@
 
 ### Changed
 
-- Updated MCPHub from 1.1.10 to 1.1.13.
-- Updated MCPHub from 1.1.13 to 1.1.14.
+- Updated MCPHub from 1.1.10 to 1.1.15.
 - The existing configuration section is now named Home Assistant MCP (official).
 - The official server is now named `HomeAssistant MCP (official)` in MCPHub. Installations using the old default `ha-home-assistant` are renamed automatically; update MCPHub groups or clients that reference the old name. Custom names stay unchanged.
-- Updated MCPHub from 1.1.14 to 1.1.15.
 - Updated bundled OpenAI tunnel-client v0.0.18 to v0.0.19.
 
 ### Fixed
