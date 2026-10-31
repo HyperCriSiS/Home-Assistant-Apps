@@ -1,5 +1,17 @@
 [
   {
+    "revision": 137,
+    "version": "v2026.10.31-1-dev.137",
+    "source_sha": "d53214e234f1d1dff961666f22c964bb567c5966",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "d53214e234f1d1dff961666f22c964bb567c5966",
+        "subject": "chore(mcphub): update OpenAI tunnel client (#130)"
+      }
+    ]
+  },
+  {
     "revision": 136,
     "version": "v2026.10.31-dev.136",
     "source_sha": "d645ba285690af5e38123e05947c2d370a7d6b80",
