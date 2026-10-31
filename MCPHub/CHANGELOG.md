@@ -9,6 +9,7 @@
 
 ### Changed
 
+- Updated MCPHub from 1.1.13 to 1.1.14.
 - The existing configuration section is now named Home Assistant MCP (official).
 - New installations name the official server `HomeAssistant MCP (official)` in MCPHub;
   existing installations keep their saved name.
