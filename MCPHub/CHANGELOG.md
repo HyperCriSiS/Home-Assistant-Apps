@@ -2,34 +2,18 @@
 
 ## v2026.10.31-1
 
-### Changed
-
-- Updated MCPHub from 1.1.14 to 1.1.15.
-- Updated bundled OpenAI tunnel-client v0.0.18 to v0.0.19.
-
-## v2026.10.31
-
 ### Added
 
-- Optional unofficial Home Assistant MCP server (ha-mcp), started by the App and
-  added to MCPHub as `HomeAssistant MCP (unofficial)`. Off by default. The name can
-  be changed with `ha_mcp_server_name`.
-
-### Changed
-
-- Updated MCPHub from 1.1.13 to 1.1.14.
-- The existing configuration section is now named Home Assistant MCP (official).
-- The official server is now named `HomeAssistant MCP (official)` in MCPHub. Installations
-  using the old default `ha-home-assistant` are renamed automatically; update MCPHub
-  groups or clients that reference the old name. Custom names stay unchanged.
-
-## v2026.10.29-1
+- Optional unofficial Home Assistant MCP server (ha-mcp), started by the App and added to MCPHub as `HomeAssistant MCP (unofficial)`. Off by default. The name can be changed with `ha_mcp_server_name`.
 
 ### Changed
 
 - Updated MCPHub from 1.1.10 to 1.1.13.
-
-## v2026.10.29
+- Updated MCPHub from 1.1.13 to 1.1.14.
+- The existing configuration section is now named Home Assistant MCP (official).
+- The official server is now named `HomeAssistant MCP (official)` in MCPHub. Installations using the old default `ha-home-assistant` are renamed automatically; update MCPHub groups or clients that reference the old name. Custom names stay unchanged.
+- Updated MCPHub from 1.1.14 to 1.1.15.
+- Updated bundled OpenAI tunnel-client v0.0.18 to v0.0.19.
 
 ### Fixed
 
