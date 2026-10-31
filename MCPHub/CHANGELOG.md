@@ -5,6 +5,7 @@
 ### Changed
 
 - Updated MCPHub from 1.1.14 to 1.1.15.
+- Updated bundled OpenAI tunnel-client v0.0.18 to v0.0.19.
 
 ## v2026.10.31
 
