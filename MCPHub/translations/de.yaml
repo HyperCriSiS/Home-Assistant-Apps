@@ -75,7 +75,9 @@ configuration:
       ha_mcp_auth_mode:
         name: "Authentifizierung"
         description: >-
-          supervisor: automatischer Supervisor-Token (empfohlen). Voller Zugriff auf Home Assistant, aber nicht auf Apps und App-Store; dafür die eigene ha-mcp-App verwenden.
+          supervisor: automatischer Supervisor-Token (empfohlen).
+          Voller Zugriff auf Home Assistant, aber nicht auf Apps und App-Store;
+          dafür die eigene ha-mcp-App verwenden.
           restricted_user: Token eines Benutzers; ohne Admin-Rechte weniger Funktionen.
       ha_mcp_user_token:
         name: "Benutzer-Token"
