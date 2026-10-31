@@ -29,7 +29,7 @@ CUSTOM_CA_PATTERN = re.compile(r"^/ssl/[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*\.pem
 def flatten_grouped_options(data: dict) -> dict:
     """Read legacy flat and grouped options."""
     result = dict(data)
-    for group in ("openai", "remote_access", "home_assistant", "github", "logging"):
+    for group in ("openai", "remote_access", "home_assistant", "ha_mcp", "github", "logging"):
         section = data.get(group)
         if isinstance(section, dict):
             result.update(section)

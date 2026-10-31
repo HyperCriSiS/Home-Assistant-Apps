@@ -48,14 +48,14 @@ class ManagedHomeAssistantMCPTests(unittest.TestCase):
 
     def test_default_name_and_migration(self):
         MODULE.main()
-        self.assertIn("ha-home-assistant", self.servers())
+        self.assertIn(MODULE.HOME_ASSISTANT_MCP_DEFAULT_NAME, self.servers())
         self.options(
             home_assistant_mcp_enabled=True,
             home_assistant_mcp_server_name="ha-livingroom",
         )
         MODULE.main()
         self.assertIn("ha-livingroom", self.servers())
-        self.assertNotIn("ha-home-assistant", self.servers())
+        self.assertNotIn(MODULE.HOME_ASSISTANT_MCP_DEFAULT_NAME, self.servers())
         self.assertEqual(
             MODULE.MANAGED_HOME_ASSISTANT_NAME_FILE.read_text().strip(),
             "ha-livingroom",
@@ -70,6 +70,14 @@ class ManagedHomeAssistantMCPTests(unittest.TestCase):
         )
         MODULE.main()
         self.assertEqual(list(self.servers()), ["ha-renamed"])
+
+    def test_saved_old_default_name_becomes_official_name(self):
+        self.options(
+            home_assistant_mcp_enabled=True,
+            home_assistant_mcp_server_name=MODULE.HOME_ASSISTANT_MCP_LEGACY_NAME,
+        )
+        MODULE.main()
+        self.assertEqual(list(self.servers()), [MODULE.HOME_ASSISTANT_MCP_DEFAULT_NAME])
 
     def test_disable_removes_only_managed_entry(self):
         MODULE.main()
@@ -93,12 +101,12 @@ class ManagedHomeAssistantMCPTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "non-managed server"):
             MODULE.main()
         self.assertEqual(self.servers()["other-server"], {"command": "echo"})
-        self.assertIn("ha-home-assistant", self.servers())
+        self.assertIn(MODULE.HOME_ASSISTANT_MCP_DEFAULT_NAME, self.servers())
 
     def test_reused_managed_name_is_never_deleted(self):
         MODULE.main()
         settings = json.loads(MODULE.SETTINGS_FILE.read_text())
-        settings["mcpServers"]["ha-home-assistant"] = {"command": "my-own-service"}
+        settings["mcpServers"][MODULE.HOME_ASSISTANT_MCP_DEFAULT_NAME] = {"command": "my-own-service"}
         MODULE.SETTINGS_FILE.write_text(json.dumps(settings))
         self.options(
             home_assistant_mcp_enabled=True,
@@ -106,13 +114,13 @@ class ManagedHomeAssistantMCPTests(unittest.TestCase):
         )
         MODULE.main()
         self.assertEqual(
-            self.servers()["ha-home-assistant"],
+            self.servers()[MODULE.HOME_ASSISTANT_MCP_DEFAULT_NAME],
             {"command": "my-own-service"},
         )
         self.assertIn("ha-fresh", self.servers())
 
     def test_invalid_names(self):
-        for name in ("", "/mcp/bad", "with spaces", "ha-github-cli", "x" * 65):
+        for name in ("", "/mcp/bad", "ha-github-cli", "x" * 65):
             with self.subTest(name=name):
                 self.options(
                     home_assistant_mcp_enabled=True,

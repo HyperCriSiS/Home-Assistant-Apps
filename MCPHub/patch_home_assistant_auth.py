@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Patch MCPHub 1.1.10 for trusted Home Assistant Ingress sessions.
+"""Patch MCPHub 1.1.15 for trusted Home Assistant Ingress sessions.
 
 The Supervisor injects X-Remote-User-* headers for authenticated Ingress sessions.
 A second private proxy secret prevents those headers from being trusted outside the
@@ -26,7 +26,7 @@ SERVER_CONTROLLER_FILE = Path("/app/dist/controllers/serverController.js")
 def replace_once(text: str, old: str, new: str, label: str) -> str:
     count = text.count(old)
     if count != 1:
-        raise SystemExit(f"Unexpected MCPHub 1.1.10 structure for {label}: found {count}")
+        raise SystemExit(f"Unexpected MCPHub 1.1.15 structure for {label}: found {count}")
     return text.replace(old, new, 1)
 
 
@@ -34,7 +34,15 @@ def patch_auth() -> None:
     text = AUTH_FILE.read_text(encoding="utf-8")
 
     marker = "const resolveBetterAuthUserSafe = async (req) => {"
-    helper = """export const resolveHomeAssistantIngressUser = (req) => {
+    helper = """// Constant-time comparison owned by this patch: MCPHub's own helper is
+// internal and was removed in a later release. Hashing equalizes the lengths.
+const homeAssistantSecretMatches = (expected, provided) =>
+    haTimingSafeEqual(
+        haCreateHash('sha256').update(String(expected)).digest(),
+        haCreateHash('sha256').update(String(provided)).digest(),
+    );
+
+export const resolveHomeAssistantIngressUser = (req) => {
     const expectedSecret = process.env.HA_INGRESS_PROXY_SECRET;
     const providedSecret = req.header('x-mcphub-ha-proxy-secret');
 
@@ -42,7 +50,7 @@ def patch_auth() -> None:
         return null;
     }
 
-    if (!safeCompare(expectedSecret, providedSecret)) {
+    if (!homeAssistantSecretMatches(expectedSecret, providedSecret)) {
         return null;
     }
 
@@ -63,6 +71,10 @@ def patch_auth() -> None:
 
 """
     text = replace_once(text, marker, helper + marker, "Home Assistant auth helper")
+    text = (
+        "import { createHash as haCreateHash, timingSafeEqual as haTimingSafeEqual } "
+        "from 'crypto';\n" + text
+    )
 
     auth_marker = "    // Check if bearer auth via configured keys can validate this request\n"
     auth_block = """    const homeAssistantUser = resolveHomeAssistantIngressUser(req);

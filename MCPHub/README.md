@@ -87,7 +87,7 @@ See [LAN access instructions](LAN_ACCESS.md) for details and security notes.
 ## Home Assistant MCP Server
 
 The App can optionally add Home Assistant's own MCP Server to MCPHub as the
-managed server **ha-home-assistant** by default. The server name is configurable
+managed server **HomeAssistant MCP (official)** by default. The server name is configurable
 through `home_assistant_mcp_server_name` in the App options. The Home Assistant
 **MCP Server** integration must already be configured.
 
@@ -216,7 +216,8 @@ The Home Assistant App configuration contains Home Assistant MCP and remote-acce
 | Option | Default | Description |
 | --- | --- | --- |
 | `home_assistant_mcp_enabled` | `false` | Adds the managed Home Assistant MCP Server to MCPHub |
-| `home_assistant_mcp_server_name` | `ha-home-assistant` | Unique MCPHub server name; renaming migrates the managed entry |
+| `home_assistant_mcp_server_name` | `HomeAssistant MCP (official)` | Unique MCPHub server name; renaming migrates the managed entry |
+| `ha_mcp_server_name` | `HomeAssistant MCP (unofficial)` | Unique MCPHub server name of ha-mcp; renaming migrates the managed entry |
 | `home_assistant_mcp_auth_mode` | `restricted_user` | Uses either the Supervisor token or a dedicated user token |
 | `home_assistant_mcp_user_token` | empty | Dedicated Home Assistant user's Long-Lived Access Token |
 | `home_assistant_mcp_url` | `http://homeassistant:8123/api/mcp` | Direct MCP endpoint used by `restricted_user` mode |
