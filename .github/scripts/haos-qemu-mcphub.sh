@@ -251,10 +251,16 @@ supervisor POST "addons/${SLUG}/restart" 600
 wait_started
 
 log "List the tools of both servers from inside the App"
-probe="$(base64 -w0 "$(dirname "${BASH_SOURCE[0]}")/haos-mcp-probe.py")"
+# The serial console drops long lines, so the probe is written in small chunks.
+mapfile -t chunks < <(base64 -w0 "$(dirname "${BASH_SOURCE[0]}")/haos-mcp-probe.py" | fold -w 200)
+commands=("rm -f /tmp/probe.b64")
+for chunk in "${chunks[@]}"; do
+  commands+=("printf %s ${chunk} >> /tmp/probe.b64")
+done
+console "${commands[@]}" >/dev/null
 result=""
 for _ in $(seq 1 30); do
-  output="$(console "echo ${probe} | base64 -d | docker exec -i app_${SLUG} python3 -")"
+  output="$(console "base64 -d /tmp/probe.b64 | docker exec -i app_${SLUG} python3 -")"
   result="$(grep -oE 'MCP_PROBE_OK official=[0-9]+ unofficial=[0-9]+' <<<"${output}" | tail -1 || true)"
   [[ -n "${result}" ]] && break
   grep -E 'MCP_PROBE_(WAIT|ERROR) ' <<<"${output}" | grep -v 'base64' || true
