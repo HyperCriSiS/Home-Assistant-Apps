@@ -23,6 +23,12 @@ GROUPS = {
         "home_assistant_mcp_auth_mode", "home_assistant_mcp_user_token",
         "home_assistant_mcp_url", "home_assistant_mcp_ca_file",
     ),
+    "ha_mcp": (
+        "ha_mcp_enabled",
+        "ha_mcp_auth_mode",
+        "ha_mcp_user_token",
+        "ha_mcp_url",
+    ),
     "github": ("github_cli_mcp_enabled", "github_token"),
     "logging": ("tunnel_log_level",),
 }
