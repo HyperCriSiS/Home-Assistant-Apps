@@ -71,6 +71,14 @@ class ManagedHomeAssistantMCPTests(unittest.TestCase):
         MODULE.main()
         self.assertEqual(list(self.servers()), ["ha-renamed"])
 
+    def test_saved_old_default_name_becomes_official_name(self):
+        self.options(
+            home_assistant_mcp_enabled=True,
+            home_assistant_mcp_server_name=MODULE.HOME_ASSISTANT_MCP_LEGACY_NAME,
+        )
+        MODULE.main()
+        self.assertEqual(list(self.servers()), [MODULE.HOME_ASSISTANT_MCP_DEFAULT_NAME])
+
     def test_disable_removes_only_managed_entry(self):
         MODULE.main()
         existing = json.loads(MODULE.SETTINGS_FILE.read_text())

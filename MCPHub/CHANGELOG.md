@@ -12,14 +12,16 @@
 ### Added
 
 - Optional unofficial Home Assistant MCP server (ha-mcp), started by the App and
-  added to MCPHub as `HomeAssistant MCP (unofficial)`. Off by default.
+  added to MCPHub as `HomeAssistant MCP (unofficial)`. Off by default. The name can
+  be changed with `ha_mcp_server_name`.
 
 ### Changed
 
 - Updated MCPHub from 1.1.13 to 1.1.14.
 - The existing configuration section is now named Home Assistant MCP (official).
-- New installations name the official server `HomeAssistant MCP (official)` in MCPHub;
-  existing installations keep their saved name.
+- The official server is now named `HomeAssistant MCP (official)` in MCPHub. Installations
+  using the old default `ha-home-assistant` are renamed automatically; update MCPHub
+  groups or clients that reference the old name. Custom names stay unchanged.
 
 ## v2026.10.29-1
 

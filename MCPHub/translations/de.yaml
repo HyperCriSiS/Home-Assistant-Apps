@@ -69,6 +69,9 @@ configuration:
         description: >-
           Volle Kontrolle über Home Assistant, auch die Konfiguration.
           Nutzt immer die neueste Version; Update durch Neustart der App.
+      ha_mcp_server_name:
+        name: "Servername in MCPHub"
+        description: "Muss eindeutig sein. Umbenennen kann bestehende MCPHub-Gruppen betreffen."
       ha_mcp_auth_mode:
         name: "Authentifizierung"
         description: >-
