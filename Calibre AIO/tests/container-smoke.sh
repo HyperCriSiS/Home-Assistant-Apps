@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# CWA services re-execute their own run file after dropping privileges.
+for run in /app/calibre-web-automated/root/etc/s6-overlay/s6-rc.d/*/run; do
+  /command/s6-setuidgid abc test -x "$run"
+done
 # Shelfmark's internal bypass needs its driver, Xlib and a startable Chromium.
 /app/shelfmark/.venv/bin/python -c "import seleniumbase, Xlib.X; assert hasattr(Xlib.X, 'FamilyServerInterpreted')"
 chromium --headless --no-sandbox --disable-gpu --dump-dom about:blank | grep -q '<html'
