@@ -3,7 +3,7 @@ name: Auto-promote Trilium updates
 
 # Promotes dev-trilium to main only when it contains nothing but automated
 # Trilium version bumps that passed every gate in
-# .github/scripts/auto_promote_trilium.py, 48 hours after the newest one
+# .github/scripts/auto_promote_trilium.py, 36 hours after the newest one
 # reached dev-trilium. Everything else stays manual.
 # Pause at any time: set the repository variable TRILIUM_AUTO_PROMOTE=false
 # or label the Trilium release pull request "hold".

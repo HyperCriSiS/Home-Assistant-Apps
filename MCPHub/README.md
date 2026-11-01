@@ -59,6 +59,7 @@ The development App is shown as **MCPHub (Dev)** under
 - Persistent npm / npx and uv / uvx package caches
 - Home Assistant Ingress dashboard
 - Optional managed Home Assistant MCP Server bridge
+- Optional unofficial ha-mcp server, started by the App on loopback
 - Bundled GitHub CLI (`gh`) for `amd64` / `aarch64` with an optional managed GitHub CLI MCP server
 - Optional OpenAI Secure MCP Tunnel for ChatGPT / OpenAI clients
 - Remote access for Claude, Cursor, VS Code, and other MCP clients through the separate Cloudflared or Tailscale App, with status and an end-to-end address check
@@ -87,9 +88,12 @@ See [LAN access instructions](LAN_ACCESS.md) for details and security notes.
 ## Home Assistant MCP Server
 
 The App can optionally add Home Assistant's own MCP Server to MCPHub as the
-managed server **ha-home-assistant** by default. The server name is configurable
+managed server **HomeAssistant MCP (official)** by default. The server name is configurable
 through `home_assistant_mcp_server_name` in the App options. The Home Assistant
 **MCP Server** integration must already be configured.
+
+The unofficial [ha-mcp](https://homeassistant-ai.github.io/ha-mcp/) server is a separate option with
+full control of Home Assistant. See [DOCS.md](DOCS.md).
 
 Two authentication modes are available:
 
@@ -216,10 +220,15 @@ The Home Assistant App configuration contains Home Assistant MCP and remote-acce
 | Option | Default | Description |
 | --- | --- | --- |
 | `home_assistant_mcp_enabled` | `false` | Adds the managed Home Assistant MCP Server to MCPHub |
-| `home_assistant_mcp_server_name` | `ha-home-assistant` | Unique MCPHub server name; renaming migrates the managed entry |
+| `home_assistant_mcp_server_name` | `HomeAssistant MCP (official)` | Unique MCPHub server name; renaming migrates the managed entry |
 | `home_assistant_mcp_auth_mode` | `restricted_user` | Uses either the Supervisor token or a dedicated user token |
 | `home_assistant_mcp_user_token` | empty | Dedicated Home Assistant user's Long-Lived Access Token |
 | `home_assistant_mcp_url` | `http://homeassistant:8123/api/mcp` | Direct MCP endpoint used by `restricted_user` mode |
+| `ha_mcp_enabled` | `false` | Starts the unofficial ha-mcp server and adds it to MCPHub |
+| `ha_mcp_server_name` | `HomeAssistant MCP (unofficial)` | Unique MCPHub server name of ha-mcp; renaming migrates the managed entry |
+| `ha_mcp_auth_mode` | `supervisor` | Uses either the Supervisor token or a dedicated user token |
+| `ha_mcp_user_token` | empty | Dedicated Home Assistant user's Long-Lived Access Token |
+| `ha_mcp_url` | `http://homeassistant:8123` | Home Assistant address used by `restricted_user` mode |
 | `github_cli_mcp_enabled` | `false` | Adds the bundled GitHub CLI MCP server to MCPHub |
 | `github_token` | empty | Optional GitHub token supplied as `GH_TOKEN` to the CLI |
 | `tunnel_enabled` | `false` | Enables the OpenAI Secure MCP Tunnel |

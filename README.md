@@ -4,8 +4,9 @@ Home Assistant Apps maintained by HyperCriSiS.
 
 [![Validate Trilium](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate.yml/badge.svg?branch=main)](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate.yml)
 [![Validate MCPHub](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate-mcphub.yml/badge.svg?branch=main)](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate-mcphub.yml)
+[![Validate Calibre AIO](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate-calibre-aio.yml/badge.svg?branch=main)](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate-calibre-aio.yml)
 
-## Install the repository
+## 📦 Install the repository
 
 [![Add repository to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FHyperCriSiS%2FHome-Assistant-Apps)
 
@@ -25,19 +26,23 @@ https://github.com/HyperCriSiS/Home-Assistant-Apps
 > [!IMPORTANT]
 > Home Assistant Apps require **Home Assistant OS** or a **Supervised** installation. The Apps support `amd64` and `aarch64`.
 
-## Available Apps
+&nbsp;
 
-| App | Purpose | Status | Documentation |
-| --- | --- | --- | --- |
-| **MCPHub** | Central management for local and remote Model Context Protocol servers | Stable | [README](MCPHub/README.md) · [Documentation](MCPHub/DOCS.md) |
-| **Trilium Notes** | Self-hosted hierarchical notes and personal knowledge base | Stable | [README](TriliumNext%20Notes/README.md) |
-| **Calibre AIO** | Shelfmark book discovery/downloads and Calibre-Web Automated library in one interface | Stable | [README](Calibre%20AIO/README.md) · [Documentation](Calibre%20AIO/DOCS.md) |
+## 🧩 Available Apps
 
-### MCPHub
+| | App | Purpose | Status | Documentation |
+| :---: | --- | --- | --- | --- |
+| <img src="MCPHub/icon.png" alt="" width="32"> | **MCPHub** | Central management for local and remote Model Context Protocol servers | ✅ Stable | [README](MCPHub/README.md) · [Documentation](MCPHub/DOCS.md) |
+| <img src="TriliumNext%20Notes/icon.png" alt="" width="32"> | **Trilium Notes** | Self-hosted hierarchical notes and personal knowledge base | ✅ Stable | [README](TriliumNext%20Notes/README.md) |
+| <img src="Calibre%20AIO/icon.png" alt="" width="32"> | **Calibre AIO** | Shelfmark book discovery/downloads and Calibre-Web Automated library in one interface | ✅ Stable | [README](Calibre%20AIO/README.md) · [Documentation](Calibre%20AIO/DOCS.md) |
+
+&nbsp;
+
+### <img src="MCPHub/icon.png" alt="MCPHub" width="28" align="absmiddle"> MCPHub
 
 **MCPHub** brings a central MCP control plane into Home Assistant.
 
-Highlights:
+✨ **Highlights:**
 
 - Manage local stdio and remote MCP servers from one dashboard
 - Discover servers through the MCPHub Market / Registry
@@ -53,11 +58,13 @@ Highlights:
 
 See [MCPHub/README.md](MCPHub/README.md) for installation and [MCPHub/DOCS.md](MCPHub/DOCS.md) for configuration, remote access, security, and troubleshooting.
 
-### Trilium Notes
+&nbsp;
+
+### <img src="TriliumNext%20Notes/icon.png" alt="Trilium Notes" width="28" align="absmiddle"> Trilium Notes
 
 **Trilium Notes** runs [TriliumNext/Trilium](https://github.com/TriliumNext/Trilium) as a Home Assistant App.
 
-Highlights:
+✨ **Highlights:**
 
 - Hierarchical note-taking and personal knowledge management
 - Home Assistant Ingress
@@ -69,7 +76,9 @@ Highlights:
 
 See [TriliumNext Notes/README.md](TriliumNext%20Notes/README.md) for installation, configuration, backups, networking, and troubleshooting.
 
-## Development builds
+&nbsp;
+
+## 🧪 Development builds
 
 A shared development repository is available for testing upcoming releases of both Apps:
 
@@ -84,12 +93,16 @@ Home Assistant displays it as **HyperCriSiS Apps (Dev)**.
 > [!WARNING]
 > Development builds may contain incomplete or breaking changes. Use the stable repository for normal installations and keep a current backup before testing development updates.
 
-## Support
+&nbsp;
+
+## 💬 Support
 
 For Home Assistant App integration issues, configuration problems, or packaging bugs, open an issue in this repository.
 
 For application-specific bugs in Trilium or MCPHub itself, use the corresponding upstream project where appropriate.
 
-## Maintainer documentation
+&nbsp;
+
+## 🛠️ Maintainer documentation
 
 Repository branching and release mechanics are documented separately in [BRANCHING.md](BRANCHING.md).
