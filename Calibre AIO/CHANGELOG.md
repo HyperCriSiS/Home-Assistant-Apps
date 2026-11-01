@@ -1,3 +1,9 @@
+# 1.1.1
+
+- Start automatically as a regular application and let the Home Assistant
+  watchdog restart the app when its web server stops responding.
+- Stop the app during backups so its databases are captured consistently.
+
 # 1.1.0
 
 - Include Shelfmark's browser stack and Chromium, so browser-challenge sources
