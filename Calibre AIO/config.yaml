@@ -1,6 +1,6 @@
 name: "Calibre AIO (Dev)"
 description: "Shelfmark book discovery and Calibre library management in one interface"
-version: "1.1.0-dev.155"
+version: "1.1.1-dev.156"
 slug: "calibre-aio"
 init: false
 stage: experimental
@@ -11,7 +11,11 @@ url: "https://github.com/HyperCriSiS/Home-Assistant-Apps/tree/dev-calibre/Calibr
 panel_icon: "mdi:bookshelf"
 panel_title: "Calibre AIO (Dev)"
 panel_admin: false
-startup: services
+startup: application
+boot: auto
+watchdog: "http://[HOST]:[PORT:8084]/health"
+# Stop the app during backups so its SQLite databases are captured consistently.
+backup: cold
 ingress: true
 ingress_stream: true
 ingress_port: 8084
