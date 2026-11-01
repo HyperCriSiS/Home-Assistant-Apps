@@ -1,4 +1,5 @@
 import importlib.util
+import io
 import json
 import re
 from pathlib import Path
@@ -31,7 +32,8 @@ class UpstreamUpdateTest(unittest.TestCase):
         data = upstreams.load_manifest()
         def latest(name):
             return dict(data[name], version='v9.0.0', commit='f' * 40, sha256='e' * 64)
-        with patch.object(upstreams, 'latest', latest), patch.object(sys, 'argv', ['upstreams', 'update']):
+        with (patch.object(upstreams, 'latest', latest), patch.object(upstreams, 'check_chromium'),
+              patch.object(sys, 'argv', ['upstreams', 'update'])):
             upstreams.main()
         updated = upstreams.load_manifest()
         self.assertEqual(updated['cwa']['version'], 'v9.0.0')
@@ -41,6 +43,19 @@ class UpstreamUpdateTest(unittest.TestCase):
         expected = f'{previous[1]}.{previous[2]}.{int(previous[3]) + 1}'
         self.assertIn(f'version: "{expected}"', (self.root / 'config.yaml').read_text())
         self.assertEqual((self.root / 'build.yaml').read_text(), upstreams.render(updated))
+
+    def test_chromium_pin_must_match_shelfmark(self):
+        pins = 'ARG CHROMIUM_VERSION=1
+ARG CHROMIUM_SNAPSHOT=2
+'
+        (self.root / 'Dockerfile').write_text(pins)
+        def serve(text):
+            return patch.object(upstreams, 'request', return_value=io.BytesIO(text.encode()))
+        with serve(pins):
+            upstreams.check_chromium('f' * 40)
+        for text in (pins.replace('=1', '=3'), ''):
+            with self.subTest(text=text), serve(text), self.assertRaises(ValueError):
+                upstreams.check_chromium('f' * 40)
 
     def test_pinned_versions_reproduce_a_proposal(self):
         data = upstreams.load_manifest()
