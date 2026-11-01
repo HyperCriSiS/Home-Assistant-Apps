@@ -1,3 +1,8 @@
+# 1.1.3
+
+- Remove the retired local browser service from existing installs, so Shelfmark
+  uses its built-in browser after updating.
+
 # 1.1.2
 
 - Fix the book import service restart loop: upstream CWA service scripts are
