@@ -1,5 +1,17 @@
 [
   {
+    "revision": 141,
+    "version": "v2026.10.31-1-dev.141",
+    "source_sha": "0d8b661f2fea3f778e7fa28bba81af07c0a1392f",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "0d8b661f2fea3f778e7fa28bba81af07c0a1392f",
+        "subject": "docs(mcphub): show ha-mcp supervisor limits in the section info (#137)"
+      }
+    ]
+  },
+  {
     "revision": 140,
     "version": "v2026.10.31-1-dev.140",
     "source_sha": "01a942a52026de4c43edb000f867561cb659cc52",

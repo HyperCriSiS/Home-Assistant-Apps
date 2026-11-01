@@ -1,6 +1,6 @@
 ---
 name: "MCPHub (Dev)"
-version: "v2026.10.31-1-dev.140"
+version: "v2026.10.31-1-dev.141"
 slug: mcphub
 description: >-
   MCPHub 1.1.15 - central MCP server management with optional Home Assistant,

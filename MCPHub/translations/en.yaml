@@ -64,6 +64,8 @@ configuration:
     description: >-
       Runs the community server ha-mcp in this App and adds it to MCPHub.
       https://homeassistant-ai.github.io/ha-mcp/
+      Full rights in Home Assistant, but no management of Apps and the App store.
+      For full Supervisor rights use the separate ha-mcp App: https://github.com/homeassistant-ai/ha-mcp
     fields:
       ha_mcp_enabled:
         name: "Enable unofficial Home Assistant MCP"
@@ -77,8 +79,6 @@ configuration:
         name: "Authentication"
         description: >-
           supervisor: system admin without a separate token (recommended), not a Supervisor user.
-          Full rights in Home Assistant, but no management of Apps and the App store.
-          For full Supervisor rights use the separate ha-mcp App: https://github.com/homeassistant-ai/ha-mcp
           restricted_user: token of a user; a non-admin user has fewer features.
       ha_mcp_user_token:
         name: "User token"
