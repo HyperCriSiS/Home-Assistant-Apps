@@ -39,6 +39,7 @@ python3 /aio-tests/probe_container.py
   /app/shelfmark/.venv/bin/python /aio-tests/probe_delivery.py
 timeout 90 python3 /app/calibre-web-automated/scripts/ingest_processor.py \
   "$(cat /data/shelfmark-staging/probe-delivery-path)"
+timeout 240 /command/s6-setuidgid abc /app/shelfmark/.venv/bin/python /aio-tests/probe_browser.py
 python3 - <<'PY'
 import sqlite3
 with sqlite3.connect('/calibre-library/metadata.db') as db:
