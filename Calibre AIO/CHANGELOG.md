@@ -1,3 +1,10 @@
+# 1.1.0
+
+- Include Shelfmark's browser stack and Chromium, so browser-challenge sources
+  work without an extra service. The image grows accordingly.
+- Move to the Debian trixie Home Assistant base image required by that Chromium.
+- Unlock Shelfmark's bypass settings unless `shelfmark.external_bypass_url` is set.
+
 # 1.0.1
 
 - Remove the tagline from the navigation bar.

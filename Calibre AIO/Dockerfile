@@ -99,7 +99,10 @@ RUN mkdir -p /app/shelfmark \
     && rm /tmp/shelfmark.tar.gz \
     && uv python install "${SHELFMARK_PYTHON}"
 WORKDIR /app/shelfmark
-RUN uv sync --locked --no-default-groups --python "${SHELFMARK_PYTHON}"
+RUN uv sync --locked --no-default-groups --extra browser --python "${SHELFMARK_PYTHON}"
+# Same Xlib namespace fix as Shelfmark's own image: without it every internal
+# Cloudflare bypass fails at browser startup.
+RUN uv pip uninstall --python .venv/bin/python python3-xlib     && uv pip install --python .venv/bin/python --reinstall python-xlib==0.33     && .venv/bin/python -c "import Xlib.X; assert hasattr(Xlib.X, 'FamilyServerInterpreted')"
 
 FROM node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS shelfmark-frontend
 WORKDIR /frontend
@@ -155,6 +158,26 @@ RUN apt-get update \
         xz-utils \
     && rm -rf /var/lib/apt/lists/*
 
+# Chromium for Shelfmark's internal Cloudflare bypass. Keep this pin equal to
+# CHROMIUM_VERSION/CHROMIUM_SNAPSHOT in the pinned Shelfmark Dockerfile: Debian
+# builds can break the DevTools port its driver needs.
+ARG CHROMIUM_VERSION=155.0.8059.79-1~deb13u1
+ARG CHROMIUM_SNAPSHOT=20261016T000000Z
+RUN echo "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian-security/${CHROMIUM_SNAPSHOT}/ trixie-security main" \
+        > /etc/apt/sources.list.d/chromium-pin-snapshot.list \
+    && apt-get update -o Acquire::Retries=5 \
+    && apt-get install -y --no-install-recommends -o Acquire::Retries=5 \
+        xvfb \
+        ffmpeg \
+        python3-tk \
+        chromium=${CHROMIUM_VERSION} \
+        chromium-common=${CHROMIUM_VERSION} \
+    && printf 'Package: chromium chromium-common\nPin: version %s\nPin-Priority: 1001\n' "${CHROMIUM_VERSION}" \
+        > /etc/apt/preferences.d/chromium-pin \
+    && rm /etc/apt/sources.list.d/chromium-pin-snapshot.list \
+    && rm -rf /var/lib/apt/lists/* \
+    && chromium --version
+
 # Best-effort extras: exact package names/availability can drift between
 # Debian releases, and none of these are required for CWA's core web UI to
 # come up, so a missing one shouldn't fail the whole build.
@@ -199,7 +222,7 @@ RUN mkdir -p \
     && touch /app/cwa_update_notice /app/theme_migration_notice \
     && chown abc:abc /app/cwa_update_notice /app/theme_migration_notice \
     && chown -R abc:abc /app/calibre-web-automated /etc/s6-overlay \
-    && chmod a+x /etc/cont-init.d/*.sh \
+    && drivers="$(/app/shelfmark/.venv/bin/python -c "import pathlib, seleniumbase; print(pathlib.Path(seleniumbase.__file__).resolve().parent / 'drivers')")"     && chown -R abc:abc "${drivers}"     && chmod a+x /etc/cont-init.d/*.sh \
     && chmod a+x /etc/s6-overlay/s6-rc.d/*/run
 
 WORKDIR /

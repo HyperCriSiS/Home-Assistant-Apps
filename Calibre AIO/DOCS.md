@@ -50,9 +50,10 @@ sso:
   the same path for the library or another app's active download directory.
 - `network_share_mode`: polling instead of filesystem notifications for SMB/NFS.
 - `shelfmark.external_bypass_url`: optional HTTP(S) endpoint of a compatible
-  external browser-challenge service. Empty disables browser challenge handling.
-  This is not required for debrid torrent clients. This app does not contain
-  an embedded Chromium/Tor/VPN stack. Configure outbound routing separately.
+  external browser-challenge service. Leave empty to use the included Chromium
+  and configure the bypass in Shelfmark's settings. A value locks those settings
+  to the external service. This app has no embedded Tor/VPN stack; configure
+  outbound routing separately.
 - `sso.enabled`: must remain `true` in this initial AIO version. Both applications
   are ingress-only; native standalone login/device clients are not exposed.
 - `sso.admin_username`: HA login name, matched exactly (case-sensitive).
