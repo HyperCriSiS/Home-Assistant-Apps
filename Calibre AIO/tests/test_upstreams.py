@@ -45,9 +45,7 @@ class UpstreamUpdateTest(unittest.TestCase):
         self.assertEqual((self.root / 'build.yaml').read_text(), upstreams.render(updated))
 
     def test_chromium_pin_must_match_shelfmark(self):
-        pins = 'ARG CHROMIUM_VERSION=1
-ARG CHROMIUM_SNAPSHOT=2
-'
+        pins = 'ARG CHROMIUM_VERSION=1\nARG CHROMIUM_SNAPSHOT=2\n'
         (self.root / 'Dockerfile').write_text(pins)
         def serve(text):
             return patch.object(upstreams, 'request', return_value=io.BytesIO(text.encode()))
