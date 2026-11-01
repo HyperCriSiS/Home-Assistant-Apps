@@ -30,7 +30,9 @@ innerhalb dieser Oberfläche; das gemeinsame Menü bleibt sichtbar.
 - **Netzwerkfreigabe**: Für SMB/NFS regelmäßige Prüfung statt
   Dateisystemereignissen verwenden.
 - **Shelfmark → Externer Browser-Dienst**: optionaler HTTP(S)-Dienst für
-  Browser-Challenges. Für Debrid-Clients nicht erforderlich.
+  Browser-Challenges. Leer lassen, um das enthaltene Chromium zu nutzen und den
+  Bypass in den Shelfmark-Einstellungen zu konfigurieren. Ein eingetragener Wert
+  sperrt diese Einstellungen auf den externen Dienst.
 - **SSO → SSO aktivieren**: aktiviert lassen; beide Anwendungen sind
   ausschließlich über HA Ingress erreichbar.
 - **SSO → Administrator**: HA-Anmeldename, exakt und unter Beachtung der

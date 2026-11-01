@@ -90,7 +90,7 @@ jobs:
           load: true
           tags: calibre-aio:test
           build-args: |
-            BUILD_FROM=ghcr.io/home-assistant/${{ matrix.arch }}-base-debian:bookworm
+            BUILD_FROM=ghcr.io/home-assistant/${{ matrix.arch }}-base-debian:trixie
             ${{ steps.args.outputs.values }}
           cache-from: type=gha,scope=calibre-aio-${{ matrix.arch }}
           cache-to: type=gha,mode=max,scope=calibre-aio-${{ matrix.arch }}

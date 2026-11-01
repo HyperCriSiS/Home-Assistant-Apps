@@ -85,10 +85,11 @@ migrate or delete existing data.
 
 ## Browser-challenge sources
 
-The initial image contains Shelfmark's core download stack. Browser-challenge
-sources may require a separate compatible bypass service, configured through
-the optional `shelfmark.external_bypass_url` App option. An old pinned browser
-is deliberately not bundled. Torrent/debrid downloads do not require it.
+The App includes Shelfmark's full browser stack with the same Chromium version
+as the official Shelfmark image, so browser-challenge sources work without an
+extra service. Shelfmark's bypass settings are configured directly in its
+interface. Setting the optional `shelfmark.external_bypass_url` App option
+instead uses an external service and locks those settings to that service.
 
 ## Documentation
 

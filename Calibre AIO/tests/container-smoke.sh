@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# Shelfmark's internal bypass needs its driver, Xlib and a startable Chromium.
+/app/shelfmark/.venv/bin/python -c "import seleniumbase, Xlib.X; assert hasattr(Xlib.X, 'FamilyServerInterpreted')"
+chromium --headless --no-sandbox --disable-gpu --dump-dom about:blank | grep -q '<html'
 export PATH="/opt/cwa-venv/bin:$PATH"
 export CALIBRE_DBPATH=/config
 mkdir -p /data/config /data/shelfmark /data/shelfmark-staging /data/shelfmark-logs /data/shelfmark-audiobooks
