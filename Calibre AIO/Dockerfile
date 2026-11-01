@@ -163,7 +163,20 @@ RUN apt-get update \
 # builds can break the DevTools port its driver needs.
 ARG CHROMIUM_VERSION=155.0.8059.79-1~deb13u1
 ARG CHROMIUM_SNAPSHOT=20261016T000000Z
-RUN echo "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian-security/${CHROMIUM_SNAPSHOT}/ trixie-security main"         > /etc/apt/sources.list.d/chromium-pin-snapshot.list     && apt-get update -o Acquire::Retries=5     && apt-get install -y --no-install-recommends -o Acquire::Retries=5         xvfb         ffmpeg         python3-tk         chromium=${CHROMIUM_VERSION}         chromium-common=${CHROMIUM_VERSION}     && printf 'Package: chromium chromium-common\nPin: version %s\nPin-Priority: 1001\n' "${CHROMIUM_VERSION}"         > /etc/apt/preferences.d/chromium-pin     && rm /etc/apt/sources.list.d/chromium-pin-snapshot.list     && rm -rf /var/lib/apt/lists/*     && chromium --version
+RUN echo "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian-security/${CHROMIUM_SNAPSHOT}/ trixie-security main" \
+        > /etc/apt/sources.list.d/chromium-pin-snapshot.list \
+    && apt-get update -o Acquire::Retries=5 \
+    && apt-get install -y --no-install-recommends -o Acquire::Retries=5 \
+        xvfb \
+        ffmpeg \
+        python3-tk \
+        chromium=${CHROMIUM_VERSION} \
+        chromium-common=${CHROMIUM_VERSION} \
+    && printf 'Package: chromium chromium-common\nPin: version %s\nPin-Priority: 1001\n' "${CHROMIUM_VERSION}" \
+        > /etc/apt/preferences.d/chromium-pin \
+    && rm /etc/apt/sources.list.d/chromium-pin-snapshot.list \
+    && rm -rf /var/lib/apt/lists/* \
+    && chromium --version
 
 # Best-effort extras: exact package names/availability can drift between
 # Debian releases, and none of these are required for CWA's core web UI to
