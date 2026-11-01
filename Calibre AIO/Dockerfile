@@ -222,7 +222,15 @@ RUN mkdir -p \
     && touch /app/cwa_update_notice /app/theme_migration_notice \
     && chown abc:abc /app/cwa_update_notice /app/theme_migration_notice \
     && chown -R abc:abc /app/calibre-web-automated /etc/s6-overlay \
-    && drivers="$(/app/shelfmark/.venv/bin/python -c "import pathlib, seleniumbase; print(pathlib.Path(seleniumbase.__file__).resolve().parent / 'drivers')")"     && chown -R abc:abc "${drivers}"     && chmod a+x /etc/cont-init.d/*.sh \
+    && drivers="$(/app/shelfmark/.venv/bin/python -c "import pathlib, seleniumbase; print(pathlib.Path(seleniumbase.__file__).resolve().parent / 'drivers')")"     && chown -R abc:abc "${drivers}" \
+    && mkdir -p /tmp/shelfmark/seleniumbase/downloaded_files \
+        /tmp/shelfmark/seleniumbase/archived_files /tmp/.X11-unix \
+    && chmod 1777 /tmp/.X11-unix \
+    && chown -R abc:abc /tmp/shelfmark \
+    && rm -rf /app/shelfmark/downloaded_files /app/shelfmark/archived_files \
+    && ln -s /tmp/shelfmark/seleniumbase/downloaded_files /app/shelfmark/downloaded_files \
+    && ln -s /tmp/shelfmark/seleniumbase/archived_files /app/shelfmark/archived_files \
+    && chmod a+x /etc/cont-init.d/*.sh \
     && chmod a+x /etc/s6-overlay/s6-rc.d/*/run
 
 WORKDIR /

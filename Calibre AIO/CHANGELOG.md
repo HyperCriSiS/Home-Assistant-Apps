@@ -1,5 +1,7 @@
 # 1.1.1
 
+- Give Shelfmark's internal browser the writable runtime paths it needs as the
+  service user, so bypass requests can start it.
 - Start automatically as a regular application and let the Home Assistant
   watchdog restart the app when its web server stops responding.
 - Stop the app during backups so its databases are captured consistently.
