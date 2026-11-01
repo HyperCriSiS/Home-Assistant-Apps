@@ -76,6 +76,19 @@ def release(name, tag):
     return dict(repository=repository, version=version, commit=commit, sha256=digest.hexdigest())
 
 
+def chromium_pins(dockerfile):
+    return re.findall(r'^ARG (CHROMIUM_(?:VERSION|SNAPSHOT))=(\S+)$', dockerfile, re.M)
+
+
+def check_chromium(commit):
+    """Refuse a Shelfmark update whose Chromium pin differs from the bundled one."""
+    url = f'https://raw.githubusercontent.com/{REPOSITORIES["shelfmark"]}/{commit}/Dockerfile'
+    with request(url) as response:
+        wanted = chromium_pins(response.read().decode())
+    if len(wanted) != 2 or wanted != chromium_pins((ROOT / 'Dockerfile').read_text()):
+        raise ValueError('Shelfmark changed its Chromium pin; update the Dockerfile first')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('command', choices=['check', 'render', 'args', 'update', 'versions'])
@@ -109,6 +122,8 @@ def main():
                     if tuple(map(int, candidate['version'].lstrip('v').split('.'))) <= tuple(
                             map(int, data[name]['version'].lstrip('v').split('.'))):
                         raise ValueError('Refusing an upstream downgrade: ' + name)
+                    if name == 'shelfmark':
+                        check_chromium(candidate['commit'])
                     updated[name] = candidate
         if updated == data:
             print('No upstream updates')
