@@ -1,3 +1,8 @@
+# 1.1.2
+
+- Fix the book import service restart loop: upstream CWA service scripts are
+  now executable, so completed downloads reach the library.
+
 # 1.1.1
 
 - Give Shelfmark's internal browser the writable runtime paths it needs as the

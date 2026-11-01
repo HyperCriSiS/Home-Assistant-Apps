@@ -231,7 +231,8 @@ RUN mkdir -p \
     && ln -s /tmp/shelfmark/seleniumbase/downloaded_files /app/shelfmark/downloaded_files \
     && ln -s /tmp/shelfmark/seleniumbase/archived_files /app/shelfmark/archived_files \
     && chmod a+x /etc/cont-init.d/*.sh \
-    && chmod a+x /etc/s6-overlay/s6-rc.d/*/run
+    && chmod a+x /etc/s6-overlay/s6-rc.d/*/run \
+        /app/calibre-web-automated/root/etc/s6-overlay/s6-rc.d/*/run
 
 WORKDIR /
 
