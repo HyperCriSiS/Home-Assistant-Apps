@@ -11,6 +11,57 @@ import sys
 import uuid
 from pathlib import Path
 from urllib.parse import urlsplit
+from urllib.request import Request, build_opener, HTTPRedirectHandler
+
+
+class _NoSupervisorRedirect(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def migrate_removed_options() -> None:
+    """Remove obsolete groups and the old default server name from Supervisor storage."""
+    token = os.environ.get("SUPERVISOR_TOKEN", "")
+    if not token:
+        return
+    opener = build_opener(_NoSupervisorRedirect())
+
+    def request(path, payload=None):
+        data = json.dumps(payload).encode() if payload is not None else None
+        req = Request("http://supervisor/addons/self/" + path, data=data,
+                      headers={"Authorization": "Bearer " + token,
+                               "Content-Type": "application/json"})
+        with opener.open(req, timeout=5) as response:
+            body = json.load(response)
+        if body.get("result") != "ok":
+            raise ValueError("Supervisor rejected option migration")
+        return body.get("data", {})
+
+    try:
+        options = request("info")["options"]
+        if not isinstance(options, dict):
+            raise ValueError("Invalid Supervisor options")
+        cleaned = {key: value for key, value in options.items()
+                   if key not in ("cloudflare", "tailscale")}
+        home_assistant = cleaned.get("home_assistant")
+        renamed = (
+            isinstance(home_assistant, dict)
+            and home_assistant.get("home_assistant_mcp_server_name")
+            == HOME_ASSISTANT_MCP_LEGACY_NAME
+        )
+        if renamed:
+            cleaned["home_assistant"] = {
+                **home_assistant,
+                "home_assistant_mcp_server_name": HOME_ASSISTANT_MCP_DEFAULT_NAME,
+            }
+        if cleaned == options:
+            return
+        request("options", {"options": cleaned})
+        print("[INFO] Migrated obsolete App options")
+    except (OSError, ValueError, KeyError, TypeError):
+        # Do not expose response bodies, which may contain credentials.
+        print("[WARN] Could not migrate obsolete Supervisor options; will retry next start",
+              file=sys.stderr)
 
 
 DATA_DIR = Path("/data/mcphub")
@@ -48,12 +99,20 @@ OBSOLETE_KEY_NAMES = (
     "Home Assistant Tailscale MCP Gateway",
 )
 GITHUB_CLI_SERVER_NAME = "ha-github-cli"
-HOME_ASSISTANT_MCP_DEFAULT_NAME = "ha-home-assistant"
+HOME_ASSISTANT_MCP_DEFAULT_NAME = "HomeAssistant MCP (official)"
+HOME_ASSISTANT_MCP_LEGACY_NAME = "ha-home-assistant"
 HOME_ASSISTANT_MCP_DESCRIPTION = (
     "Home Assistant MCP Server managed by the Home Assistant MCPHub App wrapper"
 )
+HA_MCP_SERVER_NAME = "HomeAssistant MCP (unofficial)"
+HA_MCP_SERVER_URL = "http://127.0.0.1:8096/mcp"
+HA_MCP_DESCRIPTION = (
+    "Unofficial Home Assistant MCP server (ha-mcp) managed by the "
+    "Home Assistant MCPHub App wrapper"
+)
+HA_MCP_TOKEN_PATTERN = re.compile(r"^[A-Za-z0-9._~-]{20,4096}$")
 MANAGED_HOME_ASSISTANT_NAME_FILE = DATA_DIR / ".managed_home_assistant_mcp_name"
-HOME_ASSISTANT_MCP_NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
+HOME_ASSISTANT_MCP_NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._ ()-]{0,63}$")
 
 MCP_PATH_PATTERN = re.compile(r"^/mcp(?:/[A-Za-z0-9._$-]+){0,2}$")
 EXTERNAL_HOST_PATTERN = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$")
@@ -79,7 +138,7 @@ def ensure_secret(path: Path, factory) -> str:
 def flatten_grouped_options(data: dict) -> dict:
     """Read legacy flat and grouped options."""
     result = dict(data)
-    for group in ("openai", "remote_access", "home_assistant", "github", "logging"):
+    for group in ("openai", "remote_access", "home_assistant", "ha_mcp", "github", "logging"):
         section = data.get(group)
         if isinstance(section, dict):
             result.update(section)
@@ -237,6 +296,74 @@ def is_managed_home_assistant_server(server: object) -> bool:
     )
 
 
+def validate_ha_mcp_options(options: dict) -> None:
+    """Fail early on options the ha-mcp process could not start with."""
+    mode = str(options.get("ha_mcp_auth_mode", "supervisor")).strip()
+    if mode == "supervisor":
+        return
+    if mode != "restricted_user":
+        raise ValueError("ha_mcp_auth_mode must be supervisor or restricted_user")
+    token = str(options.get("ha_mcp_user_token", "")).strip()
+    if not HA_MCP_TOKEN_PATTERN.fullmatch(token):
+        raise ValueError("ha_mcp_user_token is missing or contains unexpected characters")
+    parsed = urlsplit(str(options.get("ha_mcp_url", "")).strip())
+    if (parsed.scheme not in {"http", "https"} or not parsed.hostname
+            or parsed.username or parsed.password or parsed.query or parsed.fragment
+            or parsed.path not in {"", "/"}):
+        raise ValueError(
+            "ha_mcp_url must be a Home Assistant address without a path, "
+            "such as http://homeassistant:8123"
+        )
+
+
+def is_managed_ha_mcp_server(server: object) -> bool:
+    """Only entries with our exact ha-mcp identity may be renamed or removed."""
+    return (
+        isinstance(server, dict)
+        and server.get("url") == HA_MCP_SERVER_URL
+        and server.get("description") == HA_MCP_DESCRIPTION
+    )
+
+
+def apply_ha_mcp_server(mcp_servers: dict, options: dict) -> None:
+    """Add, rename or remove the loopback entry of the App-started ha-mcp process."""
+    managed = [
+        key for key, server in mcp_servers.items()
+        if is_managed_ha_mcp_server(server)
+    ]
+    if not bool(options.get("ha_mcp_enabled", False)):
+        for key in managed:
+            del mcp_servers[key]
+        return
+
+    validate_ha_mcp_options(options)
+    name = str(options.get("ha_mcp_server_name") or "").strip() or HA_MCP_SERVER_NAME
+    if (
+        not HOME_ASSISTANT_MCP_NAME_PATTERN.fullmatch(name)
+        or name == GITHUB_CLI_SERVER_NAME
+    ):
+        raise ValueError(
+            "ha_mcp_server_name must be a unique 1-64 character "
+            "name using letters, digits, spaces, dots, underscores, hyphens, or parentheses "
+            "(and must not equal ha-github-cli)"
+        )
+    if name in mcp_servers and name not in managed:
+        raise ValueError(
+            f"Cannot enable ha-mcp: a non-managed server is named {name!r}"
+        )
+    for key in managed:
+        del mcp_servers[key]
+    mcp_servers[name] = {
+        "type": "streamable-http",
+        "url": HA_MCP_SERVER_URL,
+        "enabled": True,
+        "enableKeepAlive": True,
+        "keepAliveInterval": 5000,
+        "owner": "admin",
+        "description": HA_MCP_DESCRIPTION,
+    }
+
+
 def previous_managed_home_assistant_name(mcp_servers: dict) -> str | None:
     """Find the previously managed entry, including pre-rename installations."""
     if MANAGED_HOME_ASSISTANT_NAME_FILE.exists():
@@ -247,13 +374,14 @@ def previous_managed_home_assistant_name(mcp_servers: dict) -> str | None:
             raise ValueError("Stored managed Home Assistant MCP name is invalid")
         return name if is_managed_home_assistant_server(mcp_servers.get(name)) else None
 
-    legacy = mcp_servers.get(HOME_ASSISTANT_MCP_DEFAULT_NAME)
-    if is_managed_home_assistant_server(legacy):
-        return HOME_ASSISTANT_MCP_DEFAULT_NAME
+    for name in (HOME_ASSISTANT_MCP_LEGACY_NAME, HOME_ASSISTANT_MCP_DEFAULT_NAME):
+        if is_managed_home_assistant_server(mcp_servers.get(name)):
+            return name
     return None
 
 
 def main() -> None:
+    migrate_removed_options()
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     SECRET_DIR.mkdir(parents=True, exist_ok=True)
     os.chmod(SECRET_DIR, 0o700)
@@ -347,13 +475,15 @@ def main() -> None:
                 HOME_ASSISTANT_MCP_DEFAULT_NAME,
             )
         ).strip()
+        if name == HOME_ASSISTANT_MCP_LEGACY_NAME:
+            name = HOME_ASSISTANT_MCP_DEFAULT_NAME
         if (
             not HOME_ASSISTANT_MCP_NAME_PATTERN.fullmatch(name)
             or name == GITHUB_CLI_SERVER_NAME
         ):
             raise ValueError(
                 "home_assistant_mcp_server_name must be a unique 1-64 character "
-                "name using letters, digits, dots, underscores, or hyphens "
+                "name using letters, digits, spaces, dots, underscores, hyphens, or parentheses "
                 "(and must not equal ha-github-cli)"
             )
         if name in mcp_servers and name != previous_name:
@@ -375,6 +505,8 @@ def main() -> None:
         }
     elif previous_name:
         mcp_servers.pop(previous_name, None)
+
+    apply_ha_mcp_server(mcp_servers, options)
 
     github_cli_enabled = bool(options.get("github_cli_mcp_enabled", False))
     github_token = str(options.get("github_token", "")).strip()
