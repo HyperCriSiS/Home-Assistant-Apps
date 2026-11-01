@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 import sys
 
+from shelfmark_bypass import clear_retired_settings, external_url
+
 options = json.loads(os.environ.pop('AIO_SSO_OPTIONS'))
 if not options['enabled']:
     raise ValueError('Calibre AIO requires ingress SSO')
@@ -24,11 +26,13 @@ os.environ.update({
     'HARDLINK_TORRENTS': 'false',
     'FLASK_HOST': '127.0.0.1', 'FLASK_PORT': '8085',
 })
-if options.get('external_bypass_url'):
+clear_retired_settings('/data/shelfmark')
+external_bypass_url = external_url(options)
+if external_bypass_url:
     # An explicit option keeps the external service; otherwise Shelfmark's own
     # settings and internal Chromium bypass stay freely configurable.
     os.environ.update({'USE_CF_BYPASS': 'true', 'USING_EXTERNAL_BYPASSER': 'true',
-                       'EXT_BYPASSER_URL': options['external_bypass_url']})
+                       'EXT_BYPASSER_URL': external_bypass_url})
 sys.path.insert(0, '/app/shelfmark')
 import shelfmark.main as upstream
 from shelfmark_gateway import IngressIdentity
