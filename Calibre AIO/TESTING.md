@@ -3,7 +3,7 @@
 ## Automated checks
 
 `browser-theme.cjs` renders the pinned upstream CWA templates and native scripts
-with a small offline sample library. At 1440px and 390px it checks real sort-link
+with a small offline sample library. At 1440px, 1920px and 390px it checks real sort-link
 navigation, active state, readable A–Z labels, distinct arrow directions,
 accessible labels, unclipped controls and the mobile hamburger drawer. Set
 `CWA_SOURCE` to the pinned checkout and `PLAYWRIGHT_MODULE` to Playwright's module.

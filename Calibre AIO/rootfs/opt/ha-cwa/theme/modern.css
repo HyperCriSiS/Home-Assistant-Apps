@@ -166,6 +166,8 @@ html.aio-modern body.blur > div.container-fluid > div > div.col-sm-10 > div.disc
   box-shadow: 0 2px 6px #0004;
 }
 @media (min-width: 1500px) { .aio-modern body .discover .book:not(body) { width: 12.5% !important; } }
+@media (min-width: 1800px) { .aio-modern body .discover .book:not(body) { width: 10% !important; } }
+@media (min-width: 2100px) { .aio-modern body .discover .book:not(body) { width: 8.3333% !important; } }
 @media (min-width: 1280px) and (max-width: 1499px) { .aio-modern body .discover .book:not(body) { width: 14.2857% !important; } }
 @media (min-width: 1100px) and (max-width: 1279px) { .aio-modern body .discover .book:not(body) { width: 16.6667% !important; } }
 @media (min-width: 768px) and (max-width: 1099px) { .aio-modern body .discover .book:not(body) { width: 25% !important; } }

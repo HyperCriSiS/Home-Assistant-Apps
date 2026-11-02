@@ -5,7 +5,7 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const root=path.resolve(__dirname,'..'), src=path.join(process.env.CWA_SOURCE,'cps/static');
 const out=process.env.AIO_THEME_SCREENSHOTS; if(out) fs.mkdirSync(out,{recursive:true});
 (async()=>{const browser=await chromium.launch();try{
-for(const width of [1440,390]){
+for(const width of [1440,1920,390]){
  const context=await browser.newContext({viewport:{width,height:900}}); const page=await context.newPage(); const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.route('https://calibre.test/**',async route=>{
   const u=new URL(route.request().url());
@@ -18,6 +18,7 @@ for(const width of [1440,390]){
  await page.goto('https://calibre.test/library/');await page.waitForTimeout(1400);
  assert.equal(await page.title(),'Calibre-Web | Bücher');
  assert(await page.locator('.discover.load-more .book').count()>0);
+ assert((await page.locator('.discover.load-more .book').first().boundingBox()).width<180);
  if(out) await page.screenshot({path:path.join(out,`calibre-modern-${width}.png`)});
  console.log(JSON.stringify({width,title:await page.title(),sorts:await page.locator('.aio-sort').count(),errors,toolbar:await page.locator('.filterheader').boundingBox(),books:await page.locator('.discover.load-more .book').first().boundingBox()}));
  assert.equal(await page.locator('#asc').innerText(),'A–Z'); assert.equal(await page.locator('#desc').innerText(),'A–Z');
