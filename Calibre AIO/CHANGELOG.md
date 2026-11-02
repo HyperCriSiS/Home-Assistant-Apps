@@ -1,3 +1,9 @@
+# 1.2.2
+
+- Keep version labels and deployment files after large package/ownership layers,
+  so small updates can reuse the Calibre, Python and Chromium downloads.
+- Verify identical filesystem layers when only the build version changes.
+
 # 1.2.1
 
 - Install prebuilt, tested amd64/aarch64 images from GHCR instead of building

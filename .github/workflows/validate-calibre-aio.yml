@@ -98,6 +98,8 @@ jobs:
             ${{ steps.args.outputs.values }}
           cache-from: type=gha,scope=calibre-aio-${{ matrix.arch }}
           cache-to: type=gha,mode=max,scope=calibre-aio-${{ matrix.arch }}
+      - name: Verify version-only updates reuse filesystem layers
+        run: python3 'Calibre AIO/tests/check_image_layers.py' '${{ matrix.arch }}'
       - name: Full container acceptance
         run: |
           trap 'docker rm -f calibre-aio-smoke >/dev/null 2>&1 || true' EXIT
