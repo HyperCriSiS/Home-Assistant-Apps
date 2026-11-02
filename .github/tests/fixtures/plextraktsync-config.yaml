@@ -1,0 +1,42 @@
+name: "PlexTraktSync"
+description: "Protected Plex and Trakt watched-history synchronisation"
+version: "0.1.0"
+slug: "plextraktsync"
+stage: experimental
+init: false
+arch: [amd64, aarch64]
+url: "https://github.com/HyperCriSiS/Home-Assistant-Apps/tree/dev-plextraktsync/PlexTraktSync"
+panel_icon: "mdi:sync"
+panel_title: "PlexTraktSync"
+panel_admin: true
+startup: application
+ingress: true
+ingress_port: 8099
+ports: {}
+backup: cold
+options:
+  plex_url: ""
+  plex_username: ""
+  sync_enabled: false
+  sync_interval_minutes: 60
+  watch_enabled: false
+  plex_to_trakt_watched: true
+  trakt_to_plex_watched: false
+  ratings: false
+  rating_priority: "none"
+  include_libraries: []
+  exclude_libraries: []
+  log_level: "info"
+schema:
+  plex_url: "str"
+  plex_username: "str"
+  sync_enabled: "bool"
+  sync_interval_minutes: "int(15,1440)"
+  watch_enabled: "bool"
+  plex_to_trakt_watched: "bool"
+  trakt_to_plex_watched: "bool"
+  ratings: "bool"
+  rating_priority: "list(none|plex|trakt)"
+  include_libraries: ["str"]
+  exclude_libraries: ["str"]
+  log_level: "list(info|warning|error)"

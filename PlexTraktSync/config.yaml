@@ -1,0 +1,19 @@
+name: "PlexTraktSync"
+description: "Protected Plex and Trakt watched-history synchronisation"
+version: "0.4.2"
+slug: "plextraktsync"
+stage: experimental
+init: false
+arch: [amd64, aarch64]
+url: "https://github.com/HyperCriSiS/Home-Assistant-Apps/tree/dev-plextraktsync/PlexTraktSync"
+panel_icon: "mdi:sync"
+panel_title: "PlexTraktSync"
+panel_admin: true
+startup: application
+ingress: true
+ingress_port: 8099
+ports: {}
+backup: cold
+# Configuration is managed in Ingress; false also accepts legacy stored options.
+options: {}
+schema: false

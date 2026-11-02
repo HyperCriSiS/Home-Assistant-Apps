@@ -1,0 +1,91 @@
+configuration:
+  plex_url:
+    name: Plex-Server-URL
+    description: Erreichbarer Plex-Server, z. B. http://server:32400.
+  plex_username:
+    name: Plex-Konto
+    description: Muss zum Konto des gespeicherten Tokens passen.
+  sync_enabled:
+    name: Periodischer Vollabgleich
+    description: Erfordert initiale Analyse und Freigabe.
+  sync_interval_minutes:
+    name: Intervall des Vollabgleichs
+    description: Minuten nach Abschluss, 15–1440.
+  watch_enabled:
+    name: Wiedergabeüberwachung
+    description: Lesende Ereignisse lösen gezielte Abgleiche aus; keine zusätzlichen Rewatch-Einträge.
+  plex_to_trakt_watched:
+    name: 'Gesehen: Plex → Trakt'
+    description: Fehlenden Gesehen-Status zu Trakt übertragen.
+  trakt_to_plex_watched:
+    name: 'Gesehen: Trakt → Plex'
+    description: Optionaler Rückabgleich; das Entfernen von Gesehen-Markierungen bleibt gesperrt.
+  ratings:
+    name: Bewertungsabgleich aktivieren
+    description: Hauptschalter; erst dann gelten die beiden Bewertungsrichtungen.
+  plex_to_trakt_ratings:
+    name: 'Bewertungen: Plex → Trakt'
+    description: Erfordert den Hauptschalter für Bewertungen.
+  trakt_to_plex_ratings:
+    name: 'Bewertungen: Trakt → Plex'
+    description: Erfordert den Hauptschalter für Bewertungen.
+  rating_priority:
+    name: Priorität bei Bewertungskonflikten
+    description: none erhält bestehende Konflikte; plex/trakt erlaubt das Überschreiben der Gegenseite.
+  plex_to_trakt_watchlist:
+    name: 'Watchlist: Plex → Trakt'
+    description: Standardmäßig aus. Einseitiger Sync kann Zieleinträge entfernen. Neue Analyse und Freigabe
+      nötig.
+  trakt_to_plex_watchlist:
+    name: 'Watchlist: Trakt → Plex'
+    description: Standardmäßig aus. Einseitiger Sync kann Zieleinträge entfernen; Playlist-Modus importiert
+      stattdessen eine Plex-Playlist.
+  watchlist_as_playlist:
+    name: Watchlist als Plex-Playlist importieren
+    description: Erfordert Watchlist Trakt → Plex. Inhalte der verwalteten Playlist können ersetzt werden.
+  liked_lists:
+    name: Gelikte Trakt-Listen importieren
+    description: Erstellt/aktualisiert verwaltete Plex-Playlists; verändert keine Trakt-Favoriten.
+  liked_lists_keep_watched:
+    name: Gesehene Titel in importierten Listen behalten
+    description: Globale Vorgabe für importierte gelikte Listen.
+  liked_list_overrides:
+    name: Gesehen-Regel je Liste überschreiben
+    description: Einträge mit exaktem name und booleschem keep_watched; siehe OPTIONS.md.
+  trakt_to_plex_playback:
+    name: 'Wiedergabefortschritt: Trakt → Plex'
+    description: Überschreibt Plex-Fortschritt; ab 99 % markiert Upstream den Titel als gesehen, auch bei deaktiviertem
+      Rückabgleich.
+  sync_media:
+    name: Medientypen des Bibliotheksabgleichs
+    description: all, movies oder tv. Konto-Watchlists sind vom Bibliotheksfilter unabhängig.
+  include_libraries:
+    name: Bibliotheken einschließen
+    description: Leer bedeutet alle zugänglichen Bibliotheken.
+  exclude_libraries:
+    name: Bibliotheken ausschließen
+    description: Ausschluss hat Vorrang vor Einschluss.
+  ignore_ids:
+    name: Plex-Titel-IDs ignorieren
+    description: Numerische Plex-Metadaten-IDs als Zeichenketten, keine IMDb-/Trakt-IDs.
+  watch_ignore_clients:
+    name: Wiedergabe-Clients ignorieren
+    description: Plex-Client-Kennungen; die Prüfung des Sitzungsbenutzers bleibt immer aktiv.
+  plex_timeout:
+    name: Plex-Verbindungs-Timeout
+    description: Sekunden, 5–300.
+  request_timeout:
+    name: Trakt-Anfrage-Timeout
+    description: Sekunden für Trakt-API und Geräteanmeldung, 5–300.
+  batch_delay:
+    name: Upstream-Batch-Verzögerung
+    description: Sekunden, 0–300; null deaktiviert die Verzögerung.
+  movie_provider:
+    name: ID-Anbieter für alte XBMC-Filme
+    description: imdb oder tmdb; betrifft die Interpretation alter XBMC-GUIDs.
+  show_provider:
+    name: ID-Anbieter für alte XBMC-Serien
+    description: tvdb, tmdb oder imdb; betrifft die Interpretation alter XBMC-GUIDs.
+  log_level:
+    name: Betriebsprotokoll-Stufe
+    description: Bereinigte JSON-Logs; rohe Upstream-Debuglogs mit möglichen Tokens bleiben deaktiviert.
