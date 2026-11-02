@@ -114,14 +114,12 @@ RUN npm run build
 FROM ${BUILD_FROM}
 
 ARG CWA_VERSION
-ARG BUILD_VERSION
 
 # Labels
 LABEL \
     io.hass.name="Calibre AIO" \
     io.hass.description="Shelfmark discovery and Calibre-Web Automated library" \
     io.hass.type="addon" \
-    io.hass.version="${BUILD_VERSION}" \
     org.opencontainers.image.source="https://github.com/HyperCriSiS/Home-Assistant-Apps" \
     maintainer="HyperCriSiS"
 
@@ -211,9 +209,6 @@ COPY --from=shelfmark-frontend /frontend/dist /app/shelfmark/frontend-dist
 ENV PATH="/opt/cwa-venv/bin:${PATH}"
 ENV CALIBRE_CONFIG_DIR="/config/.config/calibre"
 
-# Copy add-on rootfs (HA-specific cont-init.d bootstrap + CWA's own s6-rc.d services)
-COPY rootfs /
-
 # Required directories, ownership and script permissions
 RUN mkdir -p \
         /app/calibre-web-automated/metadata_change_logs \
@@ -221,7 +216,7 @@ RUN mkdir -p \
         /app/calibre-web-automated/cps/cache \
     && touch /app/cwa_update_notice /app/theme_migration_notice \
     && chown abc:abc /app/cwa_update_notice /app/theme_migration_notice \
-    && chown -R abc:abc /app/calibre-web-automated /etc/s6-overlay \
+    && chown -R abc:abc /app/calibre-web-automated \
     && drivers="$(/app/shelfmark/.venv/bin/python -c "import pathlib, seleniumbase; print(pathlib.Path(seleniumbase.__file__).resolve().parent / 'drivers')")"     && chown -R abc:abc "${drivers}" \
     && mkdir -p /tmp/shelfmark/seleniumbase/downloaded_files \
         /tmp/shelfmark/seleniumbase/archived_files /tmp/.X11-unix \
@@ -230,10 +225,16 @@ RUN mkdir -p \
     && rm -rf /app/shelfmark/downloaded_files /app/shelfmark/archived_files \
     && ln -s /tmp/shelfmark/seleniumbase/downloaded_files /app/shelfmark/downloaded_files \
     && ln -s /tmp/shelfmark/seleniumbase/archived_files /app/shelfmark/archived_files \
-    && chmod a+x /etc/cont-init.d/*.sh \
-    && chmod a+x /etc/s6-overlay/s6-rc.d/*/run \
-        /app/calibre-web-automated/root/etc/s6-overlay/s6-rc.d/*/run
+    && chmod a+x /app/calibre-web-automated/root/etc/s6-overlay/s6-rc.d/*/run
+
+COPY rootfs /
+RUN chown -R abc:abc /etc/s6-overlay \
+    && chmod a+x /etc/cont-init.d/*.sh /etc/s6-overlay/s6-rc.d/*/run
 
 WORKDIR /
 
 EXPOSE 8084
+
+# Version metadata belongs last: changing it must not invalidate package layers.
+ARG BUILD_VERSION
+LABEL io.hass.version="${BUILD_VERSION}"
