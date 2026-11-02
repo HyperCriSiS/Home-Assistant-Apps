@@ -38,7 +38,7 @@ images this is the bundled candidate commit that is later pushed to `dev-store`.
 
 ## First rollout
 
-1. Ensure the updated shared store workflow is present on `main`, `dev-mcphub`
+1. Ensure the updated shared store workflow is present on `main`, `dev-mcphub`,
    `dev-trilium` and `dev-calibre` before allowing a development branch to generate a
    store containing the new `image:` configuration. Older workflow copies do
    not publish images and must not advertise new prebuilt versions.
@@ -63,3 +63,8 @@ The existing HAOS harnesses remove `image:` only from their disposable local App
 copy. They still build and test the exact selected source commit, including PRs
 that have no published image. The checked-in App metadata retains `image:`.
 These source tests do not replace a prebuilt-image installation smoke test.
+Run `haos-qemu-mcphub.yml` with `prebuilt: true` after publication to exercise
+the anonymous GHCR installation path. This mode removes the Dockerfile only
+from the disposable VM copy, so a successful installation proves Supervisor
+pulled the published image. It retains the start/restart, Ingress, LAN and
+official/unofficial Home Assistant MCP tool checks used by the source test.

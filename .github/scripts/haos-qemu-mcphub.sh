@@ -12,9 +12,14 @@ set -Eeuo pipefail
 
 SOURCE_DIR="${1:?MCPHub source directory}"
 SOURCE_SHA="${2:?tested commit SHA}"
+HAOS_PREBUILT_IMAGE="${HAOS_PREBUILT_IMAGE:-false}"
 : "${HAOS_VERSION:?Set HAOS_VERSION to an official Home Assistant OS release}"
 [[ "${HAOS_VERSION}" =~ ^[0-9]+\.[0-9]+$ ]] || { echo "Invalid HAOS_VERSION" >&2; exit 1; }
 [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]] || { echo "Invalid source SHA" >&2; exit 1; }
+case "${HAOS_PREBUILT_IMAGE}" in
+  true|false) ;;
+  *) echo "HAOS_PREBUILT_IMAGE must be true or false" >&2; exit 1 ;;
+esac
 
 WORK="${RUNNER_TEMP:-/tmp}/haos-qemu"
 IMAGE="${WORK}/haos.qcow2"
@@ -126,8 +131,17 @@ target="${local_apps}/mcphub_ci"
 sudo mkdir -p "${target}"
 sudo rsync -a --delete "${SOURCE_DIR%/}/" "${target}/"
 printf '%s\n' "${SOURCE_SHA}" | sudo tee "${target}/.haos-source-revision" >/dev/null
-# Test the selected source instead of pulling a possibly unrelated release tag.
-sudo sed -i '/^image:/d' "${target}/config.yaml"
+if [[ "${HAOS_PREBUILT_IMAGE}" == "true" ]]; then
+  grep -Fxq 'image: "ghcr.io/hypercrisis/mcphub"' "${SOURCE_DIR%/}/config.yaml" || {
+    echo "Prebuilt test requires the public MCPHub image configuration" >&2
+    exit 1
+  }
+  # This disposable local App cannot fall back to an on-device build.
+  sudo rm -f "${target}/Dockerfile"
+else
+  # Source tests must exercise the selected commit, including unreleased PRs.
+  sudo sed -i '/^image:/d' "${target}/config.yaml"
+fi
 sudo umount "${WORK}/data"
 sudo qemu-nbd --disconnect /dev/nbd0
 
@@ -195,7 +209,11 @@ for attempt in $(seq 1 30); do
   sleep 10
 done
 
-log "Install (build) MCPHub"
+if [[ "${HAOS_PREBUILT_IMAGE}" == "true" ]]; then
+  log "Install MCPHub by anonymous pull from GHCR (no Dockerfile available)"
+else
+  log "Install (build) MCPHub"
+fi
 supervisor POST "addons/${SLUG}/install" 3000
 expected="$(sed -n 's/^version: "\(.*\)"$/\1/p' "${SOURCE_DIR%/}/config.yaml")"
 installed="$(supervisor GET "addons/${SLUG}/info" | field version)"
