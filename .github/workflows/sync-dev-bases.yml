@@ -33,7 +33,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          for branch in dev-trilium dev-mcphub dev-calibre; do
+          for branch in dev-trilium dev-mcphub dev-calibre dev-plextraktsync; do
             if ! git ls-remote --exit-code --heads origin "${branch}" >/dev/null 2>&1; then
               echo "${branch} does not exist yet; skipping"
               continue

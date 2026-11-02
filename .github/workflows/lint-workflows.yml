@@ -16,6 +16,7 @@ on:
       - dev-trilium
       - dev-mcphub
       - dev-calibre
+      - dev-plextraktsync
     paths:
       - "**.yml"
       - "**.yaml"
