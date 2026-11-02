@@ -23,6 +23,12 @@ without manually creating `/config` or starting services. A minimal Supervisor
 HTTP fixture supplies the ingress entry. The production ingress ACL stays
 unchanged, and requests originate from the fixture at `172.30.32.2`. The test
 checks both applications after first boot and restart with persistent volumes.
+It also delivers a generated EPUB to the running unprivileged ingest watcher
+and verifies the final library entry. Before restart it makes `metadata.db`
+root-owned to exercise repair of an existing installation. The separate root
+Linux permission regression reproduces the original symlink/chown failure,
+checks real SQLite writes as an unprivileged user, and covers nested libraries,
+read-only files/directories, network-share ownership and internal symlinks.
 
 ## Live HAOS acceptance
 

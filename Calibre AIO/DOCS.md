@@ -121,6 +121,18 @@ SSO. Standalone external reader sync is outside the initial AIO scope.
 
 ## Troubleshooting
 
+If Shelfmark reports a completed download but the book is missing from the
+library, check the subsequent CWA ingest log. `apsw.ReadOnlyError: attempt to
+write a readonly database` means that CWA cannot write the library database;
+the earlier Shelfmark completion only confirms delivery to the ingest folder.
+Version 1.1.4 repairs local library ownership after library initialization,
+including existing installations, and checks write access as UID/GID 911
+before starting CWA. Update and restart the app, then retry the import of the
+affected file. For `network_share_mode: true`, ownership is kept unchanged;
+the share must grant UID/GID 911 write access to both `metadata.db` and the
+library directory so SQLite can create its journal files. Do not delete or
+recreate `metadata.db` to resolve a permissions error.
+
 Check App logs after a restart. The CWA launcher confirms the configured
 HA login-name policy. An empty `sso.admin_username` opens automatic setup inside
 HA for an HA administrator. Existing assignments are never overwritten by setup.
