@@ -48,7 +48,9 @@ jobs:
           CWA_TEST_NGINX: '1'
         run: python -m unittest discover -s 'Calibre AIO/tests' -v
       - name: Real privilege transition
-        run: sudo "$(command -v python)" -m unittest discover -s 'Calibre AIO/tests' -p test_launch_permissions.py -v
+        run: |
+          sudo "$(command -v python)" -m unittest discover -s 'Calibre AIO/tests' -p test_launch_permissions.py -v
+          sudo "$(command -v python)" -m unittest discover -s 'Calibre AIO/tests' -p test_library_permissions.py -v
       - name: Shell syntax
         run: |
           find 'Calibre AIO/rootfs' -type f \( -name '*.sh' -o -name run \) -print0 |

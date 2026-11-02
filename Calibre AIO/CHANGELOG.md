@@ -1,3 +1,10 @@
+# 1.1.4
+
+- Fix library ownership behind the persistent storage symlink, including
+  metadata.db created on first boot, so CWA can import Shelfmark downloads.
+- Verify database and library-directory write access as the service user
+  before starting CWA; report inaccessible network shares clearly.
+
 # 1.1.3
 
 - Remove the retired local browser service from existing installs, so Shelfmark
