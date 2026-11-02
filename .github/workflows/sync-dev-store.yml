@@ -11,16 +11,17 @@ on:
 
 permissions:
   contents: write
+  packages: write
 
 concurrency:
   group: sync-development-store
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   sync:
     name: Publish combined Home Assistant development store
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Check out repository
@@ -232,16 +233,41 @@ jobs:
           git show origin/dev-mcphub:.github/scripts/generate-mcphub-changelog.py > /tmp/generate-mcphub-changelog.py
           python3 /tmp/generate-mcphub-changelog.py dev
 
-      - name: Publish generated dev-store branch
+      - name: Prepare immutable store candidate
         run: |
-          git add \
-            .dev-store-revisions.json \
-            .dev-store-mcphub-changes.json \
-            repository.json \
-            "MCPHub" \
-            "Calibre AIO" \
-            "TriliumNext Notes"
-          if ! git diff --cached --quiet; then
-            git commit -m "chore(dev-store): compose current app candidates"
-          fi
-          git push origin HEAD:dev-store
+          python3 .github/scripts/calibre_images.py enable
+          git add .dev-store-revisions.json .dev-store-mcphub-changes.json repository.json \
+            "MCPHub" "Calibre AIO" "TriliumNext Notes"
+          git diff --cached --quiet || git commit -m "chore(dev-store): compose current app candidates"
+          git bundle create /tmp/store.bundle HEAD
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: calibre-store-candidate
+          path: /tmp/store.bundle
+          retention-days: 1
+
+  images:
+    needs: sync
+    uses: ./.github/workflows/publish-calibre-images.yml
+    with:
+      bundle: calibre-store-candidate
+    permissions:
+      contents: read
+      packages: write
+
+  publish:
+    needs: images
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: calibre-store-candidate
+          path: /tmp/candidate
+      - name: Publish only after both public images passed acceptance
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git clone /tmp/candidate/store.bundle store
+          cd store
+          remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push "$remote" HEAD:refs/heads/dev-store
