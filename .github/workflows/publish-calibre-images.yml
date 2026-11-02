@@ -1,0 +1,151 @@
+name: Publish tested Calibre images
+on:
+  workflow_call:
+    inputs:
+      bundle:
+        type: string
+        default: ''
+      source_ref:
+        type: string
+        default: main
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: Trusted app source to publish (main or dev-calibre)
+        type: choice
+        options: [main, dev-calibre]
+        default: main
+permissions:
+  contents: read
+  packages: write
+concurrency:
+  group: calibre-publish-${{ inputs.bundle || inputs.source_ref }}
+  cancel-in-progress: false
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          path: publisher
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        if: inputs.bundle == ''
+        with:
+          ref: ${{ inputs.source_ref }}
+          path: source
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: inputs.bundle != ''
+        with:
+          name: ${{ inputs.bundle }}
+          path: /tmp/candidate
+      - if: inputs.bundle != ''
+        run: git clone /tmp/candidate/store.bundle source
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
+      - name: Resolve exact version, architecture base and build arguments
+        id: metadata
+        working-directory: source
+        env:
+          ARCH: ${{ matrix.arch }}
+        run: |
+          python3 ../publisher/.github/scripts/calibre_images.py metadata >> "$GITHUB_OUTPUT"
+          python3 -m pip install PyYAML==6.0.3
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import os, yaml
+          from pathlib import Path
+          config = yaml.safe_load(Path('Calibre AIO/config.yaml').read_text())
+          build = yaml.safe_load(Path('Calibre AIO/build.yaml').read_text())
+          print('args<<BUILD_ARGS')
+          print('BUILD_FROM=' + build['build_from'][os.environ['ARCH']])
+          print('BUILD_VERSION=' + config['version'])
+          for key, value in build['args'].items():
+              print(f'{key}={value}')
+          print('BUILD_ARGS')
+          PY
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
+        with:
+          context: source/Calibre AIO
+          load: true
+          tags: calibre-aio:test
+          build-args: ${{ steps.metadata.outputs.args }}
+          labels: |
+            io.calibre-aio.source-tree=${{ steps.metadata.outputs.tree }}
+            org.opencontainers.image.source=https://github.com/HyperCriSiS/Home-Assistant-Apps
+          cache-from: type=gha,scope=calibre-aio-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=calibre-aio-${{ matrix.arch }}
+      - name: Real container acceptance and persistent restart
+        working-directory: source
+        run: |
+          trap 'docker rm -f calibre-aio-smoke >/dev/null 2>&1 || true' EXIT
+          timeout 420 docker run --rm --name calibre-aio-smoke --entrypoint bash \
+            -v "$PWD/Calibre AIO/tests:/aio-tests:ro" calibre-aio:test /aio-tests/container-smoke.sh
+          timeout 600 bash 'Calibre AIO/tests/boot-smoke.sh'
+      - name: Push tested staging image, never the install tag yet
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARCH: ${{ matrix.arch }}
+        run: |
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          image="ghcr.io/hypercrisis/${ARCH}-calibre-aio:build-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          docker tag calibre-aio:test "$image"
+          docker push "$image"
+
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          path: publisher
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        if: inputs.bundle == ''
+        with:
+          ref: ${{ inputs.source_ref }}
+          path: source
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: inputs.bundle != ''
+        with:
+          name: ${{ inputs.bundle }}
+          path: /tmp/candidate
+      - if: inputs.bundle != ''
+        run: git clone /tmp/candidate/store.bundle source
+      - name: Publish both tested version tags and verify public access
+        working-directory: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 ../publisher/.github/scripts/calibre_images.py metadata > /tmp/metadata
+          version="$(sed -n 's/^version=//p' /tmp/metadata)"
+          tree="$(sed -n 's/^tree=//p' /tmp/metadata)"
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          for arch in amd64 aarch64; do
+            repo="ghcr.io/hypercrisis/${arch}-calibre-aio"
+            candidate="${repo}:build-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+            docker pull --platform "linux/${arch/aarch64/arm64}" "$candidate"
+            actual="$(docker inspect --format '{{index .Config.Labels "io.calibre-aio.source-tree"}}' "$candidate")"
+            [[ "$actual" == "$tree" ]] || { echo 'Source changed during build' >&2; exit 1; }
+            if docker manifest inspect "${repo}:${version}" >/dev/null 2>&1; then
+              docker pull --platform "linux/${arch/aarch64/arm64}" "${repo}:${version}"
+              format='{{index .Config.Labels "io.calibre-aio.source-tree"}}'
+              existing="$(docker inspect --format "$format" "${repo}:${version}")"
+              [[ "$existing" == "$tree" ]] || { echo 'Refusing to replace an existing release' >&2; exit 1; }
+            else
+              docker tag "$candidate" "${repo}:${version}"
+              docker push "${repo}:${version}"
+            fi
+            # Supervisor must be able to pull without a GitHub login.
+            public_config="$(mktemp -d)"
+            DOCKER_CONFIG="$public_config" docker manifest inspect "${repo}:${version}" >/dev/null
+          done
