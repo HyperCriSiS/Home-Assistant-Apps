@@ -33,7 +33,17 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  calibre-images:
+    if: github.event_name == 'workflow_dispatch' && inputs.app == 'calibre'
+    uses: ./.github/workflows/publish-calibre-images.yml
+    with:
+      source_ref: dev-calibre
+    permissions:
+      contents: read
+      packages: write
+
   promote-calibre:
+    needs: calibre-images
     name: Prepare manual Calibre AIO release pull request
     if: github.event_name == 'workflow_dispatch' && inputs.app == 'calibre'
     runs-on: ubuntu-24.04
