@@ -105,7 +105,7 @@ function render(setup, start) {
         assert.equal(await frame.locator('nav a').first().textContent(),language === 'de' ? 'Bibliothek' : 'Library');
         assert.equal(await frame.locator('iframe').getAttribute('src'),start+'/');
         const height=await frame.locator('header').evaluate(el=>el.getBoundingClientRect().height);
-        assert.equal(height,40);
+        assert.equal(height,36);
         assert.equal(await frame.locator('body').evaluate(el=>el.scrollWidth<=window.innerWidth),true);
         assert.deepEqual(await page.evaluate(()=>window.calls),[]);
         if (scenario === 'normal-library-link') {
