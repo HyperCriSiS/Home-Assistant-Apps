@@ -18,7 +18,13 @@ for(const width of [1440,1920,390]){
  await page.goto('https://calibre.test/library/');await page.waitForTimeout(1400);
  assert.equal(await page.title(),'Calibre-Web | Bücher');
  assert(await page.locator('.discover.load-more .book').count()>0);
- assert((await page.locator('.discover.load-more .book').first().boundingBox()).width<180);
+ const card=await page.locator('.discover.load-more .book').first().boundingBox();
+ assert(card.width>=90 && card.width<180, 'Book cards must retain their compact, readable width');
+ if(width>=768){
+  const title=await page.locator('.discover.load-more > h2').boundingBox();
+  const toolbar=await page.locator('.filterheader').boundingBox();
+  assert(Math.abs(title.y+title.height/2-toolbar.y-toolbar.height/2)<2, 'Sorting must align with the page title');
+ }
  if(out) await page.screenshot({path:path.join(out,`calibre-modern-${width}.png`)});
  console.log(JSON.stringify({width,title:await page.title(),sorts:await page.locator('.aio-sort').count(),errors,toolbar:await page.locator('.filterheader').boundingBox(),books:await page.locator('.discover.load-more .book').first().boundingBox()}));
  assert.equal(await page.locator('#asc').innerText(),'A–Z'); assert.equal(await page.locator('#desc').innerText(),'A–Z');
