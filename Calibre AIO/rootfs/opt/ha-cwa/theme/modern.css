@@ -1,0 +1,212 @@
+/* Modern v1: Designs/Wormhole Modern tokens (derived from PlexTraktSync),
+   restrained surfaces and native CWA layout. */
+html.aio-modern {
+  color-scheme: dark;
+  --aio-bg: #0f1217;
+  --aio-sidebar: #14171c;
+  --aio-surface: #191e25;
+  --aio-line: #303842;
+  --aio-text: #f2f5f9;
+  --aio-muted: #b2bfce;
+  --aio-accent: #b49a64;
+}
+.aio-modern body:not(.read-frame) {
+  --color-background: var(--aio-bg);
+  --color-background-mobile: var(--aio-bg);
+  --color-primary: var(--aio-accent);
+  --color-secondary: var(--aio-accent);
+  --color-secondary-hover: #dfd0a3;
+  --lr-surface: var(--aio-surface);
+  --lr-drawer: var(--aio-sidebar);
+  --lr-text: var(--aio-text);
+  --lr-muted: var(--aio-muted);
+  --lr-border: var(--aio-line);
+  --lr-accent: var(--aio-accent);
+  background: var(--aio-bg) !important;
+  color: var(--aio-text);
+  font: 13px/1.5 "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+.aio-modern .navbar, .aio-modern .navbar-default,
+.aio-modern body > .container-fluid > .row-fluid > .col-sm-2 {
+  background: var(--aio-sidebar) !important;
+  border-color: var(--aio-line) !important;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.aio-modern .navbar a, .aio-modern .navigation a { color: var(--aio-text); }
+.aio-modern .navigation li > a { padding-top: 7px !important; padding-bottom: 7px !important; }
+.aio-modern .navigation li.active > a, .aio-modern .navigation li > a:hover {
+  color: var(--aio-accent) !important;
+  background: #25221c !important;
+}
+/* The original grid reserves a second fixed header for its title. Our title
+   participates in normal flow, so reclaim that strip only on grid pages. */
+html.aio-modern body.blur > div.container-fluid > div > div.col-sm-10:has(> .discover.load-more) {
+  position: fixed !important;
+  top: 60px !important;
+  height: calc(100% - 60px) !important;
+}
+html.aio-modern body.blur > div.container-fluid > div > div.col-sm-10 > div.discover {
+  margin: 12px 0 !important;
+  padding: 0 16px !important;
+}
+/* Title and sorting share one level instead of consuming separate rows. */
+html.aio-modern body.blur .discover.load-more {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+html.aio-modern body.blur .discover.load-more > :not(h2):not(.shelf-actions):not(.filterheader) {
+  grid-column: 1 / -1;
+}
+html.aio-modern body.blur .discover.load-more > .row.display-flex {
+  justify-self: stretch;
+  width: 100% !important;
+  min-width: 0;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+html.aio-modern body.blur .discover.load-more > .shelf-actions,
+html.aio-modern body.blur .discover.load-more > .filterheader {
+  grid-column: 2;
+  margin: 0 !important;
+}
+html.aio-modern body.blur > div.container-fluid > div > div.col-sm-10 > div.discover > h2 {
+  position: static !important;
+  width: auto !important;
+  max-width: 100% !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font: 600 21px/1.4 "Segoe UI", system-ui, sans-serif !important;
+  color: var(--aio-text) !important;
+  background: transparent !important;
+  border: 0;
+}
+.aio-modern body .shelf-actions {
+  margin: 0 0 14px !important;
+  padding: 8px !important;
+  gap: 8px;
+  border: 1px solid var(--aio-line);
+  border-radius: 6px;
+  background: var(--aio-surface) !important;
+  backdrop-filter: none;
+}
+.aio-modern body .filterheader {
+  position: static !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 0 12px !important;
+  padding: 0 !important;
+  gap: 4px;
+  float: none !important;
+  background: transparent !important;
+  overflow: visible !important;
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
+}
+.aio-modern body .shelf-actions .filterheader { margin: 0 !important; }
+.aio-modern body .filterheader > a.aio-sort {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 44px;
+  width: auto !important;
+  height: 32px !important;
+  margin: 0 !important;
+  padding: 0 8px !important;
+  border: 1px solid var(--aio-line) !important;
+  border-radius: 5px !important;
+  background: var(--aio-surface) !important;
+  color: var(--aio-muted) !important;
+  font: 600 11px/1 "Segoe UI", system-ui, sans-serif;
+  box-shadow: none !important;
+  transform: none !important;
+}
+.aio-modern .aio-sort svg { display: block; width: 16px; height: 16px; flex: none; }
+.aio-modern .aio-sort svg.aio-sort-arrow { width: 13px; height: 16px; }
+.aio-modern body .filterheader > a.aio-sort.active {
+  color: var(--aio-accent) !important;
+  background: #2b2419 !important;
+  border-color: #78643e !important;
+}
+.aio-modern body .filterheader > a.aio-sort:hover { color: var(--aio-text) !important; border-color: #697789 !important; }
+.aio-modern a:focus-visible, .aio-modern button:focus-visible,
+.aio-modern input:focus-visible, .aio-modern select:focus-visible {
+  outline: 2px solid var(--aio-accent) !important;
+  outline-offset: 2px !important;
+}
+.aio-modern .form-control, .aio-modern .form-control:focus {
+  color: var(--aio-text);
+  background: var(--aio-bg) !important;
+  border: 1px solid var(--aio-line) !important;
+  border-radius: 5px;
+  box-shadow: none !important;
+  min-height: 32px;
+}
+.aio-modern .form-control::placeholder { color: var(--aio-muted); opacity: 1; }
+.aio-modern .btn-default, .aio-modern .dropdown-menu,
+.aio-modern .modal-content, .aio-modern .panel, .aio-modern .well,
+.aio-modern .list-group-item, .aio-modern .table-striped > tbody > tr:nth-of-type(odd) {
+  color: var(--aio-text);
+  background: var(--aio-surface) !important;
+  border-color: var(--aio-line);
+}
+.aio-modern .dropdown-menu > li > a { color: var(--aio-text); padding: 7px 14px; }
+.aio-modern .dropdown-menu > li > a:hover { background: #282f39; color: var(--aio-accent); }
+.aio-modern .modal-header, .aio-modern .modal-footer, .aio-modern .table > tbody > tr > td,
+.aio-modern .table > thead > tr > th { border-color: var(--aio-line); }
+.aio-modern .table > tbody > tr > td, .aio-modern .table > thead > tr > th { padding: 7px 10px; }
+.aio-modern .text-muted, .aio-modern .help-block { color: var(--aio-muted); }
+.aio-modern .btn-primary { background: #2b2419; border-color: #78643e; color: var(--aio-accent); }
+.aio-modern .btn-success { background: #1b3630; border-color: #436e63; color: #91d7c8; }
+.aio-modern .btn-danger { background: #3c242b; border-color: #895563; color: #f1afba; }
+.aio-modern .btn { border-radius: 5px; }
+/* Keep Isotope's measured card layout; percentages are scoped to book grids. */
+.aio-modern body .discover .book:not(body) {
+  min-width: 0 !important;
+  max-width: none !important;
+  padding: 0 8px !important;
+  margin-bottom: 14px !important;
+}
+.aio-modern body .container-fluid .book .meta { margin-top: 7px !important; padding: 0 !important; }
+.aio-modern body .container-fluid .book .meta .title {
+  color: var(--aio-text); font-size: 13px !important; line-height: 1.35; font-weight: 600;
+}
+.aio-modern body .container-fluid .book .meta .author,
+.aio-modern body .container-fluid .book .meta .author > a {
+  color: var(--aio-muted); font-size: 12px !important; line-height: 1.4;
+}
+.aio-modern body .container-fluid .book .cover img {
+  border: 1px solid var(--aio-line);
+  border-radius: 4px;
+  box-shadow: 0 2px 6px #0004;
+}
+@media (min-width: 1500px) { .aio-modern body .discover .book:not(body) { width: 12.5% !important; } }
+@media (min-width: 1800px) { .aio-modern body .discover .book:not(body) { width: 10% !important; } }
+@media (min-width: 2100px) { .aio-modern body .discover .book:not(body) { width: 8.3333% !important; } }
+@media (min-width: 1280px) and (max-width: 1499px) { .aio-modern body .discover .book:not(body) { width: 14.2857% !important; } }
+@media (min-width: 1100px) and (max-width: 1279px) { .aio-modern body .discover .book:not(body) { width: 16.6667% !important; } }
+@media (min-width: 768px) and (max-width: 1099px) { .aio-modern body .discover .book:not(body) { width: 25% !important; } }
+@media (max-width: 767px) {
+  html.aio-modern body.blur .discover.load-more { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  html.aio-modern body.blur .discover.load-more > .shelf-actions,
+  html.aio-modern body.blur .discover.load-more > .filterheader { grid-column: 1; }
+  html.aio-modern body.blur > div.container-fluid > div > div.col-sm-10:has(> .discover.load-more) {
+    top: 48px !important;
+    height: calc(100% - 48px) !important;
+  }
+  .aio-modern body .discover .book:not(body) { width: 33.3333% !important; }
+  .aio-modern body > .container-fluid > div > .col-sm-10 > .discover { padding: 0 8px !important; }
+  .aio-modern body .filterheader { gap: 4px; }
+  .aio-modern body .filterheader > a.aio-sort { min-width: 44px; height: 44px !important; }
+  .aio-modern body .container-fluid .book .meta .title { font-size: 12px !important; }
+  .aio-modern body .discover .book:not(body) { padding: 0 5px !important; }
+}
+@media (max-width: 359px) { .aio-modern body .discover .book:not(body) { width: 50% !important; } }
+@media (prefers-reduced-motion: reduce) { .aio-modern *, .aio-modern *::before, .aio-modern *::after { transition: none !important; animation: none !important; } }

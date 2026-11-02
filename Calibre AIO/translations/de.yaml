@@ -1,5 +1,10 @@
 ---
 configuration:
+  library_theme:
+    name: Bibliotheks-Theme
+    description: >-
+      Modern ist der kompakte dunkle Calibre-AIO-Skin. Upstream verwendet die bisherige CWA-Darstellung.
+      Nach einer Änderung die App neu starten.
   start_page:
     name: Startseite
     description: Zuerst Bibliothek (library) oder Shelfmark (shelfmark) öffnen.
