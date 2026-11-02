@@ -126,6 +126,8 @@ target="${local_apps}/mcphub_ci"
 sudo mkdir -p "${target}"
 sudo rsync -a --delete "${SOURCE_DIR%/}/" "${target}/"
 printf '%s\n' "${SOURCE_SHA}" | sudo tee "${target}/.haos-source-revision" >/dev/null
+# Test the selected source instead of pulling a possibly unrelated release tag.
+sudo sed -i '/^image:/d' "${target}/config.yaml"
 sudo umount "${WORK}/data"
 sudo qemu-nbd --disconnect /dev/nbd0
 

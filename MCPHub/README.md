@@ -31,6 +31,11 @@ Existing users who added the former `Home-Assistant-Addons` repository should ke
 
 Then search for **MCPHub**, install it, start it with the default configuration, and open **Web UI**.
 
+Stable and development-store installations download a prebuilt image for `amd64`
+or `aarch64`. Home Assistant does not build the App or install its bundled system
+and Python packages on your device. Additional MCP servers launched through `npx`
+or `uvx` may still download their own packages on first use.
+
 ### Development testing
 
 To test the current `dev-mcphub` candidate before it is promoted to `main`, add the shared generated
