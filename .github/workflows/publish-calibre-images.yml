@@ -96,7 +96,7 @@ jobs:
           ARCH: ${{ matrix.arch }}
         run: |
           printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
-          image="ghcr.io/hypercrisis/${ARCH}-calibre-aio:build-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          image="ghcr.io/hypercrisis/${ARCH}-calibre-aio:build-${GITHUB_RUN_ID}"
           docker tag calibre-aio:test "$image"
           docker push "$image"
 
@@ -132,7 +132,7 @@ jobs:
           printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
           for arch in amd64 aarch64; do
             repo="ghcr.io/hypercrisis/${arch}-calibre-aio"
-            candidate="${repo}:build-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+            candidate="${repo}:build-${GITHUB_RUN_ID}"
             docker pull --platform "linux/${arch/aarch64/arm64}" "$candidate"
             actual="$(docker inspect --format '{{index .Config.Labels "io.calibre-aio.source-tree"}}' "$candidate")"
             [[ "$actual" == "$tree" ]] || { echo 'Source changed during build' >&2; exit 1; }
