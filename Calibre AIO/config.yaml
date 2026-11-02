@@ -1,6 +1,6 @@
 name: "Calibre AIO (Dev)"
 description: "Shelfmark book discovery and Calibre library management in one interface"
-version: "1.1.4-dev.160"
+version: "1.2.0-dev.161"
 slug: "calibre-aio"
 init: false
 stage: experimental
@@ -23,6 +23,7 @@ ports: {}
 map:
   - share:rw
 options:
+  library_theme: "modern"
   start_page: "library"
   library_dir: "calibre-aio-dev/library"
   ingest_dir: "calibre-aio-dev/ingest"
@@ -35,6 +36,7 @@ options:
     admin_account: "admin"
     auto_create_users: true
 schema:
+  library_theme: "list(modern|upstream)"
   start_page: "list(library|shelfmark)"
   library_dir: "str"
   ingest_dir: "str"

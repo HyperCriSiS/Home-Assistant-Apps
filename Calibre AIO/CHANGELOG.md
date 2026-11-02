@@ -1,3 +1,11 @@
+# 1.2.0
+
+- Add the first Modern library theme: restrained graphite surfaces, muted gold
+  accents, denser book grids, compact controls and consistent sort symbols.
+- Sort direction now uses a separate up/down arrow; alphabetical labels stay
+  upright. Native sort links and tooltips remain available, including on mobile.
+- Set `library_theme: upstream` to return to the original CWA appearance.
+
 # 1.1.4
 
 - Fix library ownership behind the persistent storage symlink, including
