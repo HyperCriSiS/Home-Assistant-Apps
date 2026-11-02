@@ -1,3 +1,9 @@
+# 1.2.1
+
+- Install prebuilt, tested amd64/aarch64 images from GHCR instead of building
+  Calibre, Shelfmark and Chromium on the Home Assistant host.
+- Publish development updates only after both public image versions are ready.
+
 # 1.2.0
 
 - Add the first Modern library theme: restrained graphite surfaces, muted gold
