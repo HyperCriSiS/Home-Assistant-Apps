@@ -58,6 +58,7 @@ class LibraryPermissionsTest(unittest.TestCase):
         # deployment helper in the controlled fixture before dropping UID.
         self.modules = self.root / 'modules'
         self.modules.mkdir(mode=0o755)
+        self.modules.chmod(0o755)
         module = self.modules / 'library_permissions.py'
         module.write_text((MODULES / module.name).read_text())
         module.chmod(0o644)
