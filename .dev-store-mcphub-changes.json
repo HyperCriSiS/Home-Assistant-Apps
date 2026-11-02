@@ -1,5 +1,17 @@
 [
   {
+    "revision": 142,
+    "version": "v2026.10.31-1-dev.142",
+    "source_sha": "80690ca6edf22b5715ec8385ea01c5cf65cbd51e",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "80690ca6edf22b5715ec8385ea01c5cf65cbd51e",
+        "subject": "chore: use the shared tested Calibre image gate for store updates (#152)"
+      }
+    ]
+  },
+  {
     "revision": 141,
     "version": "v2026.10.31-1-dev.141",
     "source_sha": "0d8b661f2fea3f778e7fa28bba81af07c0a1392f",
