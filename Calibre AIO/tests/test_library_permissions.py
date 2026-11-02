@@ -54,6 +54,13 @@ class LibraryPermissionsTest(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         self.root.chmod(0o755)
+        # CI checkout files may not be readable by nobody. Stage only the
+        # deployment helper in the controlled fixture before dropping UID.
+        self.modules = self.root / 'modules'
+        self.modules.mkdir(mode=0o755)
+        module = self.modules / 'library_permissions.py'
+        module.write_text((MODULES / module.name).read_text())
+        module.chmod(0o644)
         self.library = self.root / 'share/library'
         self.library.mkdir(parents=True)
         self.library.parent.chmod(0o755)
@@ -82,7 +89,7 @@ if sys.argv[3] == 'True':
         db.execute("INSERT INTO books VALUES ('Imported book')")
 '''
         return subprocess.run(
-            [sys.executable, '-c', script, str(MODULES), str(library or self.library),
+            [sys.executable, '-c', script, str(self.modules), str(library or self.library),
              str(insert), str(check)],
             user=self.account.pw_uid, group=self.account.pw_gid, extra_groups=[],
             capture_output=True, text=True)
