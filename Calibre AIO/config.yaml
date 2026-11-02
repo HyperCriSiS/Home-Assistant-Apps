@@ -48,3 +48,4 @@ schema:
     admin_username: "str"
     admin_account: "str"
     auto_create_users: "bool"
+image: "ghcr.io/hypercrisis/{arch}-calibre-aio"
