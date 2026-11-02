@@ -1,6 +1,6 @@
 name: "Calibre AIO"
 description: "Shelfmark book discovery and Calibre library management in one interface"
-version: "1.2.0"
+version: "1.2.1"
 slug: "calibre-aio"
 init: false
 arch:
@@ -47,3 +47,4 @@ schema:
     admin_username: "str"
     admin_account: "str"
     auto_create_users: "bool"
+image: "ghcr.io/hypercrisis/{arch}-calibre-aio"

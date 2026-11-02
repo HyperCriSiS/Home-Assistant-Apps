@@ -172,3 +172,11 @@ It is generated from `dev-calibre`; promotion to `main` is a separate release
 step after testing. Its default library and import folders are separate from
 the stable app. Do not point simultaneously running installations at the same
 library or import folder.
+
+## Installation images
+
+Home Assistant pulls the versioned GHCR image for its architecture. GitHub Actions
+builds and tests both images before a Dev update is advertised. Initial downloads
+can still be large; later updates reuse unchanged image layers. No registry login
+is needed. The supported development repository is `#dev-store`; `dev-calibre`
+is an integration branch, not an installation channel.
