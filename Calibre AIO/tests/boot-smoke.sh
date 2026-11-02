@@ -41,11 +41,31 @@ else:
     docker exec calibre-aio-boot test -L /config
     docker exec calibre-aio-boot test -f /data/config/app.db
     docker exec calibre-aio-boot test -f /calibre-library/metadata.db
+    docker exec calibre-aio-boot /command/s6-setuidgid abc \
+        python3 /opt/ha-cwa/library_permissions.py check
 }
 probe
+# Exercise the actual unprivileged watcher, not a root-run ingest processor.
+docker exec calibre-aio-boot /command/s6-setuidgid abc env 'AIO_SSO_OPTIONS={"enabled":true}' \
+    /app/shelfmark/.venv/bin/python /aio-tests/probe_delivery.py
+wait_for_book() {
+    docker exec calibre-aio-boot python3 -c \
+        'import sqlite3,time
+for attempt in range(120):
+    with sqlite3.connect("/calibre-library/metadata.db") as db:
+        found=db.execute("SELECT id FROM books WHERE title = ?", ("Calibre AIO Smoke Book",)).fetchone()
+    if found: break
+    time.sleep(1)
+else: raise AssertionError("Watcher did not import the Shelfmark-delivered EPUB")'
+}
+wait_for_book
+
 docker exec calibre-aio-boot sh -c 'printf persistent > /data/config/boot-probe'
+# Model an existing library left root-owned by an earlier app version.
+docker exec calibre-aio-boot chown root:root /calibre-library/metadata.db
 docker restart calibre-aio-boot
 probe
+wait_for_book
 docker exec calibre-aio-boot grep -qx persistent /data/config/boot-probe
 
 # A default installation must boot safely, rather than loop on an empty admin.
