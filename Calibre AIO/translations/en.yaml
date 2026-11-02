@@ -1,5 +1,8 @@
 ---
 configuration:
+  library_theme:
+    name: Library theme
+    description: Modern is the compact dark Calibre AIO skin. Upstream keeps the original CWA appearance. Restart the app after changing this option.
   start_page:
     name: Start page
     description: Open Library (library) or Shelfmark (shelfmark) first.

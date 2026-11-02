@@ -2,6 +2,16 @@
 
 ## Automated checks
 
+`browser-theme.cjs` renders the pinned upstream CWA templates and native scripts
+with a small offline sample library. At 1440px and 390px it checks real sort-link
+navigation, active state, readable A–Z labels, distinct arrow directions,
+accessible labels, unclipped controls and the mobile hamburger drawer. Set
+`CWA_SOURCE` to the pinned checkout and `PLAYWRIGHT_MODULE` to Playwright's module.
+Optional `AIO_THEME_SCREENSHOTS` stores desktop/mobile evidence outside the repository.
+The container probes additionally verify authenticated theme assets and ingress
+prefixes against the real CWA process on both architectures. `library_theme:
+upstream` is covered by launcher tests; no upstream templates are patched on disk.
+
 ```sh
 python -m pip install -r 'Calibre AIO/tests/requirements.txt'
 python 'Calibre AIO/scripts/upstreams.py' check

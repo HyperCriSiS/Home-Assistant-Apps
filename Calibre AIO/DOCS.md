@@ -28,6 +28,18 @@ the selected CWA admin account. Shelfmark keeps separate HA identities.
 
 ## App options
 
+The first **Modern** theme uses restrained graphite surfaces and muted gold
+accents from the Wormhole Connector Modern skin (Designs), derived from PlexTraktSync. Library cards, sort controls and forms use
+less space. Sort criteria use distinct symbols (title, author, added date,
+publication date, series or downloads); a separate arrow indicates direction.
+Alphabetical letters are never mirrored. Hover/focus tooltips retain CWA's
+full descriptions. On phones, the toolbar wraps and touch targets stay larger.
+
+`library_theme: modern` is the default, including for existing configurations.
+Set `library_theme: upstream` and restart the app to use CWA's original theme.
+The theme changes appearance, not library data, sorting logic or permissions.
+Shelfmark retains its native interface; the shared navigation uses matching colors.
+
 ```yaml
 start_page: library
 library_dir: calibre-aio/library
