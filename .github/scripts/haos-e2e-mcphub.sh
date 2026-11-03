@@ -22,6 +22,9 @@ if [[ -n "${HAOS_EXPECTED_SHA:-}" && "${checked_out_sha}" != "${HAOS_EXPECTED_SH
   exit 1
 fi
 printf '%s\n' "${checked_out_sha}" > "${TARGET_DIR}/.haos-source-revision"
+# This harness deliberately tests the exact source, including unreleased PRs.
+# Store installations keep image: and pull the published container instead.
+sed -i '/^image:/d' "${TARGET_DIR}/config.yaml"
 
 "${ha_cli[@]}" addons reload
 
