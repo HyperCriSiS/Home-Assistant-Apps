@@ -1,35 +1,24 @@
 # Changelog
 
-## v2026.10.31-1
+## v2026.11.02
 
 ### Changed
 
-- Updated MCPHub from 1.1.14 to 1.1.15.
-- Updated bundled OpenAI tunnel-client v0.0.18 to v0.0.19.
+- Install and update MCPHub using prebuilt `amd64` and `aarch64` images from GitHub Container Registry instead of building the App on the Home Assistant device. Bundled packages are installed and both container architectures are tested in CI before publication.
+- Publish and verify development-store images before making their version available in the store. Additional dynamically installed MCP servers still use the persistent local package caches.
 
-## v2026.10.31
+## v2026.10.31-1
 
 ### Added
 
-- Optional unofficial Home Assistant MCP server (ha-mcp), started by the App and
-  added to MCPHub as `HomeAssistant MCP (unofficial)`. Off by default. The name can
-  be changed with `ha_mcp_server_name`.
+- Optional unofficial Home Assistant MCP server (ha-mcp), started by the App and added to MCPHub as `HomeAssistant MCP (unofficial)`. Off by default. The name can be changed with `ha_mcp_server_name`.
 
 ### Changed
 
-- Updated MCPHub from 1.1.13 to 1.1.14.
+- Updated MCPHub from 1.1.10 to 1.1.15.
 - The existing configuration section is now named Home Assistant MCP (official).
-- The official server is now named `HomeAssistant MCP (official)` in MCPHub. Installations
-  using the old default `ha-home-assistant` are renamed automatically; update MCPHub
-  groups or clients that reference the old name. Custom names stay unchanged.
-
-## v2026.10.29-1
-
-### Changed
-
-- Updated MCPHub from 1.1.10 to 1.1.13.
-
-## v2026.10.29
+- The official server is now named `HomeAssistant MCP (official)` in MCPHub. Installations using the old default `ha-home-assistant` are renamed automatically; update MCPHub groups or clients that reference the old name. Custom names stay unchanged.
+- Updated bundled OpenAI tunnel-client v0.0.18 to v0.0.19.
 
 ### Fixed
 

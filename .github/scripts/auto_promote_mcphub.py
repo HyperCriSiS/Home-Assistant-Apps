@@ -324,7 +324,9 @@ def check_candidate(dev_sha: str, candidate_sha: str) -> None:
             raise ValueError("Release candidate changes more than the changelog")
 
 
-def wait_for(repository: str, workflow: str, predicate, label: str, attempts: int = 200) -> None:
+def wait_for(repository: str, workflow: str, predicate, label: str, attempts: int = 480) -> None:
+    # Validation now includes both architecture builds/tests and publication.
+    # Allow its full 35 + 75 minute job budget before timing out a release.
     for attempt in range(attempts):
         state = ci_state(repository, workflow, predicate)
         if state == "success":

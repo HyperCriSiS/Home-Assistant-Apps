@@ -41,6 +41,12 @@ Old repository URLs are kept operational by GitHub redirects after the rename. F
 
 The generator adds `(Dev)`, `-dev.<run>`, and `stage: experimental` metadata so test installations are clearly distinguishable.
 
+MCPHub versions use prebuilt images. The generator tests and publishes both
+architectures and verifies anonymous access before pushing the Dev store.
+Release-candidate validation publishes stable images before the main merge;
+main verifies the existing immutable tag. See [MCPHub image publication](docs/engineering/MCPHUB-IMAGES.md)
+for the initial package visibility setup and rollout order.
+
 **Never edit `dev-store` manually and never merge it into `main`.**
 
 ## Release flows
@@ -68,6 +74,23 @@ Any other change on `dev-mcphub` keeps the manual release PR. Enable with the re
 Use short-lived `feature/*`, `fix/*`, `refactor/*`, `test/*`, `docs/*`, `chore/*`, and `hotfix/*` branches where useful, targeting the corresponding App development branch.
 
 ## Calibre AIO development installation
+
+Calibre images are built and acceptance-tested on native amd64/aarch64 runners
+before publication to `ghcr.io/hypercrisis/{arch}-calibre-aio:<version>`.
+The generated Dev store waits for both public version tags before advertising
+the candidate, so Home Assistant pulls the image instead of building locally.
+Candidates are handed between jobs as a Git bundle; the installed version,
+build label and registry tag use the same generated version. Existing tags
+cannot be replaced with different app contents. Shared store publication is
+serialized so an older candidate cannot overwrite a newer one.
+
+`publish-calibre-images.yml` can also publish the current `main` or
+`dev-calibre` version manually. The manual Calibre promotion workflow publishes
+both tested images before opening a Stable release PR. The app configuration
+must contain `image: "ghcr.io/hypercrisis/{arch}-calibre-aio"` to enable pulls.
+New GHCR packages must be public: publication checks anonymous registry access
+and fails before updating the Dev store if access is restricted. Private app
+settings and library data never enter the build context.
 
 Refresh the existing `#dev-store` repository and install **Calibre AIO (Dev)**.
 The generated version uses `-dev.<revision>` and separate default library/import
