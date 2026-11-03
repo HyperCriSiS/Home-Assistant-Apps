@@ -1,6 +1,6 @@
 # Current Work — Home-Assistant-Apps
 
-Last reviewed: 2026-10-08. Authoritative integrated branch: `main`. This is the common work-resumption entry point, **not** a synthetic roadmap or an approval to merge pending implementation.
+Last reviewed: 2026-11-03. Authoritative integrated branch: `main`. This is the common work-resumption entry point, **not** a synthetic roadmap or an approval to merge pending implementation.
 
 ## Live sources
 
@@ -14,5 +14,14 @@ Last reviewed: 2026-10-08. Authoritative integrated branch: `main`. This is the 
 This is a multi-add-on repository. For an add-on change, inspect its directory, `repository.json`, integration/deployment workflows, and open dependency PRs. There is no repo-wide roadmap; do not invent a completed or in-progress phase.
 
 ## Verification and update policy
+
+MCPHub prebuilt-image installation is tracked in [PR #151](https://github.com/HyperCriSiS/Home-Assistant-Apps/pull/151).
+The public `v2026.11.02` images passed both architecture container tests and
+anonymous registry verification in [publication CI](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/runs/41517218976).
+The [HAOS 18.4 installation test](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/runs/41519886711)
+installed the published image without a Dockerfile and verified restart, Ingress,
+LAN authentication and tools from both Home Assistant MCP servers. Linux unit
+tests also pass. See [publication and rollout](MCPHUB-IMAGES.md); use the actual
+`main` and generated `dev-store` metadata to determine which version is offered.
 
 Compare the proposed change with the latest `main` and relevant upstream changes. Review actual tests and unfinished PRs; record verified findings and next steps here with evidence links. Avoid claiming all work is complete from a green documentation check, or adding a repo-wide roadmap merely to populate a template. Leave task-specific history in its existing documents.

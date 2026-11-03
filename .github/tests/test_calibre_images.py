@@ -5,6 +5,8 @@ import subprocess
 import sys
 import tempfile
 
+import yaml
+
 ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location('images', ROOT / '.github/scripts/calibre_images.py')
 images = importlib.util.module_from_spec(spec)
@@ -49,9 +51,13 @@ class ImageMetadataTest(unittest.TestCase):
 
     def test_dev_store_waits_for_public_tested_images(self):
         text = (ROOT / '.github/workflows/sync-dev-store.yml').read_text()
-        self.assertIn('needs: images', text)
+        workflow = yaml.safe_load(text)
+        dependencies = workflow['jobs']['publish']['needs']
+        if isinstance(dependencies, str):
+            dependencies = [dependencies]
+        self.assertIn('images', dependencies)
         self.assertLess(text.index('Prepare immutable store candidate'), text.index('  images:'))
-        self.assertGreater(text.index('HEAD:refs/heads/dev-store'), text.index('needs: images'))
+        self.assertIn('HEAD:refs/heads/dev-store', workflow['jobs']['publish']['steps'][-1]['run'])
         self.assertIn('cancel-in-progress: false', text)
 
     def test_release_tags_are_gated_by_both_architectures_and_anonymous_pull(self):

@@ -27,7 +27,8 @@ jobs:
     name: Gate, validate and merge bot-only MCPHub release
     if: vars.MCPHUB_AUTO_PROMOTE == 'true' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
-    timeout-minutes: 100
+    # Candidate and post-merge validation each include image publication.
+    timeout-minutes: 270
     env:
       GH_TOKEN: ${{ secrets.AUTOMATION_TOKEN || github.token }}
 

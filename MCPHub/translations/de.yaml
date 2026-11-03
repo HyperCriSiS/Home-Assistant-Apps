@@ -48,7 +48,7 @@ configuration:
         name: "Authentifizierung"
         description: >-
           restricted_user: Token eines eigenen, eingeschränkten Benutzers (empfohlen).
-          supervisor: automatischer Supervisor-Token.
+          supervisor: System-Admin ohne eigenen Token, kein Supervisor-Benutzer.
       home_assistant_mcp_user_token:
         name: "Token des eingeschränkten Benutzers"
         description: "Langlebiger Zugriffstoken dieses Benutzers. Nur für restricted_user."
@@ -63,6 +63,8 @@ configuration:
     description: >-
       Führt den Community-Server ha-mcp in dieser App aus und bindet ihn in MCPHub ein.
       https://homeassistant-ai.github.io/ha-mcp/
+      Volle Rechte in Home Assistant, aber keine Verwaltung von Apps und App-Store.
+      Für volle Supervisor-Rechte die separate ha-mcp-App nutzen: https://github.com/homeassistant-ai/ha-mcp
     fields:
       ha_mcp_enabled:
         name: "Inoffizielles Home Assistant MCP aktivieren"
@@ -75,7 +77,7 @@ configuration:
       ha_mcp_auth_mode:
         name: "Authentifizierung"
         description: >-
-          supervisor: automatischer Supervisor-Token (empfohlen).
+          supervisor: System-Admin ohne eigenen Token (empfohlen), kein Supervisor-Benutzer.
           restricted_user: Token eines Benutzers; ohne Admin-Rechte weniger Funktionen.
       ha_mcp_user_token:
         name: "Benutzer-Token"

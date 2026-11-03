@@ -93,6 +93,8 @@ jobs:
                       ".github/scripts/integration-test-mcphub.sh",
                       ".github/scripts/update-mcphub-upstream.py",
                       ".github/scripts/generate-mcphub-changelog.py",
+                      ".github/scripts/publish-mcphub-image.py",
+                      ".github/workflows/publish-mcphub-images.yml",
                   )
                   digests = [
                       path + ":" + source_tree(branch, path)
@@ -113,6 +115,10 @@ jobs:
                   and str(previous.get("revision", "")).isdigit()
               ):
                   revision = int(previous["revision"]) + 1
+                  if key == "mcphub":
+                      # Failed publication may already have reserved a version
+                      # tag without updating the generated store's state file.
+                      revision = max(revision, int(os.environ["DEV_BUILD"]))
               else:
                   revision = int(os.environ["DEV_BUILD"])
 
@@ -236,6 +242,9 @@ jobs:
       - name: Prepare immutable store candidate
         run: |
           python3 .github/scripts/calibre_images.py enable
+          # Bundle the integration test belonging to this MCPHub candidate,
+          # rather than an older copy inherited from main.
+          git checkout origin/dev-mcphub -- .github/scripts/integration-test-mcphub.sh
           git add .dev-store-revisions.json .dev-store-mcphub-changes.json repository.json \
             "MCPHub" "Calibre AIO" "TriliumNext Notes"
           git diff --cached --quiet || git commit -m "chore(dev-store): compose current app candidates"
@@ -256,7 +265,7 @@ jobs:
       packages: write
 
   publish:
-    needs: images
+    needs: [images, mcphub-images]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
@@ -271,3 +280,12 @@ jobs:
           cd store
           remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git push "$remote" HEAD:refs/heads/dev-store
+
+  mcphub-images:
+    needs: sync
+    uses: ./.github/workflows/publish-mcphub-images.yml
+    with:
+      bundle: calibre-store-candidate
+    permissions:
+      contents: read
+      packages: write
