@@ -51,7 +51,12 @@ for(const width of [1440,1920,390]){
   if(!scenario.startsWith('downloads')) {assert(marker.size<=32, 'List group marker is oversized'); assert(marker.left>=0); assert(!['none','normal','""'].includes(marker.content), 'Keep the native list marker');}
   const heading=await page.locator('.aio-list-page > h1').boundingBox();assert(heading.y<100,'Reclaim the old duplicate header strip');
   if(width>=768) {const box=await page.locator('.filterheader').boundingBox();assert(Math.abs(box.x+box.width/2-main.x-main.width/2)<2);assert(Math.abs(box.y+box.height/2-heading.y-heading.height/2)<2);}
-  if(scenario==='authors') {const letter=await page.locator('.character .char').first().boundingBox(),all=await page.locator('#all').boundingBox();assert(Math.abs(letter.y-all.y)<2,'Letter buttons must align with sort controls');}
+  if(scenario==='authors') {
+   const letter=await page.locator('.character .char').first().boundingBox(),group=await page.locator('.character').boundingBox(),all=await page.locator('#all').boundingBox();
+   assert(group.height>=letter.height && letter.y>=group.y && letter.y+letter.height<=group.y+group.height+1,'Letter group must contain its full-height buttons');
+   // Linux fonts can wrap the whole character group onto the next line.
+   if(Math.abs(group.y-all.y)<all.height/2) assert(Math.abs(letter.y-all.y)<2,'Letter buttons on the same line must align');
+  }
   if(scenario==='downloads') {assert(await page.locator('.aio-empty').isVisible());assert((await page.locator('.aio-download-help').innerText()).includes('Shelfmark'));assert.equal(await page.locator('.container h1').count(),0);}
   else {
    assert(await page.locator('.list-container .row').count()>0);
