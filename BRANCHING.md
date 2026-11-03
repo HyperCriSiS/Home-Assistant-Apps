@@ -41,6 +41,12 @@ Old repository URLs are kept operational by GitHub redirects after the rename. F
 
 The generator adds `(Dev)`, `-dev.<run>`, and `stage: experimental` metadata so test installations are clearly distinguishable.
 
+MCPHub versions use prebuilt images. The generator tests and publishes both
+architectures and verifies anonymous access before pushing the Dev store.
+Release-candidate validation publishes stable images before the main merge;
+main verifies the existing immutable tag. See [MCPHub image publication](docs/engineering/MCPHUB-IMAGES.md)
+for the initial package visibility setup and rollout order.
+
 **Never edit `dev-store` manually and never merge it into `main`.**
 
 ## Release flows

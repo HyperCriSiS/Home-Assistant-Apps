@@ -8,6 +8,8 @@ on:
       - ".github/scripts/integration-test-mcphub.sh"
       - ".github/scripts/haos-e2e-mcphub.sh"
       - ".github/scripts/update-mcphub-upstream.py"
+      - ".github/scripts/publish-mcphub-image.py"
+      - ".github/tests/test_publish_mcphub_image.py"
       - ".github/workflows/**"
       - ".yamllint"
   push:
@@ -19,6 +21,8 @@ on:
       - ".github/scripts/integration-test-mcphub.sh"
       - ".github/scripts/haos-e2e-mcphub.sh"
       - ".github/scripts/update-mcphub-upstream.py"
+      - ".github/scripts/publish-mcphub-image.py"
+      - ".github/tests/test_publish_mcphub_image.py"
       - ".github/workflows/**"
       - ".yamllint"
   workflow_dispatch:
@@ -75,6 +79,7 @@ jobs:
           python3 -m py_compile "MCPHub/patch_home_assistant_auth.py"
           python3 -m py_compile ".github/scripts/update-mcphub-upstream.py"
           python3 -m py_compile ".github/scripts/generate-mcphub-changelog.py"
+          python3 -m py_compile ".github/scripts/publish-mcphub-image.py"
 
       - name: Test managed Home Assistant MCP server lifecycle
         run: python3 -m unittest discover -s MCPHub/tests -p 'test_*.py' -v
@@ -93,6 +98,9 @@ jobs:
           -s .github/tests
           -p test_update_mcphub_tunnel_clients.py
           -v
+
+      - name: Test prebuilt image publication and development metadata
+        run: python3 -m unittest discover -s .github/tests -p test_publish_mcphub_image.py -v
 
       - name: Lint MCPHub Dockerfile
         run: |
@@ -121,7 +129,7 @@ jobs:
           assert config["name"] == "MCPHub"
           assert config["slug"] == "mcphub"
           assert set(config["arch"]) == {"amd64", "aarch64"}
-          assert "image" not in config
+          assert config["image"] == "ghcr.io/hypercrisis/mcphub"
           assert config["ingress"] is True
           assert config["ingress_port"] == 8099
           assert config["panel_admin"] is True
@@ -453,3 +461,32 @@ jobs:
           docker ps -a || true
           docker network ls || true
           docker volume ls || true
+
+  publish:
+    name: Publish tested MCPHub images
+    needs: validate
+    # Publish release candidates before main advertises the version. Forks and
+    # ordinary development PRs can validate code but cannot publish packages.
+    if: >-
+      ${{
+        github.repository == 'HyperCriSiS/Home-Assistant-Apps' &&
+        (
+          (
+            github.event_name != 'pull_request' &&
+            (github.ref == 'refs/heads/main' ||
+             github.ref == 'refs/heads/release/mcphub-candidate')
+          ) ||
+          (
+            github.event_name == 'pull_request' &&
+            github.base_ref == 'main' &&
+            github.head_ref == 'release/mcphub-candidate' &&
+            github.event.pull_request.head.repo.full_name == github.repository
+          )
+        )
+      }}
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/publish-mcphub-images.yml
+    with:
+      source_ref: ${{ github.sha }}
