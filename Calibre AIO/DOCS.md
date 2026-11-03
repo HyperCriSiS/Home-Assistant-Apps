@@ -34,6 +34,8 @@ less space. Sort criteria use distinct symbols (title, author, added date,
 publication date, series or downloads); a separate arrow indicates direction.
 Alphabetical letters are never mirrored. Hover/focus tooltips retain CWA's
 full descriptions. On phones, the toolbar wraps and touch targets stay larger.
+On desktop, sorting is centered on the title row. List markers and letter
+filters stay in their native positions with compact sizes and an inset gutter.
 
 `library_theme: modern` is the default, including for existing configurations.
 Set `library_theme: upstream` and restart the app to use CWA's original theme.
@@ -108,6 +110,9 @@ completed ebooks to `/cwa-book-ingest`, backed by `/share/<ingest_dir>`.
 Hardlink delivery is disabled because CWA consumes the ingest files. Shelfmark
 reads Calibre's `metadata.db` to mark already-owned books; it does not write
 the library database directly. CWA owns the actual import/conversion process.
+Calibre Web's admin **Downloads** page instead groups recorded downloads by
+user. It fills when users download library books through Calibre Web or send
+them to an e-reader; Shelfmark imports do not populate this overview.
 Audiobooks go to separate `/data/shelfmark-audiobooks` storage; CWA is not an
 audiobook library server. No Audiobookshelf integration is bundled.
 
