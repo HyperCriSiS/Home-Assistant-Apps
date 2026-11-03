@@ -30,6 +30,13 @@ Add this repository to the Home Assistant App store:
 Install **MCPHub** and start it with the default configuration first. Remote access is
 disabled by default so the dashboard can be verified independently.
 
+The stable and generated development stores use the public multi-architecture
+image `ghcr.io/hypercrisis/mcphub`. Supervisor downloads the tag matching the App
+version and selects `amd64` or `aarch64` automatically. System packages, the GitHub
+CLI and its Python MCP environment are installed in CI before publication.
+Additional `npx` / `uvx` MCP servers can still install packages locally on first use;
+their caches persist across restarts.
+
 ## First start
 
 1. Start **MCPHub**.

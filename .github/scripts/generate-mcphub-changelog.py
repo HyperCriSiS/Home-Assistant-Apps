@@ -29,6 +29,8 @@ RELATED = (
     ".github/scripts/integration-test-mcphub.sh",
     ".github/scripts/update-mcphub-upstream.py",
     ".github/scripts/generate-mcphub-changelog.py",
+    ".github/scripts/publish-mcphub-image.py",
+    ".github/workflows/publish-mcphub-images.yml",
 )
 BEGIN = "<!-- MCPHUB STABLE AUDIT BEGIN -->"
 END = "<!-- MCPHUB STABLE AUDIT END -->"

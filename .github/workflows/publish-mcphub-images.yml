@@ -1,0 +1,65 @@
+name: Publish tested MCPHub images
+on:
+  workflow_call:
+    inputs:
+      bundle:
+        type: string
+        default: ''
+      source_ref:
+        type: string
+        default: main
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: Trusted MCPHub source commit to publish
+        type: string
+        default: main
+permissions:
+  contents: read
+  packages: write
+concurrency:
+  group: mcphub-image-publication
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - name: Check out publication helpers
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          path: publisher
+          persist-credentials: false
+      - name: Check out exact validated source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        if: inputs.bundle == ''
+        with:
+          ref: ${{ inputs.source_ref }}
+          path: source
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: inputs.bundle != ''
+        with:
+          name: ${{ inputs.bundle }}
+          path: /tmp/candidate
+      - name: Load immutable development-store candidate
+        if: inputs.bundle != ''
+        run: git clone /tmp/candidate/store.bundle source
+      - name: Enable ARM64 container tests
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130  # v3
+        with:
+          image: docker.io/tonistiigi/binfmt@sha256:400a4873b838d1b89194d982c45e5fb3cda4593fbfd7e08a02e76b03b21166f0
+          platforms: arm64
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
+      - name: Install metadata reader
+        run: python3 -m pip install --disable-pip-version-check 'pyyaml==6.0.3'
+      - name: Log in to GitHub Container Registry
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+        run: printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+      - name: Build, test, publish and verify public images
+        working-directory: source
+        run: |
+          python3 ../publisher/.github/scripts/publish-mcphub-image.py \
+            --revision "$(git rev-parse HEAD)" \
+            --integration-script .github/scripts/integration-test-mcphub.sh

@@ -4,7 +4,7 @@ name: HAOS QEMU MCPHub test
 run-name: >-
   HAOS QEMU MCPHub test ${{ inputs.sha ||
   (github.event_name == 'workflow_run' && github.event.workflow_run.head_sha) ||
-  github.sha }}
+  github.sha }}${{ inputs.prebuilt && ' prebuilt' || '' }}
 
 on:
   workflow_run:
@@ -18,10 +18,15 @@ on:
         description: "Exact dev-mcphub commit to test (default: main)"
         type: string
         required: false
+      prebuilt:
+        description: "Install the public GHCR image instead of building source"
+        type: boolean
+        default: false
   pull_request:
     paths:
       - ".github/workflows/haos-qemu-mcphub.yml"
       - ".github/scripts/haos-qemu-mcphub.sh"
+      - ".github/scripts/haos-mcp-probe.py"
 
 permissions:
   contents: read
@@ -30,7 +35,7 @@ concurrency:
   group: >-
     haos-qemu-mcphub-${{ inputs.sha ||
     (github.event_name == 'workflow_run' && github.event.workflow_run.head_sha) ||
-    github.ref }}
+    github.ref }}-${{ inputs.prebuilt || false }}
   cancel-in-progress: false
 
 jobs:
@@ -93,4 +98,5 @@ jobs:
         env:
           HAOS_VERSION: ${{ steps.haos.outputs.version }}
           SHA: ${{ steps.source.outputs.sha }}
+          HAOS_PREBUILT_IMAGE: ${{ inputs.prebuilt && 'true' || 'false' }}
         run: bash .github/scripts/haos-qemu-mcphub.sh "$RUNNER_TEMP/source/MCPHub" "$SHA"
