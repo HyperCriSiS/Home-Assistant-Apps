@@ -1,13 +1,18 @@
 // Real pinned CWA templates and scripts, offline sample library and no provider requests.
 const fs=require('fs'); const path=require('path'); const assert=require('assert/strict');
 const {execFileSync}=require('child_process');
-const {chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const playwright=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const root=path.resolve(__dirname,'..'), src=path.join(process.env.CWA_SOURCE,'cps/static');
 const out=process.env.AIO_THEME_SCREENSHOTS; if(out) fs.mkdirSync(out,{recursive:true});
-(async()=>{const browser=await chromium.launch();try{
+(async()=>{const browser=await playwright[process.env.AIO_THEME_BROWSER || 'chromium'].launch();try{
 for(const width of [1440,1920,390]){
- const context=await browser.newContext({viewport:{width,height:900}}); const page=await context.newPage(); const errors=[];page.on('pageerror',e=>errors.push(e.message));
- page.on('console',msg=>{if(['error','warning'].includes(msg.type()))errors.push(msg.text());});
+ const context=await browser.newContext({viewport:{width,height:900}}); const page=await context.newPage(); const errors=[], fontWarnings=new Set();page.on('pageerror',e=>errors.push(e.message));
+ page.on('console',msg=>{
+  // Firefox repairs bounding boxes in the unmodified upstream embedded fonts.
+  // Record that specific warning separately; other warnings/errors still fail.
+  if(msg.type()==='warning' && msg.text().includes('downloadable font: glyf: Glyph bbox was incorrect; adjusting')) {fontWarnings.add(msg.text().split('source:')[0]);return;}
+  if(['error','warning'].includes(msg.type()))errors.push(msg.text().slice(0,500));
+ });
  await page.route('https://calibre.test/**',async route=>{
   const u=new URL(route.request().url());
   if(u.pathname.startsWith('/static/')){const p=path.join(src,decodeURIComponent(u.pathname.slice(8)));if(fs.existsSync(p))return route.fulfill({path:p});return route.fulfill({status:404,body:''});}
@@ -29,7 +34,7 @@ for(const width of [1440,1920,390]){
   assert(Math.abs(toolbar.x+toolbar.width/2-content.x-content.width/2)<2, 'Sorting must be centered in the content area');
  }
  if(out) await page.screenshot({path:path.join(out,`calibre-modern-${width}.png`)});
- console.log(JSON.stringify({width,title:await page.title(),sorts:await page.locator('.aio-sort').count(),errors,toolbar:await page.locator('.filterheader').boundingBox(),books:await page.locator('.discover.load-more .book').first().boundingBox()}));
+ console.log(JSON.stringify({width,title:await page.title(),sorts:await page.locator('.aio-sort').count(),errors,upstreamFontWarnings:fontWarnings.size,toolbar:await page.locator('.filterheader').boundingBox(),books:await page.locator('.discover.load-more .book').first().boundingBox()}));
  assert.equal(await page.locator('#asc').innerText(),'A–Z'); assert.equal(await page.locator('#desc').innerText(),'A–Z');
  assert.notEqual(await page.locator('#asc .aio-sort-arrow path').first().getAttribute('d'), await page.locator('#desc .aio-sort-arrow path').first().getAttribute('d'));
  await page.locator('#desc').click(); await page.waitForTimeout(300); assert.equal(await page.locator('#desc').getAttribute('aria-current'),'true');assert(page.url().includes('sort_param=zyx'));
