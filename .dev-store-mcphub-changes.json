@@ -1,5 +1,33 @@
 [
   {
+    "revision": 188,
+    "version": "v2026.11.02-dev.188",
+    "source_sha": "59cc78acfa2a89cf351aa5fb2afc15ce8403629e",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "490f1828e290036aab0f547c3679f69b40b0a13c",
+        "subject": "release(mcphub): prebuilt installation images (#155)"
+      },
+      {
+        "sha": "5da5d10849e266cd3105299d6d9dd55e79b67fff",
+        "subject": "feat(mcphub): install tested prebuilt images from GHCR (#151)"
+      },
+      {
+        "sha": "cbfb6a5234d08a92fdf907e6057c8a3282e7f691",
+        "subject": "feat(calibre): publish tested images before Home Assistant store updates (#147)"
+      },
+      {
+        "sha": "b4e26a58efcdd8742f4ad2b5033a6290910bd795",
+        "subject": "docs(mcphub): describe ha-mcp in the README (#134)"
+      },
+      {
+        "sha": "397bc7954d338b2103e13b4ae8b8e990dd0d1c98",
+        "subject": "release(mcphub): validated candidate (#133)"
+      }
+    ]
+  },
+  {
     "revision": 142,
     "version": "v2026.10.31-1-dev.142",
     "source_sha": "80690ca6edf22b5715ec8385ea01c5cf65cbd51e",
