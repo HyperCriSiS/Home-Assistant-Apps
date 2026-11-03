@@ -57,6 +57,7 @@ app.jinja_env.filters["last_modified"] = lambda b: ""
 app.jinja_env.filters["music"] = lambda b: False
 install_modern_theme(app)
 books = []
+scenario = sys.argv[2] if len(sys.argv) > 2 else "books"
 for i, (title, author) in enumerate(
     [
         ("Der stille Garten", "Mara Winter"),
@@ -104,16 +105,29 @@ with app.test_request_context("/"):
             ("tags", "glyphicon-tag", "Schlagwörter"),
         ]
     ]
+    lists = {
+        "authors": ("Authors", "authorlist", "author", ["Carnegie, Dale", "Christie, Agatha", "Ende, Michael", "Winter, Mara"]),
+        "categories": ("Categories", "catlist", "category", ["Biografie", "Roman", "Sachbuch"]),
+        "downloads": ("Downloads", "downloadlist", "download", []),
+        "downloads-filled": ("Downloads", "downloadlist", "download", ["Alex", "Mara"]),
+        "languages": ("Languages", "langlist", "language", ["Deutsch", "English"]),
+        "publishers": ("Publishers", "publisherlist", "publisher", ["Fischer", "Hanser"]),
+    }
+    title, page, data, names = lists.get(scenario, ("Bücher", "books", "", []))
+    entries = [(NS(id=i + 1, name=name, sort=name.replace(', ', ' ') if data == 'author' else name,
+                   format=None, rating=None), i + 1) for i, name in enumerate(names)]
     html = render_template(
-        "index.html",
+        "list.html" if scenario in lists else "index.html",
         current_user=user,
         instance="Calibre-Web",
-        title="Bücher",
-        page="books",
+        title=title,
+        page=page,
         bodyClass="",
-        entries=books,
+        entries=entries if scenario in lists else books,
+        charlist=[(c,) for c in sorted({name[0] for name in names})],
+        data=data,
         random=[],
-        order=sys.argv[1] if len(sys.argv) > 1 else "abc",
+        order=1 if scenario in lists else (sys.argv[1] if len(sys.argv) > 1 else "abc"),
         id=0,
         simple=True,
         sidebar=sidebar,

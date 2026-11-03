@@ -53,7 +53,7 @@ html.aio-modern body.blur > div.container-fluid > div > div.col-sm-10 > div.disc
 /* Title and sorting share one level instead of consuming separate rows. */
 html.aio-modern body.blur .discover.load-more {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 12px;
 }
@@ -70,6 +70,7 @@ html.aio-modern body.blur .discover.load-more > .row.display-flex {
 html.aio-modern body.blur .discover.load-more > .shelf-actions,
 html.aio-modern body.blur .discover.load-more > .filterheader {
   grid-column: 2;
+  justify-self: center;
   margin: 0 !important;
 }
 html.aio-modern body.blur > div.container-fluid > div > div.col-sm-10 > div.discover > h2 {
@@ -110,7 +111,8 @@ html.aio-modern body.blur > div.container-fluid > div > div.col-sm-10 > div.disc
   -webkit-mask-image: none !important;
 }
 .aio-modern body .shelf-actions .filterheader { margin: 0 !important; }
-.aio-modern body .filterheader > a.aio-sort {
+.aio-modern body .filterheader > .aio-sort,
+.aio-modern body .aio-list-page .filterheader .btn {
   display: inline-flex !important;
   align-items: center;
   justify-content: center;
@@ -130,14 +132,15 @@ html.aio-modern body.blur > div.container-fluid > div > div.col-sm-10 > div.disc
 }
 .aio-modern .aio-sort svg { display: block; width: 16px; height: 16px; flex: none; }
 .aio-modern .aio-sort svg.aio-sort-arrow { width: 13px; height: 16px; }
-.aio-modern body .filterheader > a.aio-sort.active {
+.aio-modern body .filterheader > .aio-sort.active,
+.aio-modern body .aio-list-page .filterheader .btn.active {
   color: var(--aio-accent) !important;
   background: #2b2419 !important;
   border-color: #78643e !important;
 }
-.aio-modern body .filterheader > a.aio-sort:hover { color: var(--aio-text) !important; border-color: #697789 !important; }
+.aio-modern body .filterheader > .aio-sort:hover { color: var(--aio-text) !important; border-color: #697789 !important; }
 .aio-modern a:focus-visible, .aio-modern button:focus-visible,
-.aio-modern input:focus-visible, .aio-modern select:focus-visible {
+.aio-modern input:focus-visible, .aio-modern select:focus-visible, .aio-modern [role="button"]:focus-visible {
   outline: 2px solid var(--aio-accent) !important;
   outline-offset: 2px !important;
 }
@@ -167,6 +170,131 @@ html.aio-modern body.blur > div.container-fluid > div > div.col-sm-10 > div.disc
 .aio-modern .btn-success { background: #1b3630; border-color: #436e63; color: #91d7c8; }
 .aio-modern .btn-danger { background: #3c242b; border-color: #895563; color: #f1afba; }
 .aio-modern .btn { border-radius: 5px; }
+/* Native list/filter DOM stays intact, including the separate group markers. */
+html.aio-modern body.blur > div.container-fluid > div.row-fluid > div.col-sm-10.aio-list-page {
+  position: fixed !important;
+  top: 60px !important;
+  height: calc(100% - 60px) !important;
+  padding: 12px 16px !important;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  align-content: start;
+  gap: 16px 12px;
+}
+html.aio-modern body.blur .aio-list-page > h1 {
+  position: static !important;
+  grid-column: 1;
+  grid-row: 1;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  color: var(--aio-text) !important;
+  font: 600 21px/1.4 "Segoe UI", system-ui, sans-serif !important;
+}
+html.aio-modern body.blur .aio-list-page > .filterheader {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: center;
+  margin: 0 !important;
+}
+html.aio-modern body.blur > div.container-fluid > div.row-fluid > div.col-sm-10.aio-list-page::before {
+  position: relative !important;
+  grid-column: 1;
+  grid-row: 2;
+  align-self: start;
+  left: 8px !important;
+  top: 12px !important;
+  width: 32px !important;
+  height: 32px !important;
+  font-size: 28px !important;
+  line-height: 32px !important;
+  color: var(--aio-muted);
+}
+html.aio-modern body.blur .aio-list-page > div.container {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  position: relative;
+  width: calc(100% - 56px) !important;
+  max-width: none !important;
+  margin: 12px 0 20px 56px !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+/* caliBlur repeats the page name as a CSS heading; the real heading is above. */
+html.aio-modern body.blur .aio-list-page > div.container::before { content: none !important; }
+.aio-modern body .aio-list-page .character { display: flex; flex-wrap: wrap; align-items: center; height: auto !important; gap: 4px; margin: 0 !important; padding: 0 !important; position: static !important; transform: none !important; }
+.aio-modern body .aio-list-page .filterheader .btn { top: 0 !important; }
+.aio-modern body .aio-list-page .character .btn { float: none; }
+.aio-modern body .aio-list-page .row { margin: 0; min-height: 36px; border-bottom: 1px solid var(--aio-line); }
+.aio-modern body .aio-list-page .row > div { padding: 7px 10px; }
+html.aio-modern body.blur .aio-list-page .row > div:first-child {
+  position: static !important; width: 44px; min-width: 44px; padding: 7px 10px !important; text-align: center;
+}
+html.aio-modern body.blur .aio-list-page .row > div:nth-child(2) {
+  width: calc(100% - 44px); max-width: none; height: auto; padding: 7px 10px !important;
+}
+html.aio-modern body.blur .aio-list-page .row a { padding: 0 !important; }
+html.aio-modern body.blur .aio-list-page > div.container .row a { color: var(--aio-muted) !important; }
+html.aio-modern body.blur .aio-list-page > div.container .row a:hover { color: var(--aio-text) !important; }
+.aio-modern .aio-download-help { max-width: 72ch; margin: 0 0 16px; color: var(--aio-muted); }
+.aio-modern .aio-empty { padding: 16px; border: 1px solid var(--aio-line); border-radius: 5px; background: var(--aio-surface); }
+html.aio-modern body.blur.downloadlist .aio-list-page > div.container { margin-left: 0 !important; width: 100% !important; }
+/* Replace caliBlur's absolute search decorations with one flex input group. */
+html.aio-modern body.blur > .navbar > div > form[role="search"]::before,
+html.aio-modern body.blur > .navbar > div > form[role="search"] > div > span::before,
+html.aio-modern body.blur > .navbar > div > form[role="search"] button::before { content: none !important; }
+html.aio-modern body.blur > .navbar > div > form[role="search"] { margin-top: 12px; margin-bottom: 12px; }
+html.aio-modern body.blur > .navbar > div > form[role="search"] > .input-group {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  border: 1px solid var(--aio-line);
+  border-radius: 5px;
+  background: var(--aio-bg);
+}
+html.aio-modern body.blur > .navbar > div > form[role="search"]:focus-within > .input-group { outline: 2px solid var(--aio-accent); outline-offset: 1px; }
+.aio-modern .aio-search-icon { width: 16px; height: 16px; margin: 0 10px; color: var(--aio-muted); flex: none; pointer-events: none; }
+html.aio-modern body.blur > .navbar > div > form[role="search"] #query {
+  position: static !important;
+  flex: 1;
+  min-width: 0;
+  width: 100% !important;
+  height: 34px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: var(--aio-text) !important;
+  background: transparent !important;
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+html.aio-modern body.blur > .navbar > div > form[role="search"] #query::placeholder { color: var(--aio-muted) !important; opacity: 1; }
+html.aio-modern body.blur > .navbar > div > form[role="search"] > div > .input-group-btn {
+  position: static !important;
+  width: 36px !important;
+  height: 34px !important;
+  flex: none;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  z-index: auto;
+}
+html.aio-modern body.blur > .navbar > div > form[role="search"] #query_submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 32px;
+  margin: 1px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 4px;
+  background: var(--aio-surface) !important;
+  color: var(--aio-muted) !important;
+}
+.aio-modern #query_submit svg { width: 16px; height: 16px; }
 /* Keep Isotope's measured card layout; percentages are scoped to book grids. */
 .aio-modern body .discover .book:not(body) {
   min-width: 0 !important;
@@ -204,7 +332,28 @@ html.aio-modern body.blur > div.container-fluid > div > div.col-sm-10 > div.disc
   .aio-modern body .discover .book:not(body) { width: 33.3333% !important; }
   .aio-modern body > .container-fluid > div > .col-sm-10 > .discover { padding: 0 8px !important; }
   .aio-modern body .filterheader { gap: 4px; }
-  .aio-modern body .filterheader > a.aio-sort { min-width: 44px; height: 44px !important; }
+  .aio-modern body .filterheader > .aio-sort,
+  .aio-modern body .aio-list-page .filterheader .btn { min-width: 44px; height: 44px !important; }
+  html.aio-modern body.blur > div.container-fluid > div.row-fluid > div.col-sm-10.aio-list-page {
+    top: 48px !important; height: calc(100% - 48px) !important;
+    padding: 12px !important; grid-template-columns: minmax(0, 1fr); gap: 12px;
+  }
+  html.aio-modern body.blur .aio-list-page > .filterheader { grid-column: 1; grid-row: 2; justify-self: start; }
+  html.aio-modern body.blur .aio-list-page > div.container { grid-row: 3; margin-left: 40px !important; width: calc(100% - 40px) !important; }
+  html.aio-modern body.blur > div.container-fluid > div.row-fluid > div.col-sm-10.aio-list-page::before { grid-row: 3; left: 0 !important; font-size: 24px !important; width: 28px !important; }
+  html.aio-modern body.blur > .navbar > div > form[role="search"] {
+    top: 6px !important; right: 10px !important; height: 36px !important; margin: 0 !important;
+  }
+  html.aio-modern body.blur > .navbar > div > form[role="search"] > .input-group { width: 36px; height: 36px; }
+  html.aio-modern body.blur > .navbar > div > form[role="search"]:not(:focus-within):not(.search-focus) #query {
+    position: absolute !important; inset: 0; opacity: 0; cursor: pointer;
+  }
+  html.aio-modern body.blur > .navbar > div > form[role="search"]:not(:focus-within):not(.search-focus) .input-group-btn { display: none; }
+  html.aio-modern body.blur > .navbar > div > form[role="search"]:is(:focus-within, .search-focus) {
+    left: 50px !important; width: auto !important; z-index: 1000;
+  }
+  html.aio-modern body.blur > .navbar > div > form[role="search"]:is(:focus-within, .search-focus) > .input-group { width: 100%; }
+  html.aio-modern body.blur > .navbar > div > form[role="search"] #query:focus { opacity: 1; }
   .aio-modern body .container-fluid .book .meta .title { font-size: 12px !important; }
   .aio-modern body .discover .book:not(body) { padding: 0 5px !important; }
 }

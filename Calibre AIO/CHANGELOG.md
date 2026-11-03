@@ -1,3 +1,11 @@
+# 1.2.3
+
+- Center sort controls beside the page title and compact the author/category
+  list icons, letter filters and rows without changing native filtering.
+- Align the library search icon, input and submit button in a dark field.
+- Explain the user-download overview and show an empty state when no Calibre
+  Web downloads have been recorded; Shelfmark imports are separate.
+
 # 1.2.2
 
 - Keep version labels and deployment files after large package/ownership layers,
