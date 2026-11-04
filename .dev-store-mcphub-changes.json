@@ -1,5 +1,21 @@
 [
   {
+    "revision": 191,
+    "version": "v2026.11.03-dev.191",
+    "source_sha": "eefeb5db49cf6419277ab3193233603b28c90fc6",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "eefeb5db49cf6419277ab3193233603b28c90fc6",
+        "subject": "chore(mcphub): update upstream to 1.2.1 (#157)"
+      },
+      {
+        "sha": "1d510baa506717cfd90c922e31b59666ae1b8e06",
+        "subject": "chore(mcphub): update upstream to 1.2.0 (#145)"
+      }
+    ]
+  },
+  {
     "revision": 188,
     "version": "v2026.11.02-dev.188",
     "source_sha": "59cc78acfa2a89cf351aa5fb2afc15ce8403629e",
