@@ -20,6 +20,11 @@ def load_manifest():
                 or not re.fullmatch(r'[0-9a-f]{64}', item['sha256'])
                 or not re.fullmatch(r'v?\d+\.\d+\.\d+', item['version'])):
             raise ValueError('Invalid upstream pin: ' + name)
+    for name, keys in (('calibre_sha256', ('x86_64', 'arm64')),
+                       ('kepubify_sha256', ('linux-64bit', 'linux-arm64'))):
+        if (set(data[name]) != set(keys)
+                or not all(re.fullmatch(r'[0-9a-f]{64}', value) for value in data[name].values())):
+            raise ValueError('Invalid upstream pin: ' + name)
     return data
 
 
@@ -30,6 +35,10 @@ def arguments(data):
         'SHELFMARK_SHA256': data['shelfmark']['sha256'],
         'SHELFMARK_PYTHON': data['shelfmark_python'],
         'CALIBRE_RELEASE': data['calibre'], 'KEPUBIFY_RELEASE': data['kepubify'],
+        'CALIBRE_SHA256_X86_64': data['calibre_sha256']['x86_64'],
+        'CALIBRE_SHA256_ARM64': data['calibre_sha256']['arm64'],
+        'KEPUBIFY_SHA256_64BIT': data['kepubify_sha256']['linux-64bit'],
+        'KEPUBIFY_SHA256_ARM64': data['kepubify_sha256']['linux-arm64'],
     }
 
 

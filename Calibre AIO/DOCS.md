@@ -160,6 +160,11 @@ request lacks a trusted HA identity/permission; a 502 normally means that the
 target backend has not started yet. Send only relevant log excerpts; avoid
 including API tokens or ingress URLs containing session identifiers.
 
+At every start CWA's own init script asks `api.github.com` for the newest CWA
+release to show its update notice. The request has a short timeout and the
+start continues without internet access; a related warning in the log is
+harmless. This App updates CWA only through its own releases.
+
 Upstream versions are listed in `upstream.json`. All upgrades should use the
 manifest/update workflow described in [UPDATING.md](UPDATING.md), with a backup
 before a real installation is upgraded.

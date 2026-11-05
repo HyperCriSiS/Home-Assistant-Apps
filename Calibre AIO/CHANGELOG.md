@@ -1,5 +1,16 @@
 # 1.2.3
 
+- Refuse an empty or absolute `library_dir` or `ingest_dir`, dot segments and
+  identical folders instead of using `/share` itself or container-local paths.
+- Verify the Calibre and kepubify downloads against pinned SHA-256 checksums
+  from `upstream.json`.
+- Keep the service definitions owned by root instead of the service account.
+- Send `Cache-Control: no-store` only for the App's own shell page; CWA and
+  Shelfmark assets keep their own caching headers.
+- Treat a failed registry check as an error instead of a missing release tag
+  when publishing installation images.
+- Explain the GitHub release check of CWA's init script; bring the German
+  documentation up to date with the English one.
 - Center sort controls beside the page title and compact the author/category
   list icons, letter filters and rows without changing native filtering.
 - Align the library search icon, input and submit button in a dark field.
