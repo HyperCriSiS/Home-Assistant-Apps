@@ -47,12 +47,9 @@ The development App is shown as **Trilium Notes (Dev)** under
 
 ## Configuration
 
-| Option | Description | Default |
-| --- | --- | --- |
-| `timezone` | IANA timezone used by the container | `Europe/Berlin` |
-| `log_retention_days` | Number of days Trilium keeps log files | `90` |
+The App needs no configuration. The container follows the Home Assistant system timezone, and Trilium keeps its log files for 90 days.
 
-The legacy `log_level` and `https_only` options are retained only for upgrade compatibility and are no longer used. TLS is terminated by Home Assistant Ingress or an external reverse proxy.
+The legacy `timezone`, `log_retention_days`, `log_level` and `https_only` options are retained only for upgrade compatibility and are no longer used. TLS is terminated by Home Assistant Ingress or an external reverse proxy.
 
 ## Data and backups
 
