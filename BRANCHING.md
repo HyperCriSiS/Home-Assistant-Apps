@@ -1,6 +1,9 @@
 # Branching workflow
 
 This repository uses separate long-lived development branches per Home Assistant App.
+The update, merge and release automation shared by every App, its timings and the
+checklist for a new App are documented in
+[docs/engineering/APP-AUTOMATION.md](docs/engineering/APP-AUTOMATION.md).
 
 ## `main`
 
