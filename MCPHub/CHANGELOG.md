@@ -1,5 +1,11 @@
 # Changelog
 
+## v2026.11.05
+
+### Fixed
+
+- An invalid or missing token, address or server name for the managed Home Assistant MCP bridge or the ha-mcp server no longer prevents MCPHub from starting. The affected server is left disabled with a warning in the log while Ingress, the LAN gateway and all other servers keep running.
+
 ## v2026.11.03
 
 ### Changed
