@@ -21,6 +21,29 @@ library_dir=$(bashio::config 'library_dir')
 ingest_dir=$(bashio::config 'ingest_dir')
 network_share_mode=$(bashio::config 'network_share_mode')
 
+# Both paths must stay inside /share: an empty value would make /share itself
+# the library and a dot segment would leave the persistent share.
+check_share_dir() {
+    local name="$1" value="$2" part parts
+    if [[ -z "${value}" || "${value}" == /* || "${value}" == *//* ]]; then
+        bashio::log.fatal "${name} must be a relative path below /share"
+        exit 1
+    fi
+    IFS=/ read -r -a parts <<< "${value}"
+    for part in "${parts[@]}"; do
+        if [[ "${part}" == "." || "${part}" == ".." ]]; then
+            bashio::log.fatal "${name} must not contain . or .. segments"
+            exit 1
+        fi
+    done
+}
+check_share_dir library_dir "${library_dir}"
+check_share_dir ingest_dir "${ingest_dir}"
+if [[ "${library_dir%/}" == "${ingest_dir%/}" ]]; then
+    bashio::log.fatal "library_dir and ingest_dir must be different folders"
+    exit 1
+fi
+
 CONFIG_TARGET="/data/config"
 LIBRARY_TARGET="/share/${library_dir}"
 INGEST_TARGET="/share/${ingest_dir}"

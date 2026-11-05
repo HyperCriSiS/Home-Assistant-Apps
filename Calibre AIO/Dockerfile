@@ -18,6 +18,10 @@ ARG CWA_REF
 ARG CWA_SHA256
 ARG CALIBRE_RELEASE
 ARG KEPUBIFY_RELEASE
+ARG CALIBRE_SHA256_X86_64
+ARG CALIBRE_SHA256_ARM64
+ARG KEPUBIFY_SHA256_64BIT
+ARG KEPUBIFY_SHA256_ARM64
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -54,24 +58,28 @@ RUN python3 -m venv /opt/cwa-venv \
 # kepubify: static binary release, converts EPUB to KEPUB for Kobo devices
 RUN set -eu; \
     case "$(uname -m)" in \
-        x86_64)  kbin=kepubify-linux-64bit ;; \
-        aarch64) kbin=kepubify-linux-arm64 ;; \
+        x86_64)  kbin=kepubify-linux-64bit; ksum="${KEPUBIFY_SHA256_64BIT}" ;; \
+        aarch64) kbin=kepubify-linux-arm64; ksum="${KEPUBIFY_SHA256_ARM64}" ;; \
         *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;; \
     esac; \
     curl -fsSL -o /usr/bin/kepubify \
         "https://github.com/pgaskin/kepubify/releases/download/${KEPUBIFY_RELEASE}/${kbin}" \
+    && echo "${ksum}  /usr/bin/kepubify" | sha256sum -c - \
     && chmod +x /usr/bin/kepubify
 
 # Calibre: official self-contained Linux binary release (bundles its own Qt/Python)
 RUN set -eu; \
     case "$(uname -m)" in \
-        x86_64)  carch=x86_64 ;; \
-        aarch64) carch=arm64 ;; \
+        x86_64)  carch=x86_64; csum="${CALIBRE_SHA256_X86_64}" ;; \
+        aarch64) carch=arm64; csum="${CALIBRE_SHA256_ARM64}" ;; \
         *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;; \
     esac; \
     mkdir -p /app/calibre; \
-    curl -fsSL "https://download.calibre-ebook.com/${CALIBRE_RELEASE}/calibre-${CALIBRE_RELEASE}-${carch}.txz" \
-        | tar -xJ -C /app/calibre
+    curl -fsSL -o /tmp/calibre.txz \
+        "https://download.calibre-ebook.com/${CALIBRE_RELEASE}/calibre-${CALIBRE_RELEASE}-${carch}.txz" \
+    && echo "${csum}  /tmp/calibre.txz" | sha256sum -c - \
+    && tar -xJ -C /app/calibre -f /tmp/calibre.txz \
+    && rm /tmp/calibre.txz
 
 RUN printf '%s' "${CWA_VERSION}" > /app/CWA_RELEASE \
     && printf '%s' "${CALIBRE_RELEASE}" > /CALIBRE_RELEASE
@@ -228,8 +236,8 @@ RUN mkdir -p \
     && chmod a+x /app/calibre-web-automated/root/etc/s6-overlay/s6-rc.d/*/run
 
 COPY rootfs /
-RUN chown -R abc:abc /etc/s6-overlay \
-    && chmod a+x /etc/cont-init.d/*.sh /etc/s6-overlay/s6-rc.d/*/run
+# Service scripts run as root, so they stay owned by root.
+RUN chmod a+x /etc/cont-init.d/*.sh /etc/s6-overlay/s6-rc.d/*/run
 
 WORKDIR /
 
