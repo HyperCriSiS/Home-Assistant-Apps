@@ -1,13 +1,13 @@
 ---
 configuration:
   timezone:
-    name: "Timezone"
+    name: "Timezone (deprecated)"
     description: >-
-      IANA timezone used by Trilium, for example Europe/Berlin or America/New_York.
+      No longer used. The container follows the Home Assistant system timezone.
   log_retention_days:
-    name: "Log retention (days)"
+    name: "Log retention (deprecated)"
     description: >-
-      Number of days Trilium keeps its log files (1-3650).
+      No longer used. Trilium keeps its log files for 90 days.
   log_level:
     name: "Log level (deprecated)"
     description: >-
