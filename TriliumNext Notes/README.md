@@ -47,12 +47,9 @@ The development App is shown as **Trilium Notes (Dev)** under
 
 ## Configuration
 
-| Option | Description | Default |
-| --- | --- | --- |
-| `timezone` | IANA timezone used by the container | `Europe/Berlin` |
-| `log_retention_days` | Number of days Trilium keeps log files | `90` |
+The App needs no configuration. The container follows the Home Assistant system timezone, and Trilium keeps its log files for 90 days.
 
-The legacy `log_level` and `https_only` options are retained only for upgrade compatibility and are no longer used. TLS is terminated by Home Assistant Ingress or an external reverse proxy.
+The legacy `timezone`, `log_retention_days`, `log_level` and `https_only` options are retained only for upgrade compatibility and are no longer used. TLS is terminated by Home Assistant Ingress or an external reverse proxy.
 
 ## Data and backups
 
@@ -62,10 +59,10 @@ Before upgrading, create a current Home Assistant backup. Database migrations ar
 
 ## Network access
 
-Ingress is enabled by default. Port `8080` is also exposed for optional direct access. Trilium trusts only the Home Assistant Ingress reverse proxy at `172.30.32.2` for forwarded client information instead of globally trusting arbitrary `X-Forwarded-For` headers.
+Ingress is enabled by default. Direct access on port `8080` is disabled by default on new installations; existing installations keep their network settings. Trilium trusts only the Home Assistant Ingress reverse proxy at `172.30.32.2` for forwarded client information instead of globally trusting arbitrary `X-Forwarded-For` headers.
 
 > [!TIP]
-> Direct access on port `8080` bypasses Home Assistant authentication and is protected only by Trilium's own login. If you only use Ingress or the Trilium desktop/mobile sync through a reverse proxy, clear the host port under **Settings → Apps → Trilium Notes → Configuration → Network** to disable it. Never forward this port to the internet without TLS.
+> Direct access on port `8080` bypasses Home Assistant authentication and is protected only by Trilium's own login. Until the first login, the setup wizard is open to anyone who can reach the port. Enable the host port under **Settings → Apps → Trilium Notes → Configuration → Network** only if you need the Trilium desktop or mobile sync or a reverse proxy, and never forward it to the internet without TLS.
 
 ## Troubleshooting
 
