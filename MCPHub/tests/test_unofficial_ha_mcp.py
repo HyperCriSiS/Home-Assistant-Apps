@@ -72,7 +72,8 @@ class UnofficialHaMcpTests(unittest.TestCase):
         text = (ROOT / "run.sh").read_text(encoding="utf-8")
         self.assertIn('MCP_HOST="127.0.0.1"', text)
         self.assertIn("unset JWT_SECRET HA_INGRESS_PROXY_SECRET", text)
-        self.assertIn("ha-mcp@latest ha-mcp-web", text)
+        self.assertIn('"ha-mcp==${HA_MCP_VERSION}" ha-mcp-web', text)
+        self.assertNotIn("ha-mcp@latest", text)
 
 
 if __name__ == "__main__":

@@ -9,6 +9,9 @@ ARG BUILD_ARCH
 ARG GH_VERSION=2.101.0
 ARG GH_CLI_MCP_VERSION=0.3.0
 ARG MCP_PYTHON_VERSION=1.30.0
+# ha-mcp runs with Supervisor rights, so it is pinned and updated with the App.
+ARG HA_MCP_VERSION=9.1.0
+ENV HA_MCP_VERSION=${HA_MCP_VERSION}
 
 LABEL \
     io.hass.version="${BUILD_VERSION}" \
