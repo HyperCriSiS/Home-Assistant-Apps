@@ -1,6 +1,6 @@
 ---
-name: "Trilium Notes"
-version: "v2026.11.05"
+name: "Trilium Notes (Dev)"
+version: "v2026.11.05-dev.89"
 slug: trilium
 description: >-
   Trilium v0.106.1 - hierarchical note-taking and personal knowledge base.

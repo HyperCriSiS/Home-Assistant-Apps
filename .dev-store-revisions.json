@@ -4,8 +4,8 @@
     "tree": "a1fe716cdaff521aa48f5c6c84f79f2720f02c4a"
   },
   "mcphub": {
-    "fingerprint": "2a30e4f8c55f509e4c8c48acd0b5835d862d06fbdc098594fde1f357558bd5b8",
-    "revision": 196,
+    "fingerprint": "d55a1e7a99c1a4a84982041f94837bb8597b6183738440a32da721ddaa7df806",
+    "revision": 200,
     "tree": "110b158153570485b775042cc5612fb42cb5ceb2"
   },
   "plextraktsync": {
@@ -13,7 +13,7 @@
     "tree": "3e6df9efbafcaa7df86453dd25eea6dbc70932b9"
   },
   "trilium": {
-    "revision": 88,
-    "tree": "5a718ff7c36c499c045aee389a5073e37ed670c0"
+    "revision": 89,
+    "tree": "f1d978c4d74a577827d579162abc904dd876ae25"
   }
 }

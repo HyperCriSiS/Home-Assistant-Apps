@@ -1,5 +1,25 @@
 [
   {
+    "revision": 200,
+    "version": "v2026.11.05-dev.200",
+    "source_sha": "abdc7fb7d4ddada8764569f14081b1e02df8b478",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "abdc7fb7d4ddada8764569f14081b1e02df8b478",
+        "subject": "Merge remote-tracking branch 'origin/main' into dev-mcphub"
+      },
+      {
+        "sha": "3036573789071ecd2aeef87b021c9aa25e123636",
+        "subject": "Merge remote-tracking branch 'origin/main' into dev-mcphub"
+      },
+      {
+        "sha": "e871570a317e3ef87fee0e2d9a8ca535d9ee6982",
+        "subject": "chore: document the shared App automation and fix store sync deletions (#167)"
+      }
+    ]
+  },
+  {
     "revision": 196,
     "version": "v2026.11.05-dev.196",
     "source_sha": "7123f3d39c3649f5626043b7922f4b2fee7ef8eb",
