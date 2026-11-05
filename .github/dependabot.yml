@@ -6,6 +6,8 @@ updates:
     target-branch: dev-mcphub
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 3
     open-pull-requests-limit: 5
     labels:
       - dependencies
@@ -15,6 +17,8 @@ updates:
     target-branch: dev-trilium
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 3
     open-pull-requests-limit: 5
     labels:
       - dependencies
