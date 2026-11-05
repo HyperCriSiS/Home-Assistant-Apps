@@ -1,5 +1,21 @@
 [
   {
+    "revision": 193,
+    "version": "v2026.11.05-dev.193",
+    "source_sha": "c1a16335d15c5ccd61e85b5343ec3b3afd8d2d75",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "c1a16335d15c5ccd61e85b5343ec3b3afd8d2d75",
+        "subject": "fix(mcphub): keep starting when Home Assistant MCP options are invalid (#161)"
+      },
+      {
+        "sha": "9292b60d676f50dad0dff0e712d94fb5c6ef0e93",
+        "subject": "Merge remote-tracking branch 'origin/main' into dev-mcphub"
+      }
+    ]
+  },
+  {
     "revision": 191,
     "version": "v2026.11.03-dev.191",
     "source_sha": "eefeb5db49cf6419277ab3193233603b28c90fc6",
