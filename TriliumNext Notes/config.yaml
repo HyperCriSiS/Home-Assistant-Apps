@@ -1,6 +1,6 @@
 ---
-name: "Trilium Notes (Dev)"
-version: "v2026.11.05-dev.88"
+name: "Trilium Notes"
+version: "v2026.11.05"
 slug: trilium
 description: >-
   Trilium v0.106.1 - hierarchical note-taking and personal knowledge base.
@@ -25,10 +25,11 @@ map:
   - type: data
     read_only: false
     path: /home/node/trilium-data
+# Disabled by default: direct access bypasses Home Assistant authentication.
 ports:
-  "8080/tcp": 8080
+  "8080/tcp": null
 ports_description:
-  "8080/tcp": "Trilium web interface (not required for Ingress)"
+  "8080/tcp": "Trilium web interface for direct access or sync clients (not required for Ingress)"
 options: {}
 schema:
   # Kept temporarily for compatibility with existing installations.

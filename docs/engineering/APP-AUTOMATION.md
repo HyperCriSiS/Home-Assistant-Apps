@@ -1,0 +1,90 @@
+# App automation: one contract for every App
+
+Every App in this repository is handled by the same chain of GitHub Actions.
+This page is the single reference for that chain, for the timings every App
+must share, and for the checklist that makes a new App behave identically from
+its first day. Branch semantics are described in [BRANCHING.md](../../BRANCHING.md).
+
+## The chain
+
+```text
+upstream release
+  -> update-<app>.yml           opens a bot PR against dev-<app>      (daily)
+  -> validate-<app>.yml         full validation of the PR commit      (dispatched)
+  -> merge-due-updates.yml      merges the bot PR after 12 hours      (hourly)
+  -> sync-dev-store.yml         publishes dev-store for HA testing    (on push)
+  -> auto-promote-<app>.yml     releases dev-<app> to main            (every 3 hours)
+  -> sync-dev-bases.yml         merges main back into every dev-*     (on push to main)
+```
+
+Every step is fail closed: a step that cannot prove its precondition skips or
+puts the pull request on hold with the label `hold`. Removing the label resumes
+the automation. Scheduled workflows run only from `main`; a workflow that exists
+only on a development branch never runs on its schedule.
+
+## Shared timings and settings
+
+| Setting | Value | Where it lives |
+| --- | --- | --- |
+| Update check | daily, `17 4 * * *` (Trilium, MCPHub), `23 7 * * *` (Calibre) | `update-*.yml` |
+| Bot PR merge delay into `dev-<app>` | 12 hours after the PR was opened | `merge_due_updates.py` `DELAY` |
+| Due-update merge check | hourly, `23 * * * *` | `merge-due-updates.yml` |
+| Minimum upstream release age | 48 hours | `auto_promote_*.py` `RELEASE_AGE` |
+| Soak time on `dev-<app>` before release | 36 hours after the newest update reached the branch | `auto_promote_*.py` `SOAK` |
+| Distance to the previous stable release | 24 hours (MCPHub only, images are published on release) | `auto_promote_mcphub.py` `COOLDOWN` |
+| Promotion check | every 3 hours, offset per App (`13`, `43`) | `auto-promote-*.yml` |
+| Promotion switch | repository variable `<APP>_AUTO_PROMOTE=true` | repository settings, variables |
+| Pause one PR | label `hold` on the update or release PR | GitHub labels |
+| Bot identity | `github-actions[bot]`, `github.token` | every workflow |
+| Merge method | squash only on `main`; fast-forward and deletion blocked on `dev-*` and `dev-store` | repository rulesets |
+
+The release gates accept only commits produced by the trusted updater of that
+App (version pins, generated build arguments, changelog lines). Any other commit
+on `dev-<app>` keeps the manual release flow in `promote.yml`; the automation
+then skips silently every three hours until a manual release has been made.
+
+## Per-App status
+
+| App | Updater | Merge into dev | Auto-promote | Images |
+| --- | --- | --- | --- | --- |
+| Trilium Notes | `update-trilium.yml` | yes | `auto-promote-trilium.yml`, `TRILIUM_AUTO_PROMOTE` | built by Home Assistant |
+| MCPHub | `update-mcphub.yml`, `update-mcphub-tunnel-clients.yml` | yes | `auto-promote-mcphub.yml`, `MCPHUB_AUTO_PROMOTE` | published to GHCR before the merge |
+| Calibre AIO | `update-calibre-aio.yml` | on `dev-calibre` only | `auto-promote-calibre.yml`, `CALIBRE_AUTO_PROMOTE`, on `dev-calibre` only | published to GHCR before the merge |
+
+"On `dev-calibre` only" means the files exist on the development branch but not
+yet on `main`. They become active with the next manual Calibre release and the
+variable `CALIBRE_AUTO_PROMOTE=true`.
+
+## Checklist for a new App
+
+Copy the Trilium files as the template; they are the smallest complete set.
+
+1. Create `dev-<app>` from `main` and add it to the ruleset
+   "App development branches" (blocks deletion and force pushes).
+2. Add the branch to `sync-dev-bases.yml`, `sync-dev-store.yml` (checkout,
+   `git rm` list and generator), `lint-workflows.yml` push branches and
+   `BRANCHING.md`.
+3. Add `validate-<app>.yml` with `pull_request`, `push` to `main` and
+   `dev-<app>`, and `workflow_dispatch`. The dispatched run is what the merge
+   and release gates look for.
+4. Add `update-<app>.yml`: daily schedule, checkout of `dev-<app>`, the trusted
+   updater taken from `main`, branch name `automation/<app>-<version>`, title
+   `chore: update <App> to <version>`, dispatch of the validation, close
+   superseded PRs.
+5. Add a `Kind` for the App in `.github/scripts/merge_due_updates.py` with the
+   exact file list the updater may touch, and a test in
+   `.github/tests/test_merge_due_updates.py`.
+6. Add `.github/scripts/auto_promote_<app>.py` reusing the shared helpers from
+   `auto_promote_mcphub.py` with `RELEASE_AGE = 48 * HOUR` and
+   `SOAK = 36 * HOUR`, plus `auto-promote-<app>.yml` with
+   `if: vars.<APP>_AUTO_PROMOTE == 'true' && github.ref == 'refs/heads/main'`,
+   the concurrency group `promote-app-development-main` and a cron offset that
+   does not collide with the other Apps.
+7. Add the App to `promote.yml` (`workflow_dispatch` choice and `workflow_run`
+   list) for manual releases.
+8. If the App installs prebuilt images: a `publish-<app>-images.yml`
+   `workflow_call` used by `sync-dev-store.yml`, `promote.yml` and
+   `auto-promote-<app>.yml`, and `image:` in `config.yaml`.
+9. Set the repository variable `<APP>_AUTO_PROMOTE=true` only after the first
+   manual release has proven the chain.
+10. Add the App row to this page and to the README table.

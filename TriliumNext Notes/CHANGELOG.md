@@ -4,6 +4,10 @@
 
 Trilium itself stays at v0.106.1.
 
+### Changed
+
+- The host port `8080` is no longer published by default on new installations. Direct access bypasses Home Assistant authentication, and the setup wizard is open until the first login. Existing installations keep their network settings; the port can still be enabled in the App's network configuration.
+
 ### Fixed
 
 - The `timezone` and `log_retention_days` options never took effect: Home Assistant passes `environment` values to the container literally, so Trilium received the placeholder text and fell back to its 90 day default, while the Supervisor always sets `TZ` to the Home Assistant system timezone. Both options are now deprecated and no longer shown as active settings; existing values are ignored.
