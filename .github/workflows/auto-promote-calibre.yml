@@ -4,6 +4,8 @@ name: Auto-promote Calibre AIO updates
 # CWA/Shelfmark pin updates that passed every gate in
 # .github/scripts/auto_promote_calibre.py, 36 hours after the newest one
 # reached dev-calibre. Everything else stays manual.
+# main installs prebuilt images, so both release tags are built, tested and
+# published from the gated commit before the merge; a missing tag stops it.
 # Pause at any time: set the repository variable CALIBRE_AUTO_PROMOTE=false
 # or label the Calibre AIO release pull request "hold".
 
@@ -16,6 +18,7 @@ permissions:
   actions: write
   contents: write
   issues: write
+  packages: write
   pull-requests: write
 
 concurrency:
@@ -23,13 +26,18 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  promote:
-    name: Gate and merge bot-only Calibre AIO release
+  gate:
+    name: Gate bot-only Calibre AIO release
     if: vars.CALIBRE_AUTO_PROMOTE == 'true' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
-    timeout-minutes: 100
+    timeout-minutes: 20
     env:
       GH_TOKEN: ${{ secrets.AUTOMATION_TOKEN || github.token }}
+    outputs:
+      action: ${{ steps.gate.outputs.action }}
+      main_sha: ${{ steps.gate.outputs.main_sha }}
+      dev_sha: ${{ steps.gate.outputs.dev_sha }}
+      summary: ${{ steps.gate.outputs.summary }}
 
     steps:
       - name: Check out trusted gates from main
@@ -50,13 +58,56 @@ jobs:
         if: steps.gate.outputs.action == 'validate'
         run: gh workflow run validate-calibre-aio.yml --repo "$GITHUB_REPOSITORY" --ref dev-calibre
 
+  images:
+    name: Publish tested release images from dev-calibre
+    needs: gate
+    if: needs.gate.outputs.action == 'promote'
+    uses: ./.github/workflows/publish-calibre-images.yml
+    with:
+      source_ref: dev-calibre
+    permissions:
+      contents: read
+      packages: write
+
+  promote:
+    name: Merge the exact gated Calibre AIO commit
+    needs: [gate, images]
+    if: needs.gate.outputs.action == 'promote'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    env:
+      GH_TOKEN: ${{ secrets.AUTOMATION_TOKEN || github.token }}
+
+    steps:
+      - name: Check out trusted gates from main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      # The Supervisor pulls these tags anonymously as soon as main changes.
+      - name: Require both published install images for the gated version
+        env:
+          DEV_SHA: ${{ needs.gate.outputs.dev_sha }}
+        run: |
+          set -euo pipefail
+          version="$(gh api "repos/${GITHUB_REPOSITORY}/contents/Calibre%20AIO/config.yaml?ref=${DEV_SHA}" \
+            --jq '.content' | base64 -d | sed -n 's/^version: *"\{0,1\}\([^"]*\)"\{0,1\}$/\1/p')"
+          [[ -n "$version" ]] || { echo 'Could not read the Calibre AIO version' >&2; exit 1; }
+          public_config="$(mktemp -d)"
+          for arch in amd64 aarch64; do
+            image="ghcr.io/hypercrisis/${arch}-calibre-aio:${version}"
+            DOCKER_CONFIG="$public_config" docker manifest inspect "$image" >/dev/null \
+              || { echo "Install image is not public: ${image}" >&2; exit 1; }
+          done
+
       - name: Re-check and merge the exact validated commit
         id: merge
-        if: steps.gate.outputs.action == 'promote'
         env:
-          MAIN_SHA: ${{ steps.gate.outputs.main_sha }}
-          DEV_SHA: ${{ steps.gate.outputs.dev_sha }}
-          SUMMARY: ${{ steps.gate.outputs.summary }}
+          MAIN_SHA: ${{ needs.gate.outputs.main_sha }}
+          DEV_SHA: ${{ needs.gate.outputs.dev_sha }}
+          SUMMARY: ${{ needs.gate.outputs.summary }}
         run: |
           python3 .github/scripts/auto_promote_calibre.py merge \
             --main-sha "$MAIN_SHA" --dev-sha "$DEV_SHA" --summary "$SUMMARY"
