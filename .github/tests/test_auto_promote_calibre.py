@@ -19,6 +19,8 @@ MANIFEST = {
     "shelfmark": {"repository": "calibrain/shelfmark", "version": "v1.5.1",
                   "commit": "c" * 40, "sha256": "d" * 64},
     "calibre": "9.1.0", "kepubify": "v4.0.4", "shelfmark_python": "3.14.7",
+    "calibre_sha256": {"x86_64": "3" * 64, "arm64": "4" * 64},
+    "kepubify_sha256": {"linux-64bit": "5" * 64, "linux-arm64": "6" * 64},
 }
 CONFIG = 'name: "Calibre AIO"\nversion: "1.0.0"\nslug: "calibre-aio"\n'
 NOTES = "# 1.0.0\n\n- Stable release.\n"
