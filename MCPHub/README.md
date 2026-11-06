@@ -71,7 +71,7 @@ The development App is shown as **MCPHub (Dev)** under
 - No Home Assistant Docker socket access
 - No privileged mode
 - No host networking
-- Read-only Supervisor info access only (no App control)
+- Supervisor access limited to App info and this App's own options (no control of other Apps)
 - Home Assistant hot-backup support (package caches excluded)
 - `amd64` and `aarch64` support
 
@@ -81,7 +81,7 @@ MCP clients in your LAN can connect on host port **3001**, enabled by default:
 `http://<HA-IP>:3001/mcp` (or `/mcp/<group>`, `/mcp/$smart`) with the header
 `Authorization: Bearer <key>`. Create the key in MCPHub under **Keys**.
 
-Port 3001 serves **only MCP endpoints**. MCPHub's web interface, login and management API
+Port 3001 serves **only MCP endpoints** plus an unauthenticated `/health` check. MCPHub's web interface, login and management API
 are not reachable there; they are available exclusively through the Home Assistant sidebar
 (Ingress) with your Home Assistant login.
 

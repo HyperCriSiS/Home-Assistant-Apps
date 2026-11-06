@@ -99,7 +99,7 @@ def trusted_home_assistant_ca_file(configured: str) -> Path:
 
 
 def unavailable_home_assistant_mcp_block() -> str:
-    """Fail closed for invalid CA settings without taking down Ingress."""
+    """Fail closed for invalid bridge settings without taking down Ingress."""
     return """server {
     listen 127.0.0.1:8097;
     access_log off;
@@ -202,7 +202,12 @@ def main() -> None:
     template = TEMPLATE_FILE.read_text(encoding="utf-8")
 
     ha_ingress_proxy_secret = read_secret(HA_INGRESS_PROXY_SECRET_FILE)
-    home_assistant_block = home_assistant_mcp_server_block(options)
+    try:
+        home_assistant_block = home_assistant_mcp_server_block(options)
+    except ValueError as err:
+        # An invalid bridge option must never take down Ingress or the gateway.
+        print(f"[WARN] Home Assistant MCP bridge unavailable: {err}", file=sys.stderr)
+        home_assistant_block = unavailable_home_assistant_mcp_block()
 
     rendered = template.replace(
         "__HA_INGRESS_PROXY_SECRET__",

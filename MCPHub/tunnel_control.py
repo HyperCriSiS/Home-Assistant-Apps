@@ -47,7 +47,7 @@ def options():
     if not isinstance(data, dict):
         raise ValueError('Invalid Home Assistant App options')
     value = dict(data)
-    for group in ('openai', 'remote_access', 'home_assistant', 'github', 'logging'):
+    for group in ('openai', 'remote_access', 'home_assistant', 'ha_mcp', 'github', 'logging'):
         if isinstance(data.get(group), dict):
             value.update(data[group])
     return value
