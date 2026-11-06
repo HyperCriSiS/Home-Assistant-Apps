@@ -1,5 +1,21 @@
 [
   {
+    "revision": 201,
+    "version": "v2026.11.05-dev.201",
+    "source_sha": "bebb0298b350d2a87531ae4c8c726cd8ff81f0b2",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "bebb0298b350d2a87531ae4c8c726cd8ff81f0b2",
+        "subject": "Merge remote-tracking branch 'origin/main' into dev-mcphub"
+      },
+      {
+        "sha": "612a041fdcfb181729691d091a2558a993d368bc",
+        "subject": "release(mcphub): validated candidate (#168)"
+      }
+    ]
+  },
+  {
     "revision": 200,
     "version": "v2026.11.05-dev.200",
     "source_sha": "abdc7fb7d4ddada8764569f14081b1e02df8b478",
