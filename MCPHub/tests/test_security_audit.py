@@ -90,6 +90,28 @@ class HomeAssistantProxyTlsTests(unittest.TestCase):
         self.assertIn("proxy_pass https://home.example.org/api/mcp;", nginx)
         self.assertNotIn("proxy_ssl_name", nginx)
 
+    def test_invalid_token_renders_fallback_without_startup_failure(self):
+        root = Path(self.temp.name)
+        (root / "template").write_text(
+            "__HA_INGRESS_PROXY_SECRET__\n__HOME_ASSISTANT_MCP_SERVER_BLOCK__\n",
+            encoding="utf-8",
+        )
+        (root / "secret").write_text("mha_secret\n", encoding="utf-8")
+        self.options["home_assistant_mcp_user_token"] = ""
+        (root / "options.json").write_text(json.dumps(self.options), encoding="utf-8")
+        with patch.multiple(
+            self.proxy,
+            OPTIONS_FILE=root / "options.json",
+            TEMPLATE_FILE=root / "template",
+            OUTPUT_FILE=root / "mcphub.conf",
+            HA_INGRESS_PROXY_SECRET_FILE=root / "secret",
+        ):
+            self.proxy.main()
+        rendered = (root / "mcphub.conf").read_text(encoding="utf-8")
+        self.assertIn("mha_secret", rendered)
+        self.assertIn("return 502;", rendered)
+        self.assertNotIn("proxy_pass", rendered)
+
     def test_invalid_ca_paths_fail_closed(self):
         self.options["home_assistant_mcp_url"] = "https://ha.lan/api/mcp"
         for ca in ("/etc/passwd", "/ssl/../etc/passwd", "/ssl/missing.pem"):

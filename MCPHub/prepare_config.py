@@ -380,6 +380,51 @@ def previous_managed_home_assistant_name(mcp_servers: dict) -> str | None:
     return None
 
 
+def sync_managed_home_assistant_server(
+    mcp_servers: dict, options: dict, enabled: bool, previous_name: str | None
+) -> str | None:
+    """Add, rename or remove the managed entry; return the name to persist."""
+    if enabled:
+        name = str(
+            options.get(
+                "home_assistant_mcp_server_name",
+                HOME_ASSISTANT_MCP_DEFAULT_NAME,
+            )
+        ).strip()
+        if name == HOME_ASSISTANT_MCP_LEGACY_NAME:
+            name = HOME_ASSISTANT_MCP_DEFAULT_NAME
+        if (
+            not HOME_ASSISTANT_MCP_NAME_PATTERN.fullmatch(name)
+            or name == GITHUB_CLI_SERVER_NAME
+        ):
+            raise ValueError(
+                "home_assistant_mcp_server_name must be a unique 1-64 character "
+                "name using letters, digits, spaces, dots, underscores, hyphens, or parentheses "
+                "(and must not equal ha-github-cli)"
+            )
+        if name in mcp_servers and name != previous_name:
+            raise ValueError(
+                f"Cannot use Home Assistant MCP server name {name!r}: "
+                "an existing non-managed server uses this name"
+            )
+        if previous_name and previous_name != name:
+            mcp_servers.pop(previous_name, None)
+
+        mcp_servers[name] = {
+            "type": "streamable-http",
+            "url": "http://127.0.0.1:8097/mcp",
+            "enabled": True,
+            "enableKeepAlive": True,
+            "keepAliveInterval": 5000,
+            "owner": "admin",
+            "description": HOME_ASSISTANT_MCP_DESCRIPTION,
+        }
+        return name
+    if previous_name:
+        mcp_servers.pop(previous_name, None)
+    return None
+
+
 def main() -> None:
     migrate_removed_options()
     DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -468,45 +513,22 @@ def main() -> None:
     )
     previous_name = previous_managed_home_assistant_name(mcp_servers)
 
-    if home_assistant_mcp_enabled:
-        name = str(
-            options.get(
-                "home_assistant_mcp_server_name",
-                HOME_ASSISTANT_MCP_DEFAULT_NAME,
-            )
-        ).strip()
-        if name == HOME_ASSISTANT_MCP_LEGACY_NAME:
-            name = HOME_ASSISTANT_MCP_DEFAULT_NAME
-        if (
-            not HOME_ASSISTANT_MCP_NAME_PATTERN.fullmatch(name)
-            or name == GITHUB_CLI_SERVER_NAME
-        ):
-            raise ValueError(
-                "home_assistant_mcp_server_name must be a unique 1-64 character "
-                "name using letters, digits, spaces, dots, underscores, hyphens, or parentheses "
-                "(and must not equal ha-github-cli)"
-            )
-        if name in mcp_servers and name != previous_name:
-            raise ValueError(
-                f"Cannot use Home Assistant MCP server name {name!r}: "
-                "an existing non-managed server uses this name"
-            )
-        if previous_name and previous_name != name:
-            mcp_servers.pop(previous_name, None)
+    managed_name = None
+    try:
+        managed_name = sync_managed_home_assistant_server(
+            mcp_servers, options, home_assistant_mcp_enabled, previous_name
+        )
+    except ValueError as err:
+        # Invalid bridge options must never stop MCPHub, Ingress or the gateway.
+        print(
+            f"[WARN] Managed Home Assistant MCP server left unchanged: {err}",
+            file=sys.stderr,
+        )
 
-        mcp_servers[name] = {
-            "type": "streamable-http",
-            "url": "http://127.0.0.1:8097/mcp",
-            "enabled": True,
-            "enableKeepAlive": True,
-            "keepAliveInterval": 5000,
-            "owner": "admin",
-            "description": HOME_ASSISTANT_MCP_DESCRIPTION,
-        }
-    elif previous_name:
-        mcp_servers.pop(previous_name, None)
-
-    apply_ha_mcp_server(mcp_servers, options)
+    try:
+        apply_ha_mcp_server(mcp_servers, options)
+    except ValueError as err:
+        print(f"[WARN] ha-mcp server left unchanged: {err}", file=sys.stderr)
 
     github_cli_enabled = bool(options.get("github_cli_mcp_enabled", False))
     github_token = str(options.get("github_token", "")).strip()
@@ -539,12 +561,12 @@ def main() -> None:
     else:
         MANAGED_BASE_URL_FILE.unlink(missing_ok=True)
 
-    if home_assistant_mcp_enabled:
+    if managed_name:
         name_tmp = MANAGED_HOME_ASSISTANT_NAME_FILE.with_suffix(".tmp")
-        name_tmp.write_text(name + "\n", encoding="utf-8")
+        name_tmp.write_text(managed_name + "\n", encoding="utf-8")
         os.chmod(name_tmp, 0o600)
         name_tmp.replace(MANAGED_HOME_ASSISTANT_NAME_FILE)
-    else:
+    elif not home_assistant_mcp_enabled:
         MANAGED_HOME_ASSISTANT_NAME_FILE.unlink(missing_ok=True)
 
 
