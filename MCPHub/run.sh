@@ -69,8 +69,9 @@ shutdown_processes() {
     exit "${status}"
 }
 
-# ha-mcp reaches MCPHub only on loopback and receives no App secrets. uvx
-# resolves @latest at every start, so an App restart updates it.
+# ha-mcp reaches MCPHub only on loopback and receives no App secrets. The
+# version is pinned in the Dockerfile so that a restart never installs an
+# unreviewed release with Supervisor rights.
 start_ha_mcp() {
     (
         unset JWT_SECRET HA_INGRESS_PROXY_SECRET
@@ -86,7 +87,7 @@ start_ha_mcp() {
             HOMEASSISTANT_TOKEN="$(option ha_mcp_user_token)"
             export HOMEASSISTANT_TOKEN
         fi
-        exec uvx --from ha-mcp@latest ha-mcp-web
+        exec uvx --from "ha-mcp==${HA_MCP_VERSION}" ha-mcp-web
     ) &
     ha_mcp_pid="$!"
 }
@@ -150,7 +151,7 @@ if [[ "${ha_mcp_enabled}" == "true" ]]; then
     fi
 fi
 
-log_info "Starting MCPHub 1.1.15 on internal loopback port 3000."
+log_info "Starting MCPHub 1.2.1 on internal loopback port 3000."
 if [[ -r /etc/mcphub-source-revision ]]; then
     log_info "Build source revision: $(cat /etc/mcphub-source-revision)"
 fi

@@ -91,7 +91,7 @@ configuration:
     fields:
       github_cli_mcp_enabled:
         name: "GitHub CLI MCP aktivieren"
-        description: "Installiert die GitHub CLI bei Bedarf und fügt den gh-cli-mcp-server hinzu."
+        description: "Fügt den gh-cli-mcp-server mit der mitgelieferten GitHub CLI hinzu."
       github_token:
         name: "GitHub Token (optional)"
         description: "Personal Access Token. Nötig für private Repositories und Schreibzugriffe."

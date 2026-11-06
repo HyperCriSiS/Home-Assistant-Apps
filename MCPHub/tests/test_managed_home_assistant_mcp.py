@@ -98,10 +98,26 @@ class ManagedHomeAssistantMCPTests(unittest.TestCase):
             home_assistant_mcp_enabled=True,
             home_assistant_mcp_server_name="other-server",
         )
-        with self.assertRaisesRegex(ValueError, "non-managed server"):
-            MODULE.main()
+        MODULE.main()
         self.assertEqual(self.servers()["other-server"], {"command": "echo"})
         self.assertIn(MODULE.HOME_ASSISTANT_MCP_DEFAULT_NAME, self.servers())
+        self.assertEqual(
+            MODULE.MANAGED_HOME_ASSISTANT_NAME_FILE.read_text().strip(),
+            MODULE.HOME_ASSISTANT_MCP_DEFAULT_NAME,
+        )
+
+    def test_invalid_bridge_options_never_abort_startup(self):
+        self.options(
+            home_assistant_mcp_enabled=True,
+            home_assistant_mcp_server_name="/bad",
+            ha_mcp_enabled=True,
+            ha_mcp_auth_mode="restricted_user",
+            ha_mcp_user_token="",
+        )
+        MODULE.main()
+        self.assertNotIn("/bad", self.servers())
+        self.assertNotIn(MODULE.HA_MCP_SERVER_NAME, self.servers())
+        self.assertTrue(MODULE.SETTINGS_FILE.exists())
 
     def test_reused_managed_name_is_never_deleted(self):
         MODULE.main()
@@ -127,7 +143,10 @@ class ManagedHomeAssistantMCPTests(unittest.TestCase):
                     home_assistant_mcp_server_name=name,
                 )
                 with self.assertRaises(ValueError):
-                    MODULE.main()
+                    MODULE.sync_managed_home_assistant_server({}, {
+                        "home_assistant_mcp_server_name": name}, True, None)
+                MODULE.main()
+                self.assertNotIn(name, self.servers())
 
 
 if __name__ == "__main__":
