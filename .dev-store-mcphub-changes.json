@@ -1,5 +1,25 @@
 [
   {
+    "revision": 210,
+    "version": "v2026.11.07-dev.210",
+    "source_sha": "0fb99656a884d3e4b17e0c37d0d058cc1566e14c",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "0fb99656a884d3e4b17e0c37d0d058cc1566e14c",
+        "subject": "chore(mcphub): update upstream to 1.2.2 (#173)"
+      },
+      {
+        "sha": "0868f72f6023b0a48e6707cd90d768721e389298",
+        "subject": "Merge remote-tracking branch 'origin/main' into dev-mcphub"
+      },
+      {
+        "sha": "4ff800d746c6fca2ad7390f4afb665c03e26cf23",
+        "subject": "chore(deps): bump actions/download-artifact from 4.3.0 to 8.0.2 (#153)"
+      }
+    ]
+  },
+  {
     "revision": 209,
     "version": "v2026.11.05-dev.209",
     "source_sha": "094eff955e563e95197087ef1604cc6d115616c4",

@@ -1,8 +1,9 @@
 # Changelog
 
-## v2026.11.05-dev.209
+## v2026.11.07-dev.210
 
 ### Commits in this Dev build
 
-- [`094eff9`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/094eff955e563e95197087ef1604cc6d115616c4) Merge remote-tracking branch 'origin/main' into dev-mcphub
-- [`5d02d0d`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/5d02d0d52571d05eaee8d0421f67c8b2d1cbc248) chore(deps): bump actions/upload-artifact from 4.6.2 to 7.0.2 (#154)
+- [`0fb9965`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/0fb99656a884d3e4b17e0c37d0d058cc1566e14c) chore(mcphub): update upstream to 1.2.2 (#173)
+- [`0868f72`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/0868f72f6023b0a48e6707cd90d768721e389298) Merge remote-tracking branch 'origin/main' into dev-mcphub
+- [`4ff800d`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/4ff800d746c6fca2ad7390f4afb665c03e26cf23) chore(deps): bump actions/download-artifact from 4.3.0 to 8.0.2 (#153)
