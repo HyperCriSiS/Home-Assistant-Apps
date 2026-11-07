@@ -26,6 +26,10 @@
     hot_asc:['downloads','up'], hot_desc:['downloads','down']};
   document.documentElement.classList.add('aio-modern');
   const german = document.documentElement.lang.startsWith('de');
+  const toggle = document.querySelector('.navbar-toggle');
+  // caliBlur's document mouseup closes the panel before Bootstrap's click
+  // toggles it, which otherwise reopens it when the hamburger is outside it.
+  if (toggle) toggle.addEventListener('mouseup', event => event.stopPropagation());
   for (const link of document.querySelectorAll('.filterheader a[id], .filterheader div#asc, .filterheader div#desc')) {
     const sort = sorts[link.id];
     if (!sort) continue;
@@ -68,6 +72,101 @@
         if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); control.click(); }
       });
     }
+  }
+  const main = document.querySelector('.aio-main');
+  const back = document.querySelector('.plexBack a');
+  if (back) {
+    const home = document.querySelector('.home-btn a');
+    const prefix = home ? new URL(home.href).pathname.replace(/\/?$/, '/') : null;
+    let previous = null;
+    try {const ref = new URL(document.referrer);if (prefix && ref.origin === location.origin && ref.pathname.startsWith(prefix) && ref.href !== location.href) previous = ref;} catch (_) { /* Direct entry. */ }
+    back.parentElement.classList.remove('noBack');
+    back.setAttribute('aria-label', german ? 'Zurück' : 'Back');
+    back.addEventListener('click', event => {
+      event.preventDefault(); event.stopImmediatePropagation();
+      // Referrer links create a B→C→B→C loop; browser history restores the
+      // actual previous entry and its scroll position inside the library frame.
+      if (previous && history.length > 1) history.back();
+    }, true);
+    if (!previous || history.length <= 1) {
+      back.setAttribute('aria-disabled', 'true'); back.parentElement.classList.add('aio-no-back');
+    }
+  }
+  if (main) {
+    const resolution = main.querySelector('#resolution_strategy');
+    if (resolution) {
+      const panel = resolution.closest('.settings-container');
+      const label = panel.querySelector('h4');
+      const options = document.createElement('details'); options.className = 'settings-container aio-duplicate-options';
+      const summary = document.createElement('summary'); summary.textContent = label.textContent.trim(); options.append(summary);
+      label.remove(); options.append(...panel.childNodes); panel.replaceWith(options);
+    }
+    const heading = main.querySelector(':scope > h1, :scope > .discover > h2');
+    const tools = main.querySelector(':scope > .filterheader, :scope > .discover > .shelf-actions, :scope > .discover > .filterheader');
+    if (heading) {
+      const header = document.createElement('header'); header.className = 'aio-page-header';
+      main.prepend(header); header.append(heading);
+      if (document.body.classList.contains('magicshelf')) {
+        header.setAttribute('aria-label', heading.textContent.trim());
+        heading.remove(); header.classList.add('aio-tools-only');
+      }
+      if (tools) {const rail = document.createElement('div'); rail.className = 'aio-page-tools'; rail.append(tools); header.append(rail);}
+    }
+  }
+  // filter_grid initializes Isotope synchronously, before deferred theme setup.
+  // Re-measure after the header move and after cover/font dimensions settle.
+  const seriesGrid = document.querySelector('.aio-main > #list');
+  if (seriesGrid) {
+    const layout = () => {if (window.jQuery && window.jQuery(seriesGrid).data('isotope')) window.jQuery(seriesGrid).isotope('layout');};
+    window.addEventListener('load', layout, {once:true});
+    if (document.fonts) document.fonts.ready.then(layout);
+    seriesGrid.querySelectorAll('img').forEach(img => img.addEventListener('load', layout, {once:true}));
+  }
+  // Preserve native list items and links so intent.js can still move the whole
+  // navigation between desktop and mobile. Only the section's visibility changes.
+  const functions = document.querySelector('#main-nav > .cwa-switch-theme');
+  if (functions) {
+    const head = document.createElement('li'); head.className = 'nav-head aio-functions-head';
+    head.textContent = german ? 'CWA-Funktionen' : 'CWA functions'; functions.before(head);
+  }
+  document.querySelectorAll('#scnd-nav .nav-head, #main-nav > .aio-functions-head').forEach((head, index) => {
+    const children = []; let next = head.nextElementSibling;
+    while (next && !next.classList.contains('nav-head')) { children.push(next); next = next.nextElementSibling; }
+    const button = document.createElement('button'); button.type = 'button'; button.textContent = head.textContent.trim();
+    head.replaceChildren(button); head.classList.remove('hidden-xs'); head.classList.add('aio-nav-section');
+    const key = `cwa-modern-section-${index}`;
+    let expanded = true;
+    try { expanded = localStorage.getItem(key) !== 'closed'; } catch (_) { /* Storage can be disabled. */ }
+    const hiddenClass = head.classList.contains('aio-functions-head') ? 'aio-functions-hidden' : 'aio-nav-hidden';
+    const update = () => {button.setAttribute('aria-expanded', String(expanded)); children.forEach(item => item.classList.toggle(hiddenClass, !expanded));};
+    button.addEventListener('click', () => {expanded = !expanded; update();try {localStorage.setItem(key, expanded ? 'open' : 'closed');} catch (_) { /* optional preference */ }});
+    update();
+  });
+  const upload = document.querySelector('#btn-upload');
+  const folderTrigger = document.querySelector('.aio-folder-trigger');
+  if (upload && folderTrigger) {
+    const form = upload.closest('form'), desktopSlot = form.parentElement;
+    const mobileQuery = window.matchMedia('(max-width: 767px)');
+    const placeUpload = () => (mobileQuery.matches ? document.querySelector('.navbar > .container-fluid') : desktopSlot).append(form);
+    placeUpload(); mobileQuery.addEventListener('change', placeUpload);
+    const picker = document.createElement('input'); picker.type = 'file'; picker.multiple = true;
+    picker.setAttribute('webkitdirectory', ''); picker.hidden = true; picker.setAttribute('aria-label', german ? 'Ordner hinzufügen' : 'Add folder');
+    picker.id = 'aio-folder-picker'; document.body.append(picker);
+    folderTrigger.addEventListener('click', () => picker.click());
+    picker.addEventListener('change', () => {
+      const allowed = upload.accept.split(',').map(value => value.trim().toLowerCase());
+      const files = new DataTransfer();
+      for (const file of picker.files) {
+        if (allowed.includes('.*') || allowed.includes('*') || allowed.some(ext => ext.startsWith('.') && file.name.toLowerCase().endsWith(ext))) files.items.add(file);
+      }
+      if (!files.files.length) {window.alert(german ? 'Keine unterstützten Buchdateien im Ordner gefunden.' : 'No supported book files found in this folder.'); return;}
+      // Use the existing authenticated multipart upload/progress/error handling.
+      // Relative directory paths are never sent to the server as destinations.
+      upload.files = files.files;
+      upload.dispatchEvent(new Event('change', {bubbles:true}));
+      picker.value = '';
+      document.querySelector('.aio-upload-menu').open = false;
+    });
   }
   const search = document.querySelector('form[role="search"]');
   if (search) {

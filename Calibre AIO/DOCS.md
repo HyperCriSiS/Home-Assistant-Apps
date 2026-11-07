@@ -36,6 +36,9 @@ Alphabetical letters are never mirrored. Hover/focus tooltips retain CWA's
 full descriptions. On phones, the toolbar wraps and touch targets stay larger.
 On desktop, sorting is centered on the title row. List markers and letter
 filters stay in their native positions with compact sizes and an inset gutter.
+On phones, the current page title appears in the top bar. The sorting strip
+scrolls horizontally when its controls do not fit. Navigation section headings
+can be collapsed on either desktop or mobile.
 
 `library_theme: modern` is the default, including for existing configurations.
 Set `library_theme: upstream` and restart the app to use CWA's original theme.
@@ -97,6 +100,11 @@ API key, display name or supplied group header cannot replace the HA identity.
 Readers do not see the administrator-only Shelfmark setup wizard.
 
 ## Downloads and library handoff
+
+Use the **+** menu in the library to upload files or choose **Add folder …**.
+Folder selection includes supported ebook files in subfolders; unrelated file
+types are skipped. The books use the normal upload/import flow. Calibre organizes
+the resulting library; the source directory hierarchy is not preserved as shelves.
 
 Configure sources and Real-Debrid/other clients in Shelfmark's settings, not in
 the HA YAML. Credentials remain in Shelfmark's private persistent settings.

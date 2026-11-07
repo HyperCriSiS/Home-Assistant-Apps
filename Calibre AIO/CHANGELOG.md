@@ -1,3 +1,14 @@
+# 1.2.4
+
+- Add a folder picker to the Add Books menu, including supported ebooks in subfolders.
+- Align Browse and Duplicates titles and sort controls in a shared page header.
+- Show the current page title on mobile, with a horizontally scrollable sort bar and compact separators.
+- Make navigation sections collapsible on desktop and mobile, with larger text in the mobile menu.
+- Compact duplicate groups and place automatic resolution in an expandable panel.
+- Simplify Magic Shelves headers to sorting, refresh and edit controls, and remove the Downloads explanation text.
+- Fix Series grid cards being affected by list-row styles.
+- Make Back return through the library's browser history.
+
 # 1.2.3
 
 - Refuse an empty or absolute `library_dir` or `ingest_dir`, dot segments and
