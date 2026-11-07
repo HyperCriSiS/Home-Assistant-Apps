@@ -83,6 +83,8 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
  if(width<768){await page.locator('.navbar-toggle').click(); await page.waitForTimeout(400); assert(await page.locator('#nav_author').isVisible());}
  const navSpacing=await page.evaluate(()=>{const head=document.querySelector('#scnd-nav .aio-nav-section > button'),first=document.querySelector('#nav_books a'),second=document.querySelector('#nav_author a');return [head,first,second].map(el=>{const r=el.getBoundingClientRect();return r.y+r.height/2;});});
  assert(Math.abs((navSpacing[1]-navSpacing[0])-(navSpacing[2]-navSpacing[1]))<2,'Section and menu rows must have equal spacing: '+navSpacing);
+ const sectionGaps=await page.locator('#scnd-nav .aio-nav-section').evaluateAll(heads=>heads.flatMap(head=>{const button=head.querySelector('button'),next=head.nextElementSibling;if(!button||!next||next.classList.contains('nav-head'))return [];const link=next.querySelector('a');if(!link)return [];const a=button.getBoundingClientRect(),b=link.getBoundingClientRect();return [b.y+b.height/2-a.y-a.height/2];}));
+ assert(sectionGaps.every(gap=>Math.abs(gap-(navSpacing[2]-navSpacing[1]))<2),'All section headings must match menu spacing: '+sectionGaps);
  for(const scenario of ['authors','categories','languages','publishers','downloads','downloads-filled']) {
   await page.goto(`https://calibre.test/library/?scenario=${scenario}`); await page.waitForTimeout(500);
   assert((await page.title()).includes(scenario.startsWith('downloads') ? 'Downloads' : scenario==='authors' ? 'Authors' : scenario==='categories' ? 'Categories' : scenario==='languages' ? 'Languages' : 'Publishers'));
