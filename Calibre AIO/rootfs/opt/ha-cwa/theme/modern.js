@@ -51,7 +51,7 @@
   const listSort = document.querySelector('.filterheader #asc[data-id]');
   if (listSort) {
     const toolbar = listSort.parentElement;
-    toolbar.parentElement.classList.add('aio-list-page');
+    toolbar.closest('.aio-main').classList.add('aio-list-page');
     const name = toolbar.querySelector('#sort_name');
     if (name) {
       name.replaceChildren(svg(icons.author), svg(['M4 8h16l-4-4M20 16H4l4 4']));
@@ -94,7 +94,7 @@
   }
   if (main) {
     const resolution = main.querySelector('#resolution_strategy');
-    if (resolution) {
+    if (resolution && !resolution.closest('.aio-duplicate-options')) {
       const panel = resolution.closest('.settings-container');
       const label = panel.querySelector('h4');
       const options = document.createElement('details'); options.className = 'settings-container aio-duplicate-options';
@@ -103,7 +103,7 @@
     }
     const heading = main.querySelector(':scope > h1, :scope > .discover > h2');
     const tools = main.querySelector(':scope > .filterheader, :scope > .discover > .shelf-actions, :scope > .discover > .filterheader');
-    if (heading) {
+    if (heading && !main.querySelector(':scope > .aio-page-header')) {
       const header = document.createElement('header'); header.className = 'aio-page-header';
       main.prepend(header); header.append(heading);
       if (document.body.classList.contains('magicshelf')) {
@@ -114,7 +114,7 @@
     }
   }
   // filter_grid initializes Isotope synchronously, before deferred theme setup.
-  // Re-measure after the header move and after cover/font dimensions settle.
+  // Re-measure after fallback header setup and cover/font dimensions settle.
   const seriesGrid = document.querySelector('.aio-main > #list');
   if (seriesGrid) {
     const layout = () => {if (window.jQuery && window.jQuery(seriesGrid).data('isotope')) window.jQuery(seriesGrid).isotope('layout');};
@@ -132,8 +132,9 @@
   document.querySelectorAll('#scnd-nav .nav-head, #main-nav > .aio-functions-head').forEach((head, index) => {
     const children = []; let next = head.nextElementSibling;
     while (next && !next.classList.contains('nav-head')) { children.push(next); next = next.nextElementSibling; }
-    const button = document.createElement('button'); button.type = 'button'; button.textContent = head.textContent.trim();
-    head.replaceChildren(button); head.classList.remove('hidden-xs'); head.classList.add('aio-nav-section');
+    const button = head.querySelector(':scope > button') || document.createElement('button');
+    if (!button.parentElement) {button.type = 'button'; button.textContent = head.textContent.trim(); head.replaceChildren(button);}
+    head.classList.remove('hidden-xs'); head.classList.add('aio-nav-section');
     const key = `cwa-modern-section-${index}`;
     let expanded = true;
     try { expanded = localStorage.getItem(key) !== 'closed'; } catch (_) { /* Storage can be disabled. */ }
@@ -171,9 +172,10 @@
   }
   const search = document.querySelector('form[role="search"]');
   if (search) {
-    const icon = svg(['M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0', 'm15 15 6 6']);
-    icon.classList.add('aio-search-icon');
-    search.querySelector('.input-group').prepend(icon);
+    if (!search.querySelector('.aio-search-icon')) {
+      const icon = svg(['M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0', 'm15 15 6 6']);
+      icon.classList.add('aio-search-icon'); search.querySelector('.input-group').prepend(icon);
+    }
     const submit = search.querySelector('#query_submit');
     submit.setAttribute('aria-label', submit.textContent.trim());
     submit.title = submit.textContent.trim();

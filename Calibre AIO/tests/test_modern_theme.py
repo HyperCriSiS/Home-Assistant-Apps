@@ -64,3 +64,29 @@ class ModernThemeTest(unittest.TestCase):
         self.assertEqual(source.count('filename=\'modern.css\''), 1)
         self.assertLess(source.index('css/cwa.css'), source.index("filename='modern.css'"))
         self.assertIn('navbar-toggle', source)
+        self.assertIn('class="aio-search-icon"', source)
+        self.assertIn('<button type="button" aria-expanded="true">', source)
+
+    @unittest.skipUnless(os.environ.get('CWA_SOURCE'), 'requires pinned CWA source')
+    def test_pinned_browse_headers_exist_before_script_execution(self):
+        from jinja2 import FileSystemLoader, Environment
+        from modern_theme import ThemeLoader
+        upstream = FileSystemLoader(Path(os.environ['CWA_SOURCE']) / 'cps/templates')
+        loader = ThemeLoader(upstream)
+        environment = Environment()
+        for template in ('list.html', 'grid.html', 'index.html', 'duplicates.html'):
+            with self.subTest(template=template):
+                original, _, _ = upstream.get_source(environment, template)
+                source, _, _ = loader.get_source(environment, template)
+                environment.parse(source)
+                self.assertEqual(source.count('<header class="aio-page-header'), 1)
+                if template == 'duplicates.html':
+                    self.assertIn('<details class="settings-container aio-duplicate-options">', source)
+                    self.assertIn('class="selection-info">0 BOOKS SELECTED</span>', source)
+                else:
+                    self.assertEqual(source.count('<div class="filterheader'), 1)
+                    header = source.split('</header>', 1)[0]
+                    self.assertIn('<div class="aio-page-tools">', header)
+                    self.assertIn('<div class="filterheader', header)
+                # This adapter must never edit the installed upstream source.
+                self.assertEqual(upstream.get_source(environment, template)[0], original)

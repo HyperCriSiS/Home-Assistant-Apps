@@ -141,6 +141,8 @@ with app.test_request_context("/"):
                           cover_url=f"/cover/{i+1}", series=[], data=[NS(format="EPUB")]) for i in range(2)]
     if scenario == "duplicates":
         title, page, template = "Duplicates", "duplicates", "duplicates.html"
+    pagination = NS(page=1, pages=2, has_next=True, has_prev=False,
+                    iter_pages=lambda: [1, 2]) if scenario == "books-paged" else None
     html = render_template(
         template,
         current_user=user,
@@ -162,7 +164,7 @@ with app.test_request_context("/"):
         sidebar=sidebar,
         cwa_settings={},
         magic_shelf_routes=NS(render=False, create=False),
-        pagination=None,
+        pagination=pagination,
         searchterm="",
         config=NS(),
     )
