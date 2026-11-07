@@ -14,16 +14,35 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
   if(['error','warning'].includes(msg.type()))errors.push(msg.text().slice(0,500));
  });
  const uploads=[];
+ let themeGate=null;
  await page.route('https://calibre.test/**',async route=>{
   const u=new URL(route.request().url());
   if(u.pathname==='/shell')return route.fulfill({contentType:'text/html; charset=utf-8',body:'<!doctype html><title>AIO fixture</title><body style="margin:0"><iframe title="Library" style="width:100vw;height:100vh;border:0" src="/library/?scenario=authors"></iframe></body>'});
   if(u.pathname==='/upload'){uploads.push(route.request().postDataBuffer().toString());return route.fulfill({contentType:'application/json',body:JSON.stringify({location:'/library/?uploaded=1'})});}
   if(u.pathname.startsWith('/static/')){const p=path.join(src,decodeURIComponent(u.pathname.slice(8)));if(fs.existsSync(p))return route.fulfill({path:p});return route.fulfill({status:404,body:''});}
-  if(u.pathname.startsWith('/library/aio-theme/'))return route.fulfill({path:path.join(root,'rootfs/opt/ha-cwa/theme',path.basename(u.pathname))});
+  if(u.pathname.startsWith('/library/aio-theme/')){if(path.basename(u.pathname)==='modern.js'&&themeGate)await themeGate;return route.fulfill({path:path.join(root,'rootfs/opt/ha-cwa/theme',path.basename(u.pathname))});}
   if(u.pathname.startsWith('/cover/')){const i=Number(u.pathname.split('/').pop()); const colors=['#526d67','#4d6176','#a27a50','#5b4b66','#727b62','#435665'];return route.fulfill({contentType:'image/svg+xml',body:`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300"><rect width="200" height="300" fill="${colors[i%6]}"/><rect x="12" y="12" width="176" height="276" fill="none" stroke="#ffffff55"/><path d="M12 210 Q100 80 188 210" fill="none" stroke="#ffffff33" stroke-width="30"/><text x="100" y="72" text-anchor="middle" font-family="serif" font-size="20" fill="#fff">LESEN</text><text x="100" y="125" text-anchor="middle" font-family="serif" font-size="30" fill="#fff">${String(i).padStart(2,'0')}</text></svg>`});}
   if(u.pathname==='/library/'||u.pathname==='/library') {const body=execFileSync(process.env.PYTHON || 'python3',['-X','utf8',path.join(__dirname,'theme_fixture.py'),u.searchParams.get('sort_param')||'abc',u.searchParams.get('scenario')||'books'],{encoding:'utf8'});return route.fulfill({contentType:'text/html; charset=utf-8',body});}
   return route.fulfill({contentType:'application/json',body:'{}'});
  });
+ for(const scenario of ['authors','publishers','books','books-paged','magic','series-grid','duplicates']) {
+  let release;themeGate=new Promise(resolve=>{release=resolve;});
+  await page.goto(`https://calibre.test/library/?scenario=${scenario}`,{waitUntil:'commit'});
+  await page.locator('.aio-page-header').waitFor({state:'visible'});
+  await page.waitForFunction(()=>getComputedStyle(document.querySelector('.aio-page-header')).position==='sticky');
+  // Firefox's FontFaceSet.ready may wait for document load, which this test
+  // intentionally holds back. Wait for the fonts already used by layout.
+  await page.evaluate(()=>Promise.all([...document.fonts].filter(font=>font.status==='loading').map(font=>font.loaded)));
+  // The native mobile script relocates the closed, offscreen navigation drawer.
+  // Compare its visible desktop links; mobile opening is covered below.
+  const snapshot=()=>page.evaluate(()=>Object.fromEntries(['.aio-page-header','.aio-page-tools','.aio-page-tools #asc','.pagination','.duplicate-group','#query','#query_submit',...(innerWidth>=768?['#nav_author']:[])].map(selector=>{const el=document.querySelector(selector);if(!el)return [selector,null];const r=el.getBoundingClientRect();return [selector,{x:r.x,y:r.y,width:r.width,height:r.height}];})));
+  const before=await snapshot();
+  if(out&&scenario==='publishers')await page.screenshot({path:path.join(out,`first-paint-${width}-before.png`)});
+  themeGate=null;release();await page.waitForLoadState('load');await page.waitForTimeout(600);
+  const after=await snapshot();
+  for(const [selector,box] of Object.entries(before))if(box)for(const key of ['x','y','width','height'])assert(Math.abs(box[key]-after[selector][key])<2,`${scenario} ${width}: ${selector} ${key} moved from ${box[key]} to ${after[selector][key]}`);
+  if(out&&scenario==='publishers')await page.screenshot({path:path.join(out,`first-paint-${width}-after.png`)});
+ }
  await page.goto('https://calibre.test/library/');await page.waitForTimeout(1400);
  assert.equal(await page.title(),'Calibre-Web | Bücher');
  assert(await page.locator('.discover.load-more .book').count()>0);

@@ -1,10 +1,71 @@
 """Add an optional deployment-owned theme without editing CWA's source files."""
 from pathlib import Path
+import re
 
 from flask import send_from_directory
 from jinja2 import BaseLoader
 
 ASSETS = Path(__file__).with_name('theme')
+
+
+def _svg(paths, css_class=''):
+    return ('<svg xmlns="http://www.w3.org/2000/svg" class="' + css_class + '" '
+            'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" '
+            'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+            + ''.join('<path d="' + path + '"></path>' for path in paths) + '</svg>')
+
+
+def _nav_heading(match):
+    classes = match[1].split()
+    classes = [value for value in classes if value != 'hidden-xs'] + ['aio-nav-section']
+    return ('<li class="' + ' '.join(classes) + '"' + match[2] + '>'
+            '<button type="button" aria-expanded="true">' + match[3] + '</button></li>')
+
+
+def _div_end(source, start):
+    """Find a trusted template div's end, accounting for nested controls."""
+    depth = 0
+    for tag in re.finditer(r'<div\b[^>]*>|</div\s*>', source[start:]):
+        depth += -1 if tag.group().startswith('</') else 1
+        if depth == 0:
+            return start + tag.end()
+    raise ValueError('Unbalanced Modern theme template region')
+
+
+def _page_header(heading, tools=''):
+    return '''<header class="aio-page-header{% if page == 'magicshelf' %} aio-tools-only{% endif %}"{% if page == 'magicshelf' %} aria-label="{{ title|striptags }}"{% endif %}>
+{% if page != 'magicshelf' %}''' + heading + '''{% endif %}
+''' + ('<div class="aio-page-tools">' + tools + '</div>' if tools else '') + '</header>'
+
+
+def _render_page_header(source, template):
+    """Render the final header in HTML instead of moving it after first paint."""
+    if template in ('list.html', 'grid.html'):
+        heading = '<h1 class="{{page}}">{{_(title)}}</h1>'
+        start = source.index('<div class="filterheader')
+        end = _div_end(source, start)
+        tools = source[start:end]
+        return source[:start].replace(heading, _page_header(heading, tools), 1) + source[end:]
+    if template == 'index.html' and '<div class="discover load-more">' in source:
+        heading = re.search(r'<h2 class="{{title}}">.*?</h2>', source, re.S).group()
+        start = source.index("{% set show_shelf_actions")
+        closing = '{% if show_shelf_actions %}</div>{% endif %}'
+        end = source.index(closing, start) + len(closing)
+        tools = source[start:end]
+        source = (source[:start] + source[end:]).replace(heading, '', 1)
+        return source.replace('{% block body %}', '{% block body %}' + _page_header(heading, tools), 1)
+    if template == 'duplicates.html':
+        source = source.replace('<span id="selection_count" class="selection-info"></span>',
+                                '<span id="selection_count" class="selection-info">0 BOOKS SELECTED</span>', 1)
+        source = source.replace('<div class="discover">\n  <h2>{{title}}</h2>',
+                                _page_header('<h2>{{title}}</h2>') + '<div class="discover">', 1)
+        start = source.index('<div class="settings-container" style="margin-bottom: 30px;')
+        end = _div_end(source, start)
+        panel = source[start:end]
+        panel = re.sub(r'^<div[^>]*>', '<details class="settings-container aio-duplicate-options">', panel, count=1)
+        panel = re.sub(r'<h4\b[^>]*>.*?</h4>', "<summary>{{_('Auto-Resolve Duplicates')}}</summary>", panel, count=1, flags=re.S)
+        return source[:start] + panel[:-6] + '</details>' + source[end:]
+    return source
 
 
 class ThemeLoader(BaseLoader):
@@ -19,12 +80,20 @@ class ThemeLoader(BaseLoader):
             source = source.replace('g.current_theme == 1', 'true')
             source = source.replace('<html ', '<html class="aio-modern" ', 1)
             source = source.replace('>{{instance}}</a>', '>{{title|striptags}}</a>', 1)
+            source = re.sub(r'<li class="([^"\n]*\bnav-head\b[^"\n]*)"([^>]*)>(.*?)</li>',
+                            _nav_heading, source, flags=re.S)
+            search_icon = _svg(['M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0', 'm15 15 6 6'], 'aio-search-icon')
+            source = source.replace('<input type="text" class="form-control" id="query"',
+                                    search_icon + '<input type="text" class="form-control" id="query"', 1)
+            source = source.replace('id="query_submit" class="btn btn-default">{{_(\'Search\')}}</button>',
+                                    'id="query_submit" class="btn btn-default"><span class="sr-only">{{_(\'Search\')}}</span>'
+                                    + _svg(['M4 12h16M14 6l6 6-6 6']) + '</button>', 1)
             source = source.replace('<div class="col-sm-10">', '''<div class="col-sm-10 aio-main{% if page is string and page.endswith('list') %} aio-list-page{% endif %}">''', 1)
             source = source.replace('<span class="btn btn-default btn-file">{{_(\'Upload\')}}<input', '''<details class="aio-upload-menu"><summary aria-label="{{ _('Add books') }}">+</summary><div class="aio-upload-options"><label class="btn btn-default btn-file">{{ _('Upload') }}<input''', 1)
             source = source.replace('multiple></span>', '''multiple></label><button type="button" class="aio-folder-trigger">{% if current_user.locale.startswith('de') %}Ordner hinzufügen …{% else %}Add folder …{% endif %}</button></div></details>''', 1)
             source = source.replace('</head>', '''
-    <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=3">
-    <script defer src="{{ url_for('aio_theme', filename='modern.js') }}?v=3"></script>
+    <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=4">
+    <script defer src="{{ url_for('aio_theme', filename='modern.js') }}?v=4"></script>
   </head>''', 1)
         elif template == 'list.html':
             source = source.replace('''{% if title == "Downloads" %}
@@ -32,6 +101,7 @@ class ThemeLoader(BaseLoader):
       {% if not entries %}<p class="aio-empty">
         {% if current_user.locale.startswith('de') %}Noch keine Benutzer-Downloads erfasst.{% else %}No user downloads recorded yet.{% endif %}
       </p>{% endif %}''', 1)
+        source = _render_page_header(source, template)
         return source, filename, uptodate
 
     def list_templates(self):

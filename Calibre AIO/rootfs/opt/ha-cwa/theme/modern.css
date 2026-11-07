@@ -903,3 +903,23 @@ html.aio-modern body.blur #form-upload {
 html.aio-modern body.blur.duplicates .aio-main .aio-duplicate-options {
   width: 100% !important; max-width: none !important; margin: 0 0 12px !important;
 }
+/* Reserve sort slots before SVG enhancement so the centered rail cannot shift. */
+html.aio-modern body.blur .aio-page-tools .filterheader > :is(a[id], #asc, #desc, #sort_name) {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 48px !important;
+  min-width: 48px;
+  height: 32px !important;
+  margin: 0 !important;
+  padding: 0 8px !important;
+  gap: 4px;
+  overflow: hidden;
+  font: 600 11px/1 "Segoe UI", system-ui, sans-serif;
+}
+@media (max-width: 767px) {
+  html.aio-modern body.blur .aio-page-tools .filterheader > :is(a[id], #asc, #desc, #sort_name) {
+    height: 44px !important;
+  }
+}
