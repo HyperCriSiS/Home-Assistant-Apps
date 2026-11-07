@@ -59,6 +59,10 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
    const pagination=await page.locator('.pagination').boundingBox(),tools=await page.locator('.aio-page-tools').boundingBox();
    assert(pagination.y+pagination.height<=tools.y,'Mobile page navigation must have its own row above sorting');
    for(const control of await page.locator('.pagination > .page-item > a').all()) {const box=await control.boundingBox();assert(box.y>=pagination.y&&box.y+box.height<=pagination.y+pagination.height,'Mobile pagination controls must fit their row');}
+   await page.locator('.aio-main').evaluate(el=>el.scrollTop=100);
+   const scrolledTools=await page.locator('.aio-page-tools').boundingBox();
+   assert(scrolledTools.y>=pagination.y+pagination.height,'Mobile sorting must stay below pagination while scrolling');
+   await page.locator('.aio-main').evaluate(el=>el.scrollTop=0);
   }
   assert.deepEqual(await symbols(),initialSymbols,'Sort symbols must not switch after first paint');
   for(const [selector,box] of Object.entries(before))if(box)for(const key of ['x','y','width','height'])assert(Math.abs(box[key]-after[selector][key])<2,`${scenario} ${width}: ${selector} ${key} moved from ${box[key]} to ${after[selector][key]}`);
