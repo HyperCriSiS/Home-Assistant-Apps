@@ -252,7 +252,7 @@ jobs:
             "MCPHub" "Calibre AIO" "TriliumNext Notes"
           git diff --cached --quiet || git commit -m "chore(dev-store): compose current app candidates"
           git bundle create /tmp/store.bundle HEAD
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: calibre-store-candidate
           path: /tmp/store.bundle
@@ -271,7 +271,7 @@ jobs:
     needs: [images, mcphub-images]
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           name: calibre-store-candidate
           path: /tmp/candidate
