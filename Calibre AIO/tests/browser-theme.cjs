@@ -102,12 +102,13 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
  }
  if(width>=768) {
   const brand=page.locator('.navbar-brand'),header=page.locator('.aio-page-header');
-  const bandStyle=locator=>locator.evaluate(el=>{const s=getComputedStyle(el);return [s.backgroundColor,s.borderBottomWidth,s.borderBottomStyle,s.borderBottomColor];});
-  assert.deepEqual(await bandStyle(brand),await bandStyle(header),'Sidebar title and page title must share one surface and divider');
+  assert(!(await brand.isVisible()),'Desktop must not repeat the page heading in the sidebar');
+  const bandStyle=(locator,pseudo)=>locator.evaluate((el,pseudo)=>{const s=getComputedStyle(el,pseudo);return [s.backgroundColor,s.borderBottomWidth,s.borderBottomStyle,s.borderBottomColor];},pseudo);
+  assert.deepEqual(await bandStyle(page.locator('.navbar-header'),'::after'),await bandStyle(header),'Sidebar and page title must share one surface and divider');
   const left=await brand.boundingBox(),right=await header.boundingBox();
   assert(Math.abs(left.y+left.height-right.y-right.height)<1,'Title dividers must align vertically');
   assert(left.x+left.width>=right.x,'Title divider must have no gap at the sidebar edge');
- }
+ } else assert(await page.locator('.navbar-brand').isVisible(),'Mobile keeps the page title in the navbar');
  if(width>=768)assert(!(await page.locator('#main-nav > .aio-functions-head').isVisible()),'Mobile functions heading must stay hidden on desktop');
  for(const action of await page.locator('#scnd-nav .aio-section-create').all()) {
   assert.equal((await action.innerText()).trim(),'+');assert(await action.getAttribute('aria-label'));

@@ -34,13 +34,18 @@ html.aio-modern {
   backdrop-filter: none;
 }
 .aio-modern .navbar a, .aio-modern .navigation a { color: var(--aio-text); }
-/* The desktop brand occupies the left end of the page-title band. */
+/* Desktop already has a page heading; keep only the band's surface/divider. */
 @media (min-width: 768px) {
   html.aio-modern body.blur > .navbar > .container-fluid > .navbar-header > a.navbar-brand {
+    visibility: hidden;
+  }
+  html.aio-modern body.blur > .navbar > .container-fluid > .navbar-header::after {
+    content: '';
+    position: fixed;
+    top: 60px; left: 0; width: 240px; height: 60px;
     background: var(--aio-bg);
     border-bottom: 1px solid var(--aio-line);
-    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
-    font-weight: 600;
+    pointer-events: none;
   }
 }
 .aio-modern .navigation li > a { padding-top: 7px !important; padding-bottom: 7px !important; }

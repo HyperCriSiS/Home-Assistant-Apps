@@ -137,7 +137,7 @@ class ThemeLoader(BaseLoader):
             source = source.replace('<span class="btn btn-default btn-file">{{_(\'Upload\')}}<input', '''<details class="aio-upload-menu"><summary aria-label="{{ _('Add books') }}">+</summary><div class="aio-upload-options"><label class="btn btn-default btn-file">{{ _('Upload') }}<input''', 1)
             source = source.replace('multiple></span>', '''multiple></label><button type="button" class="aio-folder-trigger">{% if current_user.locale.startswith('de') %}Ordner hinzufügen …{% else %}Add folder …{% endif %}</button></div></details>''', 1)
             source = source.replace('</head>', '''
-    <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=8">
+    <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=9">
     <script defer src="{{ url_for('aio_theme', filename='modern.js') }}?v=7"></script>
   </head>''', 1)
         elif template == 'list.html':
