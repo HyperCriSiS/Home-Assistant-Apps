@@ -3,7 +3,7 @@
   'use strict';
   const svg = paths => {
     const node = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    for (const [key, value] of Object.entries({viewBox:'0 0 24 24', fill:'none',
+    for (const [key, value] of Object.entries({width:'16', height:'16', viewBox:'0 0 24 24', fill:'none',
       stroke:'currentColor', 'stroke-width':'1.65', 'stroke-linecap':'round',
       'stroke-linejoin':'round', 'aria-hidden':'true', focusable:'false'})) node.setAttribute(key, value);
     for (const d of paths) {
@@ -43,7 +43,7 @@
     if (kind === 'title') { symbol.textContent = 'A–Z'; symbol.setAttribute('aria-hidden', 'true'); }
     const arrow = svg(direction === 'up' ? ['M12 20V4M6 10l6-6 6 6'] : ['M12 4v16M6 14l6 6 6-6']);
     arrow.classList.add('aio-sort-arrow');
-    link.replaceChildren(symbol, arrow);
+    if (!link.classList.contains('aio-sort')) link.replaceChildren(symbol, arrow);
     link.classList.add('aio-sort');
     link.dataset.sortKind = kind; link.dataset.sortDirection = direction;
     if (link.classList.contains('active')) link.setAttribute('aria-current', 'true');
@@ -54,7 +54,7 @@
     toolbar.closest('.aio-main').classList.add('aio-list-page');
     const name = toolbar.querySelector('#sort_name');
     if (name) {
-      name.replaceChildren(svg(icons.author), svg(['M4 8h16l-4-4M20 16H4l4 4']));
+      if (!name.classList.contains('aio-sort')) name.replaceChildren(svg(icons.author), svg(['M4 8h16l-4-4M20 16H4l4 4']));
       name.classList.add('aio-sort');
       name.setAttribute('aria-label', german ? 'Namensdarstellung wechseln' : 'Switch name display');
     }

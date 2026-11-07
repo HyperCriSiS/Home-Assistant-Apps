@@ -10,7 +10,7 @@ ASSETS = Path(__file__).with_name('theme')
 
 def _svg(paths, css_class=''):
     return ('<svg xmlns="http://www.w3.org/2000/svg" class="' + css_class + '" '
-            'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" '
+            'width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" '
             'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
             + ''.join('<path d="' + path + '"></path>' for path in paths) + '</svg>')
 
@@ -32,7 +32,41 @@ def _div_end(source, start):
     raise ValueError('Unbalanced Modern theme template region')
 
 
+def _sort_icons(tools):
+    # Render the same symbols as the script's fallback before the first paint.
+    icons = {
+        'author': ['M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0', 'M4 21v-2a8 8 0 0 1 16 0v2'],
+        'added': ['M4 4h6a3 3 0 0 1 3 3v14a4 4 0 0 0-4-2H4z', 'M13 8h7v11h-3', 'M17 2v6M14 5h6'],
+        'published': ['M5 5h14v16H5z', 'M8 2v6M16 2v6M5 10h14', 'M9 14h2v3H9z'],
+        'series': ['M4 5h12M4 12h12M4 19h12', 'M20 4v2M20 11v2M20 18v2'],
+        'downloads': ['M12 3v12M7 10l5 5 5-5', 'M4 17v4h16v-4'],
+    }
+    sorts = {'new': ('added', False), 'old': ('added', True),
+             'asc': ('title', True), 'desc': ('title', False),
+             'auth_az': ('author', True), 'auth_za': ('author', False),
+             'pub_new': ('published', False), 'pub_old': ('published', True),
+             'series_asc': ('series', True), 'series_desc': ('series', False),
+             'hot_asc': ('downloads', True), 'hot_desc': ('downloads', False)}
+
+    def replace(match):
+        tag, attributes, control = match[1], match[2], match[3]
+        if control == 'sort_name':
+            symbol = _svg(icons['author']) + _svg(['M4 8h16l-4-4M20 16H4l4 4'])
+        elif control in sorts:
+            kind, ascending = sorts[control]
+            symbol = ('<span aria-hidden="true">A–Z</span>' if kind == 'title' else _svg(icons[kind]))
+            symbol += _svg(['M12 20V4M6 10l6-6 6 6'] if ascending else ['M12 4v16M6 14l6 6 6-6'], 'aio-sort-arrow')
+        else:
+            return match[0]
+        attributes = attributes.replace('class="', 'class="aio-sort ', 1)
+        return '<' + tag + attributes + '>' + symbol + '</' + tag + '>'
+
+    controls = '|'.join((*sorts, 'sort_name'))
+    return re.sub(r'<(a|div)(\b[^>]*\bid="(' + controls + r')"[^>]*)>.*?</\1>', replace, tools, flags=re.S)
+
+
 def _page_header(heading, tools=''):
+    tools = _sort_icons(tools)
     return '''<header class="aio-page-header{% if page == 'magicshelf' %} aio-tools-only{% endif %}"{% if page == 'magicshelf' %} aria-label="{{ title|striptags }}"{% endif %}>
 {% if page != 'magicshelf' %}''' + heading + '''{% endif %}
 ''' + ('<div class="aio-page-tools">' + tools + '</div>' if tools else '') + '</header>'
@@ -92,8 +126,8 @@ class ThemeLoader(BaseLoader):
             source = source.replace('<span class="btn btn-default btn-file">{{_(\'Upload\')}}<input', '''<details class="aio-upload-menu"><summary aria-label="{{ _('Add books') }}">+</summary><div class="aio-upload-options"><label class="btn btn-default btn-file">{{ _('Upload') }}<input''', 1)
             source = source.replace('multiple></span>', '''multiple></label><button type="button" class="aio-folder-trigger">{% if current_user.locale.startswith('de') %}Ordner hinzufügen …{% else %}Add folder …{% endif %}</button></div></details>''', 1)
             source = source.replace('</head>', '''
-    <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=4">
-    <script defer src="{{ url_for('aio_theme', filename='modern.js') }}?v=4"></script>
+    <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=5">
+    <script defer src="{{ url_for('aio_theme', filename='modern.js') }}?v=5"></script>
   </head>''', 1)
         elif template == 'list.html':
             source = source.replace('''{% if title == "Downloads" %}
