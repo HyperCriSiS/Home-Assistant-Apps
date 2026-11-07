@@ -88,5 +88,7 @@ class ModernThemeTest(unittest.TestCase):
                     header = source.split('</header>', 1)[0]
                     self.assertIn('<div class="aio-page-tools">', header)
                     self.assertIn('<div class="filterheader', header)
+                    self.assertIn('class="aio-sort ', header)
+                    self.assertNotIn('glyphicon-sort-', header)
                 # This adapter must never edit the installed upstream source.
                 self.assertEqual(upstream.get_source(environment, template)[0], original)

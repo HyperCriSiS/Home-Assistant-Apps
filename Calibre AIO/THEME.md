@@ -16,6 +16,9 @@ the AIO launcher. The hooks are:
 - Render the final `aio-page-header` and its `aio-page-tools` in the templates,
   moving the existing native sort controls there before the response is sent.
   Reserve the same sort-control widths before and after SVG enhancement.
+  Render the final sort SVGs there as well; JavaScript preserves these symbols
+  and only supplies them as a fallback for other views. Give every SVG explicit
+  width and height attributes so it remains compact without the stylesheet.
 - Render the search symbols and navigation section buttons in the layout so
   their dimensions do not change when the deferred script starts.
 - Render the compact duplicate-resolution disclosure and initial selection count
