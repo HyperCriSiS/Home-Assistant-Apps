@@ -890,3 +890,6 @@ html.aio-modern body.blur #form-upload {
   font-size: 12px;
   padding: 5px 8px;
 }
+@media (max-width: 767px) {
+  .aio-modern .aio-upload-slot { display: none !important; }
+}

@@ -146,6 +146,7 @@
   const folderTrigger = document.querySelector('.aio-folder-trigger');
   if (upload && folderTrigger) {
     const form = upload.closest('form'), desktopSlot = form.parentElement;
+    desktopSlot.classList.add('aio-upload-slot');
     const mobileQuery = window.matchMedia('(max-width: 767px)');
     const placeUpload = () => (mobileQuery.matches ? document.querySelector('.navbar > .container-fluid') : desktopSlot).append(form);
     placeUpload(); mobileQuery.addEventListener('change', placeUpload);
