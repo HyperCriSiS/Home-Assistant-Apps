@@ -30,7 +30,9 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
   await page.goto(`https://calibre.test/library/?scenario=${scenario}`,{waitUntil:'commit'});
   await page.locator('.aio-page-header').waitFor({state:'visible'});
   await page.waitForFunction(()=>getComputedStyle(document.querySelector('.aio-page-header')).position==='sticky');
-  await page.evaluate(()=>document.fonts.ready);
+  // Firefox's FontFaceSet.ready may wait for document load, which this test
+  // intentionally holds back. Wait for the fonts already used by layout.
+  await page.evaluate(()=>Promise.all([...document.fonts].filter(font=>font.status==='loading').map(font=>font.loaded)));
   // The native mobile script relocates the closed, offscreen navigation drawer.
   // Compare its visible desktop links; mobile opening is covered below.
   const snapshot=()=>page.evaluate(()=>Object.fromEntries(['.aio-page-header','.aio-page-tools','.aio-page-tools #asc','.pagination','.duplicate-group','#query','#query_submit',...(innerWidth>=768?['#nav_author']:[])].map(selector=>{const el=document.querySelector(selector);if(!el)return [selector,null];const r=el.getBoundingClientRect();return [selector,{x:r.x,y:r.y,width:r.width,height:r.height}];})));
