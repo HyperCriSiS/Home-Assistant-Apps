@@ -441,12 +441,18 @@ html.aio-modern body.blur > div.container-fluid > div.row-fluid > div.col-sm-10.
 html.aio-modern body.blur .aio-main > #list {
   width: 100% !important;
   margin: 0 !important;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: flex-start;
 }
 .aio-modern .aio-main > #list .book {
   width: 16.6667% !important;
   min-width: 0 !important;
   padding: 0 8px !important;
   margin-bottom: 16px;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
 }
 .aio-modern .aio-main > #list .cover img {
   width: 100% !important;
@@ -921,5 +927,63 @@ html.aio-modern body.blur .aio-page-tools .filterheader > :is(a[id], #asc, #desc
 @media (max-width: 767px) {
   html.aio-modern body.blur .aio-page-tools .filterheader > :is(a[id], #asc, #desc, #sort_name) {
     height: 44px !important;
+  }
+}
+/* Match pagination to the shared desktop title band, including arrow glyphs. */
+  html.aio-modern body.blur .aio-main:has(> .aio-page-header) > .pagination {
+    display: flex !important; align-items: center; gap: 4px;
+    top: 60px !important; right: 16px !important; height: 60px !important;
+    margin: 0 !important; padding: 0 !important; line-height: normal !important;
+  }
+  html.aio-modern body.blur .aio-main > .pagination > .page-item {
+    display: flex !important; align-items: center; height: 32px;
+  }
+  html.aio-modern body.blur .aio-main > .pagination > .page-item > a {
+    display: inline-flex !important; align-items: center; justify-content: center;
+    top: auto !important; min-width: 32px; height: 32px !important;
+    padding: 0 8px !important; margin: 0 !important; line-height: 32px !important;
+  }
+  html.aio-modern body.blur .aio-main > .pagination > :is(.page-next,.page-previous) > a {
+    width: 32px !important; padding: 0 !important; font-size: 0 !important;
+  }
+  html.aio-modern body.blur .aio-main > .pagination > :is(.page-next,.page-previous) > a::before {
+    height: 32px !important; line-height: 32px !important;
+    padding: 0 !important; margin: 0 !important; border: 0 !important;
+    width: 16px; flex: none; font-size: 16px !important;
+  }
+@media (max-width: 767px) {
+  html.aio-modern body.blur .aio-main:has(> .pagination) > .aio-page-header {
+    padding-top: 44px;
+  }
+  html.aio-modern body.blur .aio-main:has(> .aio-page-header) > .pagination {
+    top: 48px !important; right: 0 !important; height: 44px !important;
+    width: 100%; max-width: 100vw; padding: 0 12px !important;
+    justify-content: flex-start; background: var(--aio-bg);
+    overflow-x: auto; overflow-y: hidden;
+  }
+  html.aio-modern body.blur .aio-main > .pagination > .page-item { flex: none; }
+  html.aio-modern body.blur .aio-main > .pagination > .page-item:first-child { margin-left: auto; }
+  html.aio-modern body.blur .aio-main > .pagination:has(.dropdown.open) { overflow: visible; }
+}
+/* Section labels use the same row rhythm as their navigation links. */
+html.aio-modern body.blur li.nav-head.aio-nav-section {
+  margin: 0 !important; padding: 0 !important; min-height: 0 !important;
+  line-height: normal !important;
+}
+html.aio-modern body.blur .aio-nav-section > button {
+  height: 34px; padding: 7px 20px; line-height: 20px;
+}
+html.aio-modern body.blur #scnd-nav > .create-shelf {
+  margin: 0 !important; width: auto !important;
+}
+@media (min-width: 768px) {
+  html.aio-modern body.blur #scnd-nav > li:not(.nav-head) > a {
+    min-height: 34px; line-height: 20px; padding-top: 7px !important; padding-bottom: 7px !important;
+  }
+}
+@media (max-width: 767px) {
+  html.aio-modern body.blur li.nav-head.aio-nav-section { height: 45px !important; min-height: 45px !important; }
+  html.aio-modern body.blur .aio-nav-section > button {
+    height: 44px; min-height: 44px; padding-top: 11px; padding-bottom: 11px; line-height: 22px;
   }
 }

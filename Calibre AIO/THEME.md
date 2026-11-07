@@ -28,13 +28,22 @@ the AIO launcher. The hooks are:
   filenames remain basenames and browser directory paths are not server paths.
 - Remove the redundant Downloads explanatory heading while retaining the empty
   state. The deployment adapter supplies the localized empty-state text.
+- Use native `fitRows` for the Series grid with matching initial flex rows.
+  The adapter serves the pinned upstream `filter_grid.js` with only its layout
+  mode changed; sorting, filtering and saved preferences remain native.
+- Align pagination with the shared title band and give navigation headings and
+  links the same row spacing on desktop and mobile.
+  On paginated mobile views reserve a separate row above the sorting strip so
+  page controls cannot overlap it, including during scrolling.
 
 The script enhances the server-rendered controls and retains a header fallback
 for other native views. It preserves their links and action handlers.
 Navigation sections keep their native
 list items so CWA can still relocate the navigation between desktop and mobile.
 Collapsed section preferences use optional local browser storage. Back uses the
-browser history only for a referrer within the library's native home URL prefix.
+browser history with a previous library entry validated against its native home
+URL prefix. History state preserves that entry across reloads; session storage
+provides a tab-local fallback when the host suppresses referrers.
 
 The browser fixture renders the pinned upstream templates, including Series list
 and grid views, duplicate groups, Magic Shelves and uploads. It delays the theme

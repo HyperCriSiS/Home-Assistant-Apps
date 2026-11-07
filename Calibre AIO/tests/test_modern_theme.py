@@ -68,6 +68,16 @@ class ModernThemeTest(unittest.TestCase):
         self.assertIn('<button type="button" aria-expanded="true">', source)
 
     @unittest.skipUnless(os.environ.get('CWA_SOURCE'), 'requires pinned CWA source')
+    def test_series_script_preserves_native_actions_with_stable_rows(self):
+        self.app.static_folder = str((Path(os.environ['CWA_SOURCE']) / 'cps/static').resolve())
+        self.assertEqual(self.client.get('/aio-theme/filter_grid.js').status_code, 403)
+        response = self.client.get('/aio-theme/filter_grid.js', headers=self.headers)
+        self.assertEqual(response.status_code, 200)
+        original = (Path(self.app.static_folder) / 'js/filter_grid.js').read_text(encoding='utf-8')
+        self.assertEqual(response.get_data(as_text=True), original.replace(
+            'selectedLayoutMode = "fitRowsCentered";', 'selectedLayoutMode = "fitRows";'))
+
+    @unittest.skipUnless(os.environ.get('CWA_SOURCE'), 'requires pinned CWA source')
     def test_pinned_browse_headers_exist_before_script_execution(self):
         from jinja2 import FileSystemLoader, Environment
         from modern_theme import ThemeLoader
