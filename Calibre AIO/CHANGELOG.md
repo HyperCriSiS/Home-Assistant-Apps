@@ -1,3 +1,8 @@
+# 1.2.8
+
+- Replace separate shelf creation entries with plus actions beside Shelves and Magic Shelves.
+- Make navigation section headings slightly larger than their menu items on desktop and mobile.
+
 # 1.2.7
 
 - Keep Series grid rows in place while the view loads.

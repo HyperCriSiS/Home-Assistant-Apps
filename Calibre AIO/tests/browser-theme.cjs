@@ -94,6 +94,25 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
  assert.deepEqual(errors,[]);
  for(const button of await page.locator('.aio-sort').all()) { const box=await button.boundingBox(); if(width>=768)assert(box.x>=0 && box.x+box.width<=width, 'Sort control is clipped'); assert(box.height>=32); assert(await button.getAttribute('aria-label')); }
  if(width<768){await page.locator('.navbar-toggle').click(); await page.waitForTimeout(400); assert(await page.locator('#nav_author').isVisible());}
+ assert.equal(await page.locator('#nav_createshelf,#nav_createmagicshelf').count(),0);
+ assert.equal(await page.locator('#scnd-nav .aio-section-create').count(),2);
+ if(width>=768)assert(!(await page.locator('#main-nav > .aio-functions-head').isVisible()),'Mobile functions heading must stay hidden on desktop');
+ for(const action of await page.locator('#scnd-nav .aio-section-create').all()) {
+  assert.equal((await action.innerText()).trim(),'+');assert(await action.getAttribute('aria-label'));
+  const heading=action.locator('..').locator(':scope > button');
+  assert(Number(await heading.evaluate(el=>parseFloat(getComputedStyle(el).fontSize)))>Number(await page.locator('#nav_author a').evaluate(el=>parseFloat(getComputedStyle(el).fontSize))),'Section headings must be larger than items');
+  const before=await heading.getAttribute('aria-expanded'),href=await action.getAttribute('href');assert(href.includes('shelf'));
+  const titleBox=await heading.boundingBox(),actionBox=await action.boundingBox();
+  const navBox=await page.locator('#scnd-nav').boundingBox();
+  assert(titleBox.x>=navBox.x-1&&actionBox.x+actionBox.width<=navBox.x+navBox.width+1,'Heading and plus must fit inside the visible menu');
+  assert(actionBox.width<=44&&titleBox.width>100,'Plus must not take the heading space');
+  assert(actionBox.x>=titleBox.x+titleBox.width-1&&actionBox.x+actionBox.width<=width,'Plus must sit to the right of its section heading');
+  assert(Math.abs(actionBox.y+actionBox.height/2-titleBox.y-titleBox.height/2)<2,'Plus must be vertically centered');
+  await heading.click();assert(await action.isVisible(),'Plus must remain available when the section is collapsed');await heading.click();
+  await action.evaluate(el=>el.addEventListener('click',event=>event.preventDefault(),{once:true}));
+  await action.click();
+  assert.equal(await heading.getAttribute('aria-expanded'),before,'Creation must not collapse the section');
+ }
  const navSpacing=await page.evaluate(()=>{const head=document.querySelector('#scnd-nav .aio-nav-section > button'),first=document.querySelector('#nav_books a'),second=document.querySelector('#nav_author a');return [head,first,second].map(el=>{const r=el.getBoundingClientRect();return r.y+r.height/2;});});
  assert(Math.abs((navSpacing[1]-navSpacing[0])-(navSpacing[2]-navSpacing[1]))<2,'Section and menu rows must have equal spacing: '+navSpacing);
  const sectionGaps=await page.locator('#scnd-nav .aio-nav-section').evaluateAll(heads=>heads.flatMap(head=>{const button=head.querySelector('button'),next=head.nextElementSibling;if(!button||!next||next.classList.contains('nav-head'))return [];const link=next.querySelector('a');if(!link)return [];const a=button.getBoundingClientRect(),b=link.getBoundingClientRect();return [b.y+b.height/2-a.y-a.height/2];}));
