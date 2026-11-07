@@ -16,12 +16,12 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
  const uploads=[];
  await page.route('https://calibre.test/**',async route=>{
   const u=new URL(route.request().url());
-  if(u.pathname==='/shell')return route.fulfill({contentType:'text/html',body:'<!doctype html><title>AIO fixture</title><body style="margin:0"><iframe title="Library" style="width:100vw;height:100vh;border:0" src="/library/?scenario=authors"></iframe></body>'});
+  if(u.pathname==='/shell')return route.fulfill({contentType:'text/html; charset=utf-8',body:'<!doctype html><title>AIO fixture</title><body style="margin:0"><iframe title="Library" style="width:100vw;height:100vh;border:0" src="/library/?scenario=authors"></iframe></body>'});
   if(u.pathname==='/upload'){uploads.push(route.request().postDataBuffer().toString());return route.fulfill({contentType:'application/json',body:JSON.stringify({location:'/library/?uploaded=1'})});}
   if(u.pathname.startsWith('/static/')){const p=path.join(src,decodeURIComponent(u.pathname.slice(8)));if(fs.existsSync(p))return route.fulfill({path:p});return route.fulfill({status:404,body:''});}
   if(u.pathname.startsWith('/library/aio-theme/'))return route.fulfill({path:path.join(root,'rootfs/opt/ha-cwa/theme',path.basename(u.pathname))});
   if(u.pathname.startsWith('/cover/')){const i=Number(u.pathname.split('/').pop()); const colors=['#526d67','#4d6176','#a27a50','#5b4b66','#727b62','#435665'];return route.fulfill({contentType:'image/svg+xml',body:`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300"><rect width="200" height="300" fill="${colors[i%6]}"/><rect x="12" y="12" width="176" height="276" fill="none" stroke="#ffffff55"/><path d="M12 210 Q100 80 188 210" fill="none" stroke="#ffffff33" stroke-width="30"/><text x="100" y="72" text-anchor="middle" font-family="serif" font-size="20" fill="#fff">LESEN</text><text x="100" y="125" text-anchor="middle" font-family="serif" font-size="30" fill="#fff">${String(i).padStart(2,'0')}</text></svg>`});}
-  if(u.pathname==='/library/'||u.pathname==='/library') {const body=execFileSync(process.env.PYTHON || 'python3',['-X','utf8',path.join(__dirname,'theme_fixture.py'),u.searchParams.get('sort_param')||'abc',u.searchParams.get('scenario')||'books'],{encoding:'utf8'});return route.fulfill({contentType:'text/html',body});}
+  if(u.pathname==='/library/'||u.pathname==='/library') {const body=execFileSync(process.env.PYTHON || 'python3',['-X','utf8',path.join(__dirname,'theme_fixture.py'),u.searchParams.get('sort_param')||'abc',u.searchParams.get('scenario')||'books'],{encoding:'utf8'});return route.fulfill({contentType:'text/html; charset=utf-8',body});}
   return route.fulfill({contentType:'application/json',body:'{}'});
  });
  await page.goto('https://calibre.test/library/');await page.waitForTimeout(1400);
@@ -143,6 +143,6 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
 // Before JavaScript runs, list markers already have the compact server class.
 const initial=await browser.newContext({javaScriptEnabled:false});const first=await initial.newPage();
 const fixture=execFileSync(process.env.PYTHON||'python3',['-X','utf8',path.join(__dirname,'theme_fixture.py'),'abc','authors'],{encoding:'utf8'});
-await first.route('https://calibre.test/**',route=>{const u=new URL(route.request().url());if(u.pathname.startsWith('/library/aio-theme/'))return route.fulfill({path:path.join(root,'rootfs/opt/ha-cwa/theme',path.basename(u.pathname))});if(u.pathname.startsWith('/static/')){const p=path.join(src,decodeURIComponent(u.pathname.slice(8)));if(fs.existsSync(p))return route.fulfill({path:p});}return route.fulfill({contentType:'text/html',body:fixture});});
+await first.route('https://calibre.test/**',route=>{const u=new URL(route.request().url());if(u.pathname.startsWith('/library/aio-theme/'))return route.fulfill({path:path.join(root,'rootfs/opt/ha-cwa/theme',path.basename(u.pathname))});if(u.pathname.startsWith('/static/')){const p=path.join(src,decodeURIComponent(u.pathname.slice(8)));if(fs.existsSync(p))return route.fulfill({path:p});}return route.fulfill({contentType:'text/html; charset=utf-8',body:fixture});});
 await first.goto('https://calibre.test/library/');assert.equal(await first.locator('.aio-list-page').count(),1);assert(await first.locator('.aio-list-page').evaluate(el=>parseFloat(getComputedStyle(el,'::before').fontSize)<=32));await initial.close();
 }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1});
