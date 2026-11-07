@@ -55,6 +55,11 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
    const header=await page.locator('.aio-page-header').boundingBox();
    for(const control of await page.locator('.pagination > .page-item > a').all()) {const box=await control.boundingBox();assert(Math.abs(box.y+box.height/2-header.y-header.height/2)<2,'Page controls must be vertically centered');}
   }
+  if(width<768&&scenario==='books-paged') {
+   const pagination=await page.locator('.pagination').boundingBox(),tools=await page.locator('.aio-page-tools').boundingBox();
+   assert(pagination.y+pagination.height<=tools.y,'Mobile page navigation must have its own row above sorting');
+   for(const control of await page.locator('.pagination > .page-item > a').all()) {const box=await control.boundingBox();assert(box.y>=pagination.y&&box.y+box.height<=pagination.y+pagination.height,'Mobile pagination controls must fit their row');}
+  }
   assert.deepEqual(await symbols(),initialSymbols,'Sort symbols must not switch after first paint');
   for(const [selector,box] of Object.entries(before))if(box)for(const key of ['x','y','width','height'])assert(Math.abs(box[key]-after[selector][key])<2,`${scenario} ${width}: ${selector} ${key} moved from ${box[key]} to ${after[selector][key]}`);
   if(out&&scenario==='publishers')await page.screenshot({path:path.join(out,`first-paint-${width}-after.png`)});

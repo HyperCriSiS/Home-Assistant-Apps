@@ -930,7 +930,6 @@ html.aio-modern body.blur .aio-page-tools .filterheader > :is(a[id], #asc, #desc
   }
 }
 /* Match pagination to the shared desktop title band, including arrow glyphs. */
-@media (min-width: 768px) {
   html.aio-modern body.blur .aio-main:has(> .aio-page-header) > .pagination {
     display: flex !important; align-items: center; gap: 4px;
     top: 60px !important; right: 16px !important; height: 60px !important;
@@ -951,6 +950,18 @@ html.aio-modern body.blur .aio-page-tools .filterheader > :is(a[id], #asc, #desc
     height: 32px !important; line-height: 32px !important;
     padding: 0 !important; margin: 0 !important; border: 0 !important;
   }
+@media (max-width: 767px) {
+  html.aio-modern body.blur .aio-main:has(> .pagination) > .aio-page-header {
+    padding-top: 44px;
+  }
+  html.aio-modern body.blur .aio-main:has(> .aio-page-header) > .pagination {
+    top: 48px !important; right: 0 !important; height: 44px !important;
+    width: 100%; max-width: 100vw; padding: 0 12px !important;
+    justify-content: flex-start; background: var(--aio-bg);
+    overflow-x: auto; overflow-y: hidden;
+  }
+  html.aio-modern body.blur .aio-main > .pagination > .page-item { flex: none; }
+  html.aio-modern body.blur .aio-main > .pagination > .page-item:first-child { margin-left: auto; }
 }
 /* Section labels use the same row rhythm as their navigation links. */
 html.aio-modern body.blur li.nav-head.aio-nav-section {

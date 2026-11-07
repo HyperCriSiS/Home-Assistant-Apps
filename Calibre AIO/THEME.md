@@ -33,6 +33,8 @@ the AIO launcher. The hooks are:
   mode changed; sorting, filtering and saved preferences remain native.
 - Align pagination with the shared title band and give navigation headings and
   links the same row spacing on desktop and mobile.
+  On paginated mobile views reserve a separate row above the sorting strip so
+  page controls cannot overlap it, including during scrolling.
 
 The script enhances the server-rendered controls and retains a header fallback
 for other native views. It preserves their links and action handlers.

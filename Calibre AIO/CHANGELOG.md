@@ -2,6 +2,7 @@
 
 - Keep Series grid rows in place while the view loads.
 - Vertically center page numbers and navigation arrows in the desktop title bar.
+- Place mobile sorting below a separate page-navigation row when a view has multiple pages.
 - Match the spacing below navigation section headings to the spacing between menu items.
 - Keep Back navigation working when the browser suppresses referrers, including after a reload.
 
