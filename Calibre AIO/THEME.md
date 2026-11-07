@@ -21,6 +21,9 @@ the AIO launcher. The hooks are:
   width and height attributes so it remains compact without the stylesheet.
 - Render the search symbols and navigation section buttons in the layout so
   their dimensions do not change when the deferred script starts.
+- Render permitted shelf creation links beside their section buttons instead
+  of separate menu rows. Keep them as sibling anchors so creation never toggles
+  the section, and keep the native anonymous-user and magic-route conditions.
 - Render the compact duplicate-resolution disclosure and initial selection count
   in the template rather than rebuilding that panel after the first paint.
 - Wrap the existing permitted upload input in the plus menu and add a folder

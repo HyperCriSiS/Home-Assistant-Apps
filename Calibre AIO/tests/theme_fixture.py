@@ -44,6 +44,8 @@ app.jinja_env.globals.update(
     _=lambda x, *a, **k: x,
     csrf_token=lambda: "fixture",
     url_for=lambda endpoint, **kw: (
+        "/library/create-shelf" if endpoint == "shelf.create_shelf" else
+        "/library/create-magic-shelf" if endpoint == "web.create_magic_shelf" else
         "/upload" if endpoint == "edit-book.upload" else
         "/library/aio-theme/" + kw["filename"]
         if endpoint == "aio_theme"
@@ -163,7 +165,7 @@ with app.test_request_context("/"):
         simple=True,
         sidebar=sidebar,
         cwa_settings={},
-        magic_shelf_routes=NS(render=False, create=False),
+        magic_shelf_routes=NS(render=True, create=True),
         pagination=pagination,
         searchterm="",
         config=NS(),
