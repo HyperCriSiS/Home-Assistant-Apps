@@ -125,10 +125,10 @@ with app.test_request_context("/"):
     entries = [(NS(id=i + 1, name=name, sort=name.replace(', ', ' ') if data == 'author' else name,
                    format=None, rating=None), i + 1) for i, name in enumerate(names)]
     template = "list.html" if scenario in lists else "index.html"
-    if scenario == "series-grid":
+    if scenario in ("series-grid", "series-grid-many"):
         title, page, data, template = "Series", "serieslist", "series", "grid.html"
         entries = []
-        for i, book in enumerate(books[:6]):
+        for i, book in enumerate(books[:7 if scenario == "series-grid-many" else 6]):
             book.Books.series = [NS(id=i+1, name=f"Sammlung {i+1}")]
             class SeriesRow(tuple):
                 @property

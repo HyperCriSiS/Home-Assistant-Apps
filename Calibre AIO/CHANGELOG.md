@@ -1,3 +1,9 @@
+# 1.2.7
+
+- Keep Series grid rows in place while the view loads.
+- Vertically center page numbers and navigation arrows in the desktop title bar.
+- Match the spacing below navigation section headings to the spacing between menu items.
+
 # 1.2.6
 
 - Show Modern sorting icons immediately when switching library views.

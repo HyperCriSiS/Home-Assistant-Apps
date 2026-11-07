@@ -75,6 +75,8 @@ def _page_header(heading, tools=''):
 def _render_page_header(source, template):
     """Render the final header in HTML instead of moving it after first paint."""
     if template in ('list.html', 'grid.html'):
+        if template == 'grid.html':
+            source = source.replace("url_for('static', filename='js/filter_grid.js')", "url_for('aio_theme', filename='filter_grid.js')")
         heading = '<h1 class="{{page}}">{{_(title)}}</h1>'
         start = source.index('<div class="filterheader')
         end = _div_end(source, start)
@@ -126,8 +128,8 @@ class ThemeLoader(BaseLoader):
             source = source.replace('<span class="btn btn-default btn-file">{{_(\'Upload\')}}<input', '''<details class="aio-upload-menu"><summary aria-label="{{ _('Add books') }}">+</summary><div class="aio-upload-options"><label class="btn btn-default btn-file">{{ _('Upload') }}<input''', 1)
             source = source.replace('multiple></span>', '''multiple></label><button type="button" class="aio-folder-trigger">{% if current_user.locale.startswith('de') %}Ordner hinzufügen …{% else %}Add folder …{% endif %}</button></div></details>''', 1)
             source = source.replace('</head>', '''
-    <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=5">
-    <script defer src="{{ url_for('aio_theme', filename='modern.js') }}?v=5"></script>
+    <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=6">
+    <script defer src="{{ url_for('aio_theme', filename='modern.js') }}?v=6"></script>
   </head>''', 1)
         elif template == 'list.html':
             source = source.replace('''{% if title == "Downloads" %}
@@ -144,6 +146,12 @@ class ThemeLoader(BaseLoader):
 
 def install_modern_theme(app):
     def asset(filename):
+        if filename == 'filter_grid.js':
+            # Preserve native filtering/sorting while matching the initial CSS
+            # rows. caliBlur's centered mode shifts partial rows after loading.
+            source = (Path(app.static_folder) / 'js/filter_grid.js').read_text(encoding='utf-8')
+            return app.response_class(source.replace('selectedLayoutMode = "fitRowsCentered";',
+                                                    'selectedLayoutMode = "fitRows";'), mimetype='text/javascript')
         # Keep the asset surface explicit; authentication remains CWA's hook.
         if filename not in ('modern.css', 'modern.js'):
             from flask import abort

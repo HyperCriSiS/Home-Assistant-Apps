@@ -28,6 +28,11 @@ the AIO launcher. The hooks are:
   filenames remain basenames and browser directory paths are not server paths.
 - Remove the redundant Downloads explanatory heading while retaining the empty
   state. The deployment adapter supplies the localized empty-state text.
+- Use native `fitRows` for the Series grid with matching initial flex rows.
+  The adapter serves the pinned upstream `filter_grid.js` with only its layout
+  mode changed; sorting, filtering and saved preferences remain native.
+- Align pagination with the shared title band and give navigation headings and
+  links the same row spacing on desktop and mobile.
 
 The script enhances the server-rendered controls and retains a header fallback
 for other native views. It preserves their links and action handlers.
