@@ -361,7 +361,7 @@ html.aio-modern body.blur > .navbar > div > form[role="search"] #query_submit {
 @media (prefers-reduced-motion: reduce) { .aio-modern *, .aio-modern *::before, .aio-modern *::after { transition: none !important; animation: none !important; } }
 
 /* Shared page band. The server adds aio-list-page before scripts run. */
-html.aio-modern body.blur > div.container-fluid > div.row-fluid > div.col-sm-10.aio-main {
+html.aio-modern body.blur > div.container-fluid > div.row-fluid > div.col-sm-10.aio-main:is(.aio-list-page, :has(> .aio-page-header)) {
   position: fixed !important;
   top: 60px !important;
   height: calc(100% - 60px) !important;
@@ -502,12 +502,12 @@ html.aio-modern body.blur .aio-main > #list {
   padding: 2px 6px;
   background: #3c242b;
 }
-.aio-modern .books-grid {
+.aio-modern .duplicates-container .books-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit,minmax(260px,1fr));
   gap: 10px;
 }
-.aio-modern .book-item {
+.aio-modern .duplicate-group .book-item {
   width: 100%;
   max-width: none;
   padding: 10px;
@@ -515,28 +515,28 @@ html.aio-modern body.blur .aio-main > #list {
   background: var(--aio-bg);
   box-shadow: none;
 }
-.aio-modern .book-cover {
+.aio-modern .duplicate-group .book-cover {
   margin: 0 10px 0 0;
 }
-.aio-modern .book-cover img {
+.aio-modern .duplicate-group .book-cover img {
   width: 48px;
   height: 72px;
 }
-.aio-modern .book-checkbox {
+.aio-modern .duplicate-group .book-checkbox {
   width: 16px;
   height: 16px;
   margin: 0 8px 0 0;
   transform: none;
 }
-.aio-modern .book-title {
+.aio-modern .duplicate-group .book-title {
   font-size: 13px;
   margin-bottom: 4px;
 }
-.aio-modern .book-info {
+.aio-modern .duplicate-group .book-info {
   font-size: 12px;
   line-height: 1.4;
 }
-.aio-modern .duplicate-group:hover, .aio-modern .book-item:hover {
+.aio-modern .duplicate-group:hover, .aio-modern .duplicate-group .book-item:hover {
   transform: none;
 }
 /* Collapsible sections work with the original desktop/mobile navigation. */
@@ -625,7 +625,7 @@ html.aio-modern body.blur .aio-main > #list {
   }
 }
 @media(max-width: 767px) {
-  html.aio-modern body.blur > div.container-fluid > div.row-fluid > div.col-sm-10.aio-main {
+  html.aio-modern body.blur > div.container-fluid > div.row-fluid > div.col-sm-10.aio-main:is(.aio-list-page, :has(> .aio-page-header)) {
     top: 48px !important;
     height: calc(100% - 48px) !important;
     padding: 0 12px 20px !important;
@@ -687,7 +687,7 @@ html.aio-modern body.blur .aio-main > #list {
     width: 33.3333% !important;
     padding: 0 5px !important;
   }
-  .aio-modern .books-grid {
+  .aio-modern .duplicates-container .books-grid {
     grid-template-columns: minmax(0,1fr);
   }
   .aio-modern .duplicate-header > div {
@@ -793,7 +793,7 @@ html.aio-modern body.blur .duplicate-group .book-item .book-meta div {
 .aio-modern .aio-duplicate-options[open] summary {
   margin-bottom: 10px;
 }
-html.aio-modern body.blur .duplicates .bulk-actions, html.aio-modern body.blur .bulk-actions {
+html.aio-modern body.blur.duplicates .bulk-actions {
   padding: 8px !important;
   margin-bottom: 12px !important;
   border-radius: 5px;
