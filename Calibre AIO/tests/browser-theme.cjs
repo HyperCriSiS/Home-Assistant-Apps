@@ -63,6 +63,10 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
    const scrolledTools=await page.locator('.aio-page-tools').boundingBox();
    assert(scrolledTools.y>=pagination.y+pagination.height,'Mobile sorting must stay below pagination while scrolling');
    await page.locator('.aio-main').evaluate(el=>el.scrollTop=0);
+   const jump=page.locator('.pagination .page-jump').first();await jump.locator(':scope > a').click();
+   const menu=jump.locator('.page-jump-menu');assert(await menu.isVisible());
+   assert(await menu.locator('a').first().evaluate(el=>{const r=el.getBoundingClientRect();return !!document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.closest('.page-jump-menu');}),'Mobile page-jump menu must not be clipped');
+   await jump.locator(':scope > a').click();
   }
   assert.deepEqual(await symbols(),initialSymbols,'Sort symbols must not switch after first paint');
   for(const [selector,box] of Object.entries(before))if(box)for(const key of ['x','y','width','height'])assert(Math.abs(box[key]-after[selector][key])<2,`${scenario} ${width}: ${selector} ${key} moved from ${box[key]} to ${after[selector][key]}`);
