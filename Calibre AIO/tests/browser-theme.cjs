@@ -88,6 +88,7 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
    await page.locator('#desc').click();assert.equal(await page.locator('#desc').getAttribute('aria-pressed'),'true');
   }
   if(scenario==='duplicates') {
+   const options=await page.locator('.aio-duplicate-options').boundingBox(),group=await page.locator('.duplicate-group').first().boundingBox();assert(Math.abs(options.x-group.x)<2&&Math.abs(options.width-group.width)<2,'Duplicate panels must share the same content width');
    const cover=await page.locator('.book-cover img').first().boundingBox();assert(cover.width<=50&&cover.height<=75);
    await page.locator('.book-checkbox').first().check();assert(await page.locator('.book-checkbox').first().isChecked());
    assert(await page.locator('#delete_selected').isEnabled());

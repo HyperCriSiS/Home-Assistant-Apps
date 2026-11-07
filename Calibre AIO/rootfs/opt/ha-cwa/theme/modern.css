@@ -893,3 +893,6 @@ html.aio-modern body.blur #form-upload {
 @media (max-width: 767px) {
   .aio-modern .aio-upload-slot { display: none !important; }
 }
+html.aio-modern body.blur.duplicates .aio-main .aio-duplicate-options {
+  width: 100% !important; max-width: none !important; margin: 0 0 12px !important;
+}
