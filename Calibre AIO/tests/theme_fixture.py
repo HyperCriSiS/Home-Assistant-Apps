@@ -125,10 +125,10 @@ with app.test_request_context("/"):
     entries = [(NS(id=i + 1, name=name, sort=name.replace(', ', ' ') if data == 'author' else name,
                    format=None, rating=None), i + 1) for i, name in enumerate(names)]
     template = "list.html" if scenario in lists else "index.html"
-    if scenario == "series-grid":
+    if scenario in ("series-grid", "series-grid-many"):
         title, page, data, template = "Series", "serieslist", "series", "grid.html"
         entries = []
-        for i, book in enumerate(books[:6]):
+        for i, book in enumerate(books[:7 if scenario == "series-grid-many" else 6]):
             book.Books.series = [NS(id=i+1, name=f"Sammlung {i+1}")]
             class SeriesRow(tuple):
                 @property
@@ -141,8 +141,8 @@ with app.test_request_context("/"):
                           cover_url=f"/cover/{i+1}", series=[], data=[NS(format="EPUB")]) for i in range(2)]
     if scenario == "duplicates":
         title, page, template = "Duplicates", "duplicates", "duplicates.html"
-    pagination = NS(page=1, pages=2, has_next=True, has_prev=False,
-                    iter_pages=lambda: [1, 2]) if scenario == "books-paged" else None
+    pagination = NS(page=6, pages=12, has_next=True, has_prev=True,
+                    iter_pages=lambda: [1, None, 5, 6, 7, None, 12]) if scenario == "books-paged" else None
     html = render_template(
         template,
         current_user=user,
@@ -150,11 +150,11 @@ with app.test_request_context("/"):
         title=title,
         page=page,
         bodyClass="",
-        entries=entries if scenario in lists or scenario == "series-grid" else books,
-        charlist=[(c,) for c in sorted({name[0] for name in names})] if scenario != "series-grid" else [NS(char="S")],
+        entries=entries if scenario in lists or scenario.startswith("series-grid") else books,
+        charlist=[(c,) for c in sorted({name[0] for name in names})] if not scenario.startswith("series-grid") else [NS(char="S")],
         data=data,
         random=[],
-        order=1 if scenario in lists or scenario == "series-grid" else (sys.argv[1] if len(sys.argv) > 1 else "abc"),
+        order=1 if scenario in lists or scenario.startswith("series-grid") else (sys.argv[1] if len(sys.argv) > 1 else "abc"),
         accept=["epub", "pdf"],
         duplicate_groups=[NS(title="Der stille Garten", author="Mara Winter", count=2, group_hash="fixture", books=duplicate_books)],
         duplicate_index_needs_full_scan=False,
