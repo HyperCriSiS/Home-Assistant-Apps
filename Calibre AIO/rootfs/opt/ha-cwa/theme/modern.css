@@ -550,7 +550,8 @@ html.aio-modern body.blur .aio-main > #list {
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 10px;
   background: none;
   border: 0;
   padding: 12px 20px;
@@ -558,12 +559,18 @@ html.aio-modern body.blur .aio-main > #list {
   font-size: 11px;
   text-align: left;
 }
-.aio-modern .aio-nav-section button::after {
-  content: '⌄';
-  font-size: 16px;
+.aio-modern .aio-nav-section button::before {
+  content: '';
+  flex: none;
+  width: 0;
+  height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 6px solid currentColor;
+  transform: rotate(90deg);
 }
-.aio-modern .aio-nav-section button[aria-expanded=false]::after {
-  content: '›';
+.aio-modern .aio-nav-section button[aria-expanded=false]::before {
+  transform: rotate(0deg);
 }
 /* Native file upload and directory selection share one clear plus menu. */
 .aio-modern #form-upload .form-group::before, .aio-modern #form-upload .btn::before {
