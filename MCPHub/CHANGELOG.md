@@ -1,5 +1,11 @@
 # Changelog
 
+## v2026.11.07-1
+
+### Changed
+
+- Updated bundled OpenAI tunnel-client v0.0.19 to v0.0.20.
+
 ## v2026.11.07
 
 ### Changed
