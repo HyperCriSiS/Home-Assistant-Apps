@@ -13,20 +13,30 @@ the AIO launcher. The hooks are:
 - Render `aio-list-page` on list pages before any JavaScript runs, including the
   Series overview. This prevents the initial oversized caliBlur marker.
 - Render the current page title in the navbar brand location.
+- Render the final `aio-page-header` and its `aio-page-tools` in the templates,
+  moving the existing native sort controls there before the response is sent.
+  Reserve the same sort-control widths before and after SVG enhancement.
+- Render the search symbols and navigation section buttons in the layout so
+  their dimensions do not change when the deferred script starts.
+- Render the compact duplicate-resolution disclosure and initial selection count
+  in the template rather than rebuilding that panel after the first paint.
 - Wrap the existing permitted upload input in the plus menu and add a folder
   action. The script passes supported selected files to the original input;
   filenames remain basenames and browser directory paths are not server paths.
 - Remove the redundant Downloads explanatory heading while retaining the empty
   state. The deployment adapter supplies the localized empty-state text.
 
-The script moves existing headings and controls into a shared page band without
-recreating their links or action handlers. Navigation sections keep their native
+The script enhances the server-rendered controls and retains a header fallback
+for other native views. It preserves their links and action handlers.
+Navigation sections keep their native
 list items so CWA can still relocate the navigation between desktop and mobile.
 Collapsed section preferences use optional local browser storage. Back uses the
 browser history only for a referrer within the library's native home URL prefix.
 
 The browser fixture renders the pinned upstream templates, including Series list
-and grid views, duplicate groups, Magic Shelves and uploads. Its upload endpoint
+and grid views, duplicate groups, Magic Shelves and uploads. It delays the theme
+script to compare visible geometry before and after enhancement, including a
+paginated book view. Its upload endpoint
 is a local fixture; the container acceptance tests cover the actual ingest path.
 An upstream submission still needs integration with upstream's theme switcher
 and review there; this document does not imply upstream acceptance.

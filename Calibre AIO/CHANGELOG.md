@@ -1,3 +1,8 @@
+# 1.2.5
+
+- Prevent titles, sorting controls and the search field from shifting while library views load.
+- Keep the Duplicates layout steady while its controls initialize.
+
 # 1.2.4
 
 - Add a folder picker to the Add Books menu, including supported ebooks in subfolders.
