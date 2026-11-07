@@ -37,9 +37,16 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
   // Compare its visible desktop links; mobile opening is covered below.
   const snapshot=()=>page.evaluate(()=>Object.fromEntries(['.aio-page-header','.aio-page-tools','.aio-page-tools #asc','.pagination','.duplicate-group','#query','#query_submit',...(innerWidth>=768?['#nav_author']:[])].map(selector=>{const el=document.querySelector(selector);if(!el)return [selector,null];const r=el.getBoundingClientRect();return [selector,{x:r.x,y:r.y,width:r.width,height:r.height}];})));
   const before=await snapshot();
+  assert.equal(await page.locator('.aio-page-tools .glyphicon').count(),scenario==='magic'?2:0,'Sort symbols must already be modern before the script');
+  const symbols=()=>page.locator('.aio-page-tools .aio-sort').evaluateAll(nodes=>nodes.map(node=>node.innerHTML));
+  const initialSymbols=await symbols();
+  for(const icon of await page.locator('.aio-search-icon, #query_submit svg').all()) {
+   assert.equal(await icon.getAttribute('width'),'16');assert.equal(await icon.getAttribute('height'),'16');
+  }
   if(out&&scenario==='publishers')await page.screenshot({path:path.join(out,`first-paint-${width}-before.png`)});
   themeGate=null;release();await page.waitForLoadState('load');await page.waitForTimeout(600);
   const after=await snapshot();
+  assert.deepEqual(await symbols(),initialSymbols,'Sort symbols must not switch after first paint');
   for(const [selector,box] of Object.entries(before))if(box)for(const key of ['x','y','width','height'])assert(Math.abs(box[key]-after[selector][key])<2,`${scenario} ${width}: ${selector} ${key} moved from ${box[key]} to ${after[selector][key]}`);
   if(out&&scenario==='publishers')await page.screenshot({path:path.join(out,`first-paint-${width}-after.png`)});
  }
@@ -164,5 +171,8 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
 const initial=await browser.newContext({javaScriptEnabled:false});const first=await initial.newPage();
 const fixture=execFileSync(process.env.PYTHON||'python3',['-X','utf8',path.join(__dirname,'theme_fixture.py'),'abc','authors'],{encoding:'utf8'});
 await first.route('https://calibre.test/**',route=>{const u=new URL(route.request().url());if(u.pathname.startsWith('/library/aio-theme/'))return route.fulfill({path:path.join(root,'rootfs/opt/ha-cwa/theme',path.basename(u.pathname))});if(u.pathname.startsWith('/static/')){const p=path.join(src,decodeURIComponent(u.pathname.slice(8)));if(fs.existsSync(p))return route.fulfill({path:p});}return route.fulfill({contentType:'text/html; charset=utf-8',body:fixture});});
-await first.goto('https://calibre.test/library/');assert.equal(await first.locator('.aio-list-page').count(),1);assert(await first.locator('.aio-list-page').evaluate(el=>parseFloat(getComputedStyle(el,'::before').fontSize)<=32));await initial.close();
+await first.goto('https://calibre.test/library/');assert.equal(await first.locator('.aio-list-page').count(),1);assert(await first.locator('.aio-list-page').evaluate(el=>parseFloat(getComputedStyle(el,'::before').fontSize)<=32));
+await first.evaluate(()=>document.querySelectorAll('style,link[rel="stylesheet"]').forEach(node=>node.remove()));
+for(const icon of await first.locator('.aio-search-icon, #query_submit svg').all()) {const box=await icon.boundingBox();assert(box.width===16&&box.height===16,'Search symbols must stay small without theme CSS or JavaScript');}
+await initial.close();
 }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1});

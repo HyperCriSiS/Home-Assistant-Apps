@@ -1,3 +1,8 @@
+# 1.2.6
+
+- Show Modern sorting icons immediately when switching library views.
+- Keep the search icon compact while the page loads.
+
 # 1.2.5
 
 - Prevent titles, sorting controls and the search field from shifting while library views load.
