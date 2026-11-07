@@ -39,7 +39,9 @@ for other native views. It preserves their links and action handlers.
 Navigation sections keep their native
 list items so CWA can still relocate the navigation between desktop and mobile.
 Collapsed section preferences use optional local browser storage. Back uses the
-browser history only for a referrer within the library's native home URL prefix.
+browser history with a previous library entry validated against its native home
+URL prefix. History state preserves that entry across reloads; session storage
+provides a tab-local fallback when the host suppresses referrers.
 
 The browser fixture renders the pinned upstream templates, including Series list
 and grid views, duplicate groups, Magic Shelves and uploads. It delays the theme

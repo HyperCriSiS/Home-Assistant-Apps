@@ -78,8 +78,20 @@
   if (back) {
     const home = document.querySelector('.home-btn a');
     const prefix = home ? new URL(home.href).pathname.replace(/\/?$/, '/') : null;
-    let previous = null;
-    try {const ref = new URL(document.referrer);if (prefix && ref.origin === location.origin && ref.pathname.startsWith(prefix) && ref.href !== location.href) previous = ref;} catch (_) { /* Direct entry. */ }
+    const key = 'cwa-modern-history:' + prefix;
+    const valid = value => {
+      try {const url = new URL(value);return prefix && url.origin === location.origin && url.pathname.startsWith(prefix) && url.href !== location.href ? url.href : null;} catch (_) {return null;}
+    };
+    // A referrer can be suppressed by the host/browser. Remember the previous
+    // library entry in this tab and preserve it on reload and history restore.
+    const state = history.state && typeof history.state === 'object' ? history.state : {};
+    let previous = valid(state.aioLocation === location.href ? state.aioPrevious : document.referrer);
+    if (state.aioLocation !== location.href && !previous) {
+      try {previous = valid(sessionStorage.getItem(key));} catch (_) { /* Storage may be blocked. */ }
+    }
+    try {history.replaceState({...state, aioLocation:location.href, aioPrevious:previous}, '');} catch (_) { /* History may be restricted. */ }
+    const remember = () => {try {sessionStorage.setItem(key, location.href);} catch (_) { /* Optional tab history. */ }};
+    remember(); window.addEventListener('pageshow', remember);
     back.parentElement.classList.remove('noBack');
     back.setAttribute('aria-label', german ? 'Zurück' : 'Back');
     back.addEventListener('click', event => {

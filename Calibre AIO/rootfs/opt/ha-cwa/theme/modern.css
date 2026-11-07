@@ -451,6 +451,8 @@ html.aio-modern body.blur .aio-main > #list {
   min-width: 0 !important;
   padding: 0 8px !important;
   margin-bottom: 16px;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
 }
 .aio-modern .aio-main > #list .cover img {
   width: 100% !important;
@@ -951,11 +953,11 @@ html.aio-modern body.blur .aio-page-tools .filterheader > :is(a[id], #asc, #desc
   }
 }
 /* Section labels use the same row rhythm as their navigation links. */
-html.aio-modern body.blur .navigation li.nav-head.aio-nav-section {
+html.aio-modern body.blur li.nav-head.aio-nav-section {
   margin: 0 !important; padding: 0 !important; min-height: 0 !important;
   line-height: normal !important;
 }
-html.aio-modern body.blur .navigation .aio-nav-section > button {
+html.aio-modern body.blur .aio-nav-section > button {
   height: 34px; padding: 7px 20px; line-height: 20px;
 }
 @media (min-width: 768px) {
@@ -964,7 +966,8 @@ html.aio-modern body.blur .navigation .aio-nav-section > button {
   }
 }
 @media (max-width: 767px) {
-  html.aio-modern body.blur .navigation .aio-nav-section > button {
+  html.aio-modern body.blur li.nav-head.aio-nav-section { height: 45px !important; min-height: 45px !important; }
+  html.aio-modern body.blur .aio-nav-section > button {
     height: 44px; min-height: 44px; padding-top: 11px; padding-bottom: 11px; line-height: 22px;
   }
 }

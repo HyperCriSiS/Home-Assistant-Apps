@@ -23,7 +23,7 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
   if(u.pathname==='/library/aio-theme/filter_grid.js'){if(themeGate)await themeGate;return route.fulfill({contentType:'text/javascript',body:fs.readFileSync(path.join(src,'js/filter_grid.js'),'utf8').replace('selectedLayoutMode = "fitRowsCentered";','selectedLayoutMode = "fitRows";')});}
   if(u.pathname.startsWith('/library/aio-theme/')){if(path.basename(u.pathname)==='modern.js'&&themeGate)await themeGate;return route.fulfill({path:path.join(root,'rootfs/opt/ha-cwa/theme',path.basename(u.pathname))});}
   if(u.pathname.startsWith('/cover/')){const i=Number(u.pathname.split('/').pop()); const colors=['#526d67','#4d6176','#a27a50','#5b4b66','#727b62','#435665'];return route.fulfill({contentType:'image/svg+xml',body:`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300"><rect width="200" height="300" fill="${colors[i%6]}"/><rect x="12" y="12" width="176" height="276" fill="none" stroke="#ffffff55"/><path d="M12 210 Q100 80 188 210" fill="none" stroke="#ffffff33" stroke-width="30"/><text x="100" y="72" text-anchor="middle" font-family="serif" font-size="20" fill="#fff">LESEN</text><text x="100" y="125" text-anchor="middle" font-family="serif" font-size="30" fill="#fff">${String(i).padStart(2,'0')}</text></svg>`});}
-  if(u.pathname==='/library/'||u.pathname==='/library') {const body=execFileSync(process.env.PYTHON || 'python3',['-X','utf8',path.join(__dirname,'theme_fixture.py'),u.searchParams.get('sort_param')||'abc',u.searchParams.get('scenario')||'books'],{encoding:'utf8'});return route.fulfill({contentType:'text/html; charset=utf-8',body});}
+  if(u.pathname==='/library/'||u.pathname==='/library') {const body=execFileSync(process.env.PYTHON || 'python3',['-X','utf8',path.join(__dirname,'theme_fixture.py'),u.searchParams.get('sort_param')||'abc',u.searchParams.get('scenario')||'books'],{encoding:'utf8'});return route.fulfill({contentType:'text/html; charset=utf-8',headers:{'Referrer-Policy':'no-referrer'},body});}
   return route.fulfill({contentType:'application/json',body:'{}'});
  });
  for(const scenario of ['authors','publishers','books','books-paged','magic','series-grid','series-grid-many','duplicates']) {
@@ -58,6 +58,7 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
   assert.deepEqual(await symbols(),initialSymbols,'Sort symbols must not switch after first paint');
   for(const [selector,box] of Object.entries(before))if(box)for(const key of ['x','y','width','height'])assert(Math.abs(box[key]-after[selector][key])<2,`${scenario} ${width}: ${selector} ${key} moved from ${box[key]} to ${after[selector][key]}`);
   if(out&&scenario==='publishers')await page.screenshot({path:path.join(out,`first-paint-${width}-after.png`)});
+  if(out&&scenario==='books-paged')await page.screenshot({path:path.join(out,`pagination-${width}.png`)});
  }
  await page.goto('https://calibre.test/library/');await page.waitForTimeout(1400);
  assert.equal(await page.title(),'Calibre-Web | Bücher');
@@ -167,11 +168,14 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
  assert.notEqual(await page.locator('#query').evaluate(el=>getComputedStyle(el).color),'rgb(85, 85, 85)');
  if(out) await page.screenshot({path:path.join(out,`calibre-search-${width}.png`)});
  await page.locator('#query_submit').click(); await page.waitForURL(/query=Garten/); assert(page.url().includes('query=Garten'));
+ await page.evaluate(()=>sessionStorage.clear());
  await page.goto('https://calibre.test/shell');
  const frame=await (await page.$('iframe')).contentFrame();await frame.waitForSelector('.aio-page-header');
  assert.equal(await frame.locator('.plexBack a').getAttribute('aria-disabled'),'true');
  await frame.evaluate(()=>location.assign('/library/?scenario=publishers'));await frame.waitForURL(/scenario=publishers/);
  await frame.evaluate(()=>location.assign('/library/?scenario=categories'));await frame.waitForURL(/scenario=categories/);
+ assert.equal(await frame.evaluate(()=>document.referrer),'','Back must work with the referrer suppressed');
+ await Promise.all([frame.waitForNavigation({waitUntil:'load'}),frame.evaluate(()=>location.reload())]);
  await frame.locator('.plexBack a').evaluate(el=>el.click());await frame.waitForURL(/scenario=publishers/);
  await frame.locator('.plexBack a').evaluate(el=>el.click());await frame.waitForURL(/scenario=authors/);
  assert.equal(page.url(),'https://calibre.test/shell');
