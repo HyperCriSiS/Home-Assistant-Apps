@@ -68,6 +68,33 @@ class ModernThemeTest(unittest.TestCase):
         self.assertIn('<button type="button" aria-expanded="true">', source)
 
     @unittest.skipUnless(os.environ.get('CWA_SOURCE'), 'requires pinned CWA source')
+    def test_shelf_heading_actions_preserve_native_visibility(self):
+        from types import SimpleNamespace as NS
+        from jinja2 import Environment
+        from modern_theme import ThemeLoader
+        source = '''{% if current_user.is_authenticated or allow_anonymous %}
+<li class="nav-head public-shelves">{{_('Shelves')}}</li>
+<li id="nav_createshelf" class="create-shelf"><a>Old create</a></li>{% endif %}
+{% if current_user.is_authenticated and magic_shelf_routes.render %}
+<li class="nav-head">{{_('Magic Shelves ✨')}}</li>
+<li id="nav_createmagicshelf" class="create-shelf"><a>Old magic create</a></li>{% endif %}'''
+        env = Environment(loader=ThemeLoader(DictLoader({'layout.html': source})), autoescape=True)
+        env.globals.update(_=lambda value: value, url_for=lambda endpoint: endpoint)
+        for authenticated, anonymous, allow_anonymous, render, create, expected in (
+                (True, False, False, True, True, 2),
+                (True, False, False, True, False, 1),
+                (True, False, False, False, True, 1),
+                (False, True, True, True, True, 0),
+                (False, True, False, True, True, 0)):
+            with self.subTest(authenticated=authenticated, render=render, create=create):
+                result = env.get_template('layout.html').render(
+                    current_user=NS(is_authenticated=authenticated, is_anonymous=anonymous),
+                    allow_anonymous=allow_anonymous, magic_shelf_routes=NS(render=render, create=create))
+                self.assertEqual(result.count('class="aio-section-create"'), expected)
+                self.assertNotIn('nav_createshelf', result)
+                self.assertNotIn('nav_createmagicshelf', result)
+
+    @unittest.skipUnless(os.environ.get('CWA_SOURCE'), 'requires pinned CWA source')
     def test_series_script_preserves_native_actions_with_stable_rows(self):
         self.app.static_folder = str((Path(os.environ['CWA_SOURCE']) / 'cps/static').resolve())
         self.assertEqual(self.client.get('/aio-theme/filter_grid.js').status_code, 403)

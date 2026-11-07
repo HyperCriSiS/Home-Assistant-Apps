@@ -987,3 +987,27 @@ html.aio-modern body.blur #scnd-nav > .create-shelf {
     height: 44px; min-height: 44px; padding-top: 11px; padding-bottom: 11px; line-height: 22px;
   }
 }
+/* Creation is an independent action beside each collapsible section title. */
+html.aio-modern body.blur li.aio-nav-section {
+  display: flex !important; align-items: center; width: 100% !important; max-width: none !important;
+}
+html.aio-modern body.blur .aio-nav-section > button {
+  flex: 1; min-width: 0; width: auto; font-size: 15px; font-weight: 600;
+}
+html.aio-modern body.blur .aio-nav-section > a.aio-section-create {
+  display: inline-flex !important; align-items: center; justify-content: center;
+  flex: none; width: 32px; height: 34px; min-height: 0;
+  padding: 0 !important; margin: 0 12px 0 0 !important;
+  font: 400 22px/1 system-ui; color: var(--aio-muted);
+  text-decoration: none; border-radius: 4px;
+}
+html.aio-modern body.blur .aio-section-create:hover,
+html.aio-modern body.blur .aio-section-create:focus-visible {
+  color: var(--aio-accent); background: var(--aio-surface);
+}
+@media (max-width: 767px) {
+  html.aio-modern body.blur .navbar .aio-nav-section > button { font-size: 17px; }
+  html.aio-modern body.blur .navbar .aio-nav-section > a.aio-section-create {
+    width: 44px; height: 44px;
+  }
+}
