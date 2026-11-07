@@ -34,6 +34,15 @@ html.aio-modern {
   backdrop-filter: none;
 }
 .aio-modern .navbar a, .aio-modern .navigation a { color: var(--aio-text); }
+/* The desktop brand occupies the left end of the page-title band. */
+@media (min-width: 768px) {
+  html.aio-modern body.blur > .navbar > .container-fluid > .navbar-header > a.navbar-brand {
+    background: var(--aio-bg);
+    border-bottom: 1px solid var(--aio-line);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    font-weight: 600;
+  }
+}
 .aio-modern .navigation li > a { padding-top: 7px !important; padding-bottom: 7px !important; }
 .aio-modern .navigation li.active > a, .aio-modern .navigation li > a:hover {
   color: var(--aio-accent) !important;
@@ -992,7 +1001,10 @@ html.aio-modern body.blur #scnd-nav > li.aio-nav-section {
   display: flex !important; align-items: center; width: 100% !important; max-width: none !important;
 }
 html.aio-modern body.blur .aio-nav-section > button {
-  flex: 1; min-width: 0; width: auto; font-size: 15px; font-weight: 600; white-space: nowrap;
+  flex: 1; min-width: 0; width: auto;
+  /* Avoid synthesizing another bold weight on caliBlur's Open Sans Bold face. */
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: 15px; font-weight: 600; white-space: nowrap;
 }
 html.aio-modern body.blur .aio-nav-section > a.aio-section-create {
   display: inline-flex !important; align-items: center; justify-content: center;
