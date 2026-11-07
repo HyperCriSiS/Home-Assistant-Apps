@@ -69,7 +69,7 @@ class ModernThemeTest(unittest.TestCase):
 
     @unittest.skipUnless(os.environ.get('CWA_SOURCE'), 'requires pinned CWA source')
     def test_series_script_preserves_native_actions_with_stable_rows(self):
-        self.app.static_folder = str(Path(os.environ['CWA_SOURCE']) / 'cps/static')
+        self.app.static_folder = str((Path(os.environ['CWA_SOURCE']) / 'cps/static').resolve())
         self.assertEqual(self.client.get('/aio-theme/filter_grid.js').status_code, 403)
         response = self.client.get('/aio-theme/filter_grid.js', headers=self.headers)
         self.assertEqual(response.status_code, 200)
