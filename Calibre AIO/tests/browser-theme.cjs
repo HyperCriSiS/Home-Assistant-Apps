@@ -103,6 +103,9 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
   assert(Number(await heading.evaluate(el=>parseFloat(getComputedStyle(el).fontSize)))>Number(await page.locator('#nav_author a').evaluate(el=>parseFloat(getComputedStyle(el).fontSize))),'Section headings must be larger than items');
   const before=await heading.getAttribute('aria-expanded'),href=await action.getAttribute('href');assert(href.includes('shelf'));
   const titleBox=await heading.boundingBox(),actionBox=await action.boundingBox();
+  const navBox=await page.locator('#scnd-nav').boundingBox();
+  assert(titleBox.x>=navBox.x-1&&actionBox.x+actionBox.width<=navBox.x+navBox.width+1,'Heading and plus must fit inside the visible menu');
+  assert(actionBox.width<=44&&titleBox.width>100,'Plus must not take the heading space');
   assert(actionBox.x>=titleBox.x+titleBox.width-1&&actionBox.x+actionBox.width<=width,'Plus must sit to the right of its section heading');
   assert(Math.abs(actionBox.y+actionBox.height/2-titleBox.y-titleBox.height/2)<2,'Plus must be vertically centered');
   await heading.click();assert(await action.isVisible(),'Plus must remain available when the section is collapsed');await heading.click();

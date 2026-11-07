@@ -1011,3 +1011,16 @@ html.aio-modern body.blur .aio-section-create:focus-visible {
     width: 44px; height: 44px;
   }
 }
+@media (max-width: 767px) {
+  html.aio-modern body.blur .navbar #main-nav + #scnd-nav > li.aio-nav-section {
+    margin: 0 !important; padding: 0 !important; left: auto !important;
+  }
+  html.aio-modern body.blur .navbar #main-nav + #scnd-nav > li.aio-nav-section > a.aio-section-create {
+    width: 44px !important; min-width: 44px !important; max-width: 44px !important;
+    height: 44px !important; min-height: 44px !important;
+    margin: 0 !important; padding: 0 !important; position: static !important;
+    overflow: visible !important; font: 400 22px/1 system-ui !important;
+  }
+  html.aio-modern body.blur .navbar #scnd-nav .aio-section-create::before,
+  html.aio-modern body.blur .navbar #scnd-nav .aio-section-create::after { content: none !important; }
+}
