@@ -988,11 +988,11 @@ html.aio-modern body.blur #scnd-nav > .create-shelf {
   }
 }
 /* Creation is an independent action beside each collapsible section title. */
-html.aio-modern body.blur li.aio-nav-section {
+html.aio-modern body.blur #scnd-nav > li.aio-nav-section {
   display: flex !important; align-items: center; width: 100% !important; max-width: none !important;
 }
 html.aio-modern body.blur .aio-nav-section > button {
-  flex: 1; min-width: 0; width: auto; font-size: 15px; font-weight: 600;
+  flex: 1; min-width: 0; width: auto; font-size: 15px; font-weight: 600; white-space: nowrap;
 }
 html.aio-modern body.blur .aio-nav-section > a.aio-section-create {
   display: inline-flex !important; align-items: center; justify-content: center;

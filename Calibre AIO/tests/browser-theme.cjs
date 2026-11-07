@@ -96,6 +96,7 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
  if(width<768){await page.locator('.navbar-toggle').click(); await page.waitForTimeout(400); assert(await page.locator('#nav_author').isVisible());}
  assert.equal(await page.locator('#nav_createshelf,#nav_createmagicshelf').count(),0);
  assert.equal(await page.locator('#scnd-nav .aio-section-create').count(),2);
+ if(width>=768)assert(!(await page.locator('#main-nav > .aio-functions-head').isVisible()),'Mobile functions heading must stay hidden on desktop');
  for(const action of await page.locator('#scnd-nav .aio-section-create').all()) {
   assert.equal((await action.innerText()).trim(),'+');assert(await action.getAttribute('aria-label'));
   const heading=action.locator('..').locator(':scope > button');
