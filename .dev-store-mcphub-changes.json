@@ -1,5 +1,21 @@
 [
   {
+    "revision": 209,
+    "version": "v2026.11.05-dev.209",
+    "source_sha": "094eff955e563e95197087ef1604cc6d115616c4",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "094eff955e563e95197087ef1604cc6d115616c4",
+        "subject": "Merge remote-tracking branch 'origin/main' into dev-mcphub"
+      },
+      {
+        "sha": "5d02d0d52571d05eaee8d0421f67c8b2d1cbc248",
+        "subject": "chore(deps): bump actions/upload-artifact from 4.6.2 to 7.0.2 (#154)"
+      }
+    ]
+  },
+  {
     "revision": 208,
     "version": "v2026.11.05-dev.208",
     "source_sha": "fbc1b1e64fd5d3d4ca4fae9f747ea6e07df0daf8",
