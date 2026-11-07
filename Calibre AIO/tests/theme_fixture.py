@@ -2,6 +2,7 @@
 
 from pathlib import Path
 from types import SimpleNamespace as NS
+from datetime import datetime
 import re, sys, os
 from urllib.parse import urlencode
 from flask import Flask, g, render_template
@@ -22,6 +23,10 @@ class User:
     theme = 1
     email = ""
     kindle_mail = ""
+    id = 1
+
+    def role_upload(self):
+        return True
 
     def __getattr__(self, key):
         return lambda *a, **k: False
@@ -39,6 +44,7 @@ app.jinja_env.globals.update(
     _=lambda x, *a, **k: x,
     csrf_token=lambda: "fixture",
     url_for=lambda endpoint, **kw: (
+        "/upload" if endpoint == "edit-book.upload" else
         "/library/aio-theme/" + kw["filename"]
         if endpoint == "aio_theme"
         else (
@@ -83,6 +89,7 @@ for i, (title, author) in enumerate(
     books.append(NS(Books=b))
 with app.test_request_context("/"):
     g.current_theme = 1
+    g.allow_upload = True
     g.google_site_verification = ""
     g.allow_anonymous = False
     g.shelves_access = []
@@ -112,22 +119,44 @@ with app.test_request_context("/"):
         "downloads-filled": ("Downloads", "downloadlist", "download", ["Alex", "Mara"]),
         "languages": ("Languages", "langlist", "language", ["Deutsch", "English"]),
         "publishers": ("Publishers", "publisherlist", "publisher", ["Fischer", "Hanser"]),
+        "series": ("Series", "serieslist", "series", ["Abenteuer", "Fantasie", "Geschichten"]),
     }
     title, page, data, names = lists.get(scenario, ("Bücher", "books", "", []))
     entries = [(NS(id=i + 1, name=name, sort=name.replace(', ', ' ') if data == 'author' else name,
                    format=None, rating=None), i + 1) for i, name in enumerate(names)]
+    template = "list.html" if scenario in lists else "index.html"
+    if scenario == "series-grid":
+        title, page, data, template = "Series", "serieslist", "series", "grid.html"
+        entries = []
+        for i, book in enumerate(books[:6]):
+            book.Books.series = [NS(id=i+1, name=f"Sammlung {i+1}")]
+            class SeriesRow(tuple):
+                @property
+                def count(self):
+                    return 3
+            entries.append(SeriesRow((book.Books,)))
+    if scenario == "magic":
+        title, page = "Sehr langer Name eines magischen Bücherregals", "magicshelf"
+    duplicate_books = [NS(id=i+1, title="Der stille Garten", author_names="Mara Winter", timestamp=datetime(2026, 1, 1),
+                          cover_url=f"/cover/{i+1}", series=[], data=[NS(format="EPUB")]) for i in range(2)]
+    if scenario == "duplicates":
+        title, page, template = "Duplicates", "duplicates", "duplicates.html"
     html = render_template(
-        "list.html" if scenario in lists else "index.html",
+        template,
         current_user=user,
         instance="Calibre-Web",
         title=title,
         page=page,
         bodyClass="",
-        entries=entries if scenario in lists else books,
-        charlist=[(c,) for c in sorted({name[0] for name in names})],
+        entries=entries if scenario in lists or scenario == "series-grid" else books,
+        charlist=[(c,) for c in sorted({name[0] for name in names})] if scenario != "series-grid" else [NS(char="S")],
         data=data,
         random=[],
-        order=1 if scenario in lists else (sys.argv[1] if len(sys.argv) > 1 else "abc"),
+        order=1 if scenario in lists or scenario == "series-grid" else (sys.argv[1] if len(sys.argv) > 1 else "abc"),
+        accept=["epub", "pdf"],
+        duplicate_groups=[NS(title="Der stille Garten", author="Mara Winter", count=2, group_hash="fixture", books=duplicate_books)],
+        duplicate_index_needs_full_scan=False,
+        shelf=NS(user_id=1),
         id=0,
         simple=True,
         sidebar=sidebar,

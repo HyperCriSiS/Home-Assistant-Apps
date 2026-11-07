@@ -18,20 +18,17 @@ class ThemeLoader(BaseLoader):
             # user's saved upstream palette. Never rewrite that saved choice.
             source = source.replace('g.current_theme == 1', 'true')
             source = source.replace('<html ', '<html class="aio-modern" ', 1)
+            source = source.replace('>{{instance}}</a>', '>{{title|striptags}}</a>', 1)
+            source = source.replace('<div class="col-sm-10">', '''<div class="col-sm-10 aio-main{% if page is string and page.endswith('list') %} aio-list-page{% endif %}">''', 1)
+            source = source.replace('<span class="btn btn-default btn-file">{{_(\'Upload\')}}<input', '''<details class="aio-upload-menu"><summary aria-label="{{ _('Add books') }}">+</summary><div class="aio-upload-options"><label class="btn btn-default btn-file">{{ _('Upload') }}<input''', 1)
+            source = source.replace('multiple></span>', '''multiple></label><button type="button" class="aio-folder-trigger">{% if current_user.locale.startswith('de') %}Ordner hinzufügen …{% else %}Add folder …{% endif %}</button></div></details>''', 1)
             source = source.replace('</head>', '''
-    <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=2">
-    <script defer src="{{ url_for('aio_theme', filename='modern.js') }}?v=2"></script>
+    <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=3">
+    <script defer src="{{ url_for('aio_theme', filename='modern.js') }}?v=3"></script>
   </head>''', 1)
         elif template == 'list.html':
             source = source.replace('''{% if title == "Downloads" %}
       <h1 style="padding-top: 1rem; padding-bottom: 2rem;">Users Downloaded Books:</h1>''', '''{% if data == "download" %}
-      <p class="aio-download-help">
-        {% if current_user.locale.startswith('de') %}
-          Downloads nach Benutzer: Hier erscheinen Bücher, die Benutzer über Calibre Web herunterladen oder an einen E-Reader versenden. Shelfmark-Importe werden hier nicht erfasst.
-        {% else %}
-          Downloads by user: Books appear here when users download them through Calibre Web or send them to an e-reader. Shelfmark imports are not included.
-        {% endif %}
-      </p>
       {% if not entries %}<p class="aio-empty">
         {% if current_user.locale.startswith('de') %}Noch keine Benutzer-Downloads erfasst.{% else %}No user downloads recorded yet.{% endif %}
       </p>{% endif %}''', 1)
