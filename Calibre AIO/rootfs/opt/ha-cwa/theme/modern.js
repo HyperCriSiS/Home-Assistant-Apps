@@ -29,10 +29,7 @@
     hot_asc:['downloads','up'], hot_desc:['downloads','down']};
   document.documentElement.classList.add('aio-modern');
   const german = document.documentElement.lang.startsWith('de');
-  const toggle = document.querySelector('.navbar-toggle');
-  // caliBlur's document mouseup closes the panel before Bootstrap's click
-  // toggles it, which otherwise reopens it when the hamburger is outside it.
-  if (toggle) toggle.addEventListener('mouseup', event => event.stopPropagation());
+  const mobile = window.matchMedia('(max-width: 767px)');
   for (const link of document.querySelectorAll('.filterheader a[id], .filterheader div#asc, .filterheader div#desc')) {
     const sort = sorts[link.id];
     if (!sort) continue;
@@ -77,10 +74,9 @@
     }
   }
   const main = document.querySelector('.aio-main');
-  const back = document.querySelector('.plexBack a');
+  const back = document.querySelector('.aio-back');
   if (back) {
-    const home = document.querySelector('.home-btn a');
-    const prefix = home ? new URL(home.href).pathname.replace(/\/?$/, '/') : null;
+    const prefix = new URL(back.href).pathname.replace(/\/?$/, '/');
     const key = 'cwa-modern-history:' + prefix;
     const valid = value => {
       try {const url = new URL(value);return prefix && url.origin === location.origin && url.pathname.startsWith(prefix) && url.href !== location.href ? url.href : null;} catch (_) {return null;}
@@ -95,7 +91,6 @@
     try {history.replaceState({...state, aioLocation:location.href, aioPrevious:previous}, '');} catch (_) { /* History may be restricted. */ }
     const remember = () => {try {sessionStorage.setItem(key, location.href);} catch (_) { /* Optional tab history. */ }};
     remember(); window.addEventListener('pageshow', remember);
-    back.parentElement.classList.remove('noBack');
     back.setAttribute('aria-label', german ? 'Zurück' : 'Back');
     back.addEventListener('click', event => {
       event.preventDefault(); event.stopImmediatePropagation();
@@ -104,7 +99,7 @@
       if (previous && history.length > 1) history.back();
     }, true);
     if (!previous || history.length <= 1) {
-      back.setAttribute('aria-disabled', 'true'); back.parentElement.classList.add('aio-no-back');
+      back.setAttribute('aria-disabled', 'true'); back.classList.add('aio-no-back');
     }
   }
   if (main) {
@@ -138,8 +133,18 @@
     if (document.fonts) document.fonts.ready.then(layout);
     seriesGrid.querySelectorAll('img').forEach(img => img.addEventListener('load', layout, {once:true}));
   }
-  // Preserve native list items and links so intent.js can still move the whole
-  // navigation between desktop and mobile. Only the section's visibility changes.
+  // The browse navigation lives in the sidebar on desktop and joins the
+  // navbar drawer below 768px, the breakpoint the rest of the layout uses.
+  const browse = document.querySelector('#scnd-nav'), navigation = document.querySelector('nav.navigation');
+  const functionsNav = document.querySelector('#main-nav');
+  if (browse && navigation && functionsNav) {
+    const placeNav = () => {
+      if (mobile.matches) {browse.classList.add('nav', 'navbar-nav'); functionsNav.after(browse);}
+      else {browse.classList.remove('nav', 'navbar-nav'); navigation.append(browse);}
+    };
+    placeNav(); mobile.addEventListener('change', placeNav);
+  }
+  // Native list items and links stay intact; only each section's visibility changes.
   const functions = document.querySelector('#main-nav > .cwa-switch-theme');
   if (functions) {
     const head = document.createElement('li'); head.className = 'nav-head aio-functions-head';
@@ -164,9 +169,8 @@
   if (upload && folderTrigger) {
     const form = upload.closest('form'), desktopSlot = form.parentElement;
     desktopSlot.classList.add('aio-upload-slot');
-    const mobileQuery = window.matchMedia('(max-width: 767px)');
-    const placeUpload = () => (mobileQuery.matches ? document.querySelector('.navbar > .container-fluid') : desktopSlot).append(form);
-    placeUpload(); mobileQuery.addEventListener('change', placeUpload);
+    const placeUpload = () => (mobile.matches ? document.querySelector('.navbar > .container-fluid') : desktopSlot).append(form);
+    placeUpload(); mobile.addEventListener('change', placeUpload);
     const picker = document.createElement('input'); picker.type = 'file'; picker.multiple = true;
     picker.setAttribute('webkitdirectory', ''); picker.hidden = true; picker.setAttribute('aria-label', german ? 'Ordner hinzufügen' : 'Add folder');
     picker.id = 'aio-folder-picker'; document.body.append(picker);

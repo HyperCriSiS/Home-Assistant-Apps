@@ -66,6 +66,13 @@ class ModernThemeTest(unittest.TestCase):
         self.assertIn('navbar-toggle', source)
         self.assertIn('class="aio-search-icon"', source)
         self.assertIn('<button type="button" aria-expanded="true">', source)
+        # Standalone: CWA's standard branch renders, caliBlur never loads.
+        self.assertNotIn('g.current_theme', source)
+        self.assertNotIn(' intent ', source)
+        self.assertGreaterEqual(source.count('{% if false %}'), 4)
+        self.assertIn("{% if true %}", source)
+        self.assertIn('class="aio-back"', source)
+        self.assertNotIn('message[0] == "theme_migration"', source)
 
     def test_shelf_heading_actions_preserve_native_visibility(self):
         from types import SimpleNamespace as NS
@@ -108,14 +115,13 @@ class ModernThemeTest(unittest.TestCase):
         self.assertNotIn('✨', result)
 
     @unittest.skipUnless(os.environ.get('CWA_SOURCE'), 'requires pinned CWA source')
-    def test_series_script_preserves_native_actions_with_stable_rows(self):
-        self.app.static_folder = str((Path(os.environ['CWA_SOURCE']) / 'cps/static').resolve())
-        self.assertEqual(self.client.get('/aio-theme/filter_grid.js').status_code, 403)
-        response = self.client.get('/aio-theme/filter_grid.js', headers=self.headers)
-        self.assertEqual(response.status_code, 200)
-        original = (Path(self.app.static_folder) / 'js/filter_grid.js').read_text(encoding='utf-8')
-        self.assertEqual(response.get_data(as_text=True), original.replace(
-            'selectedLayoutMode = "fitRowsCentered";', 'selectedLayoutMode = "fitRows";'))
+    def test_series_script_is_the_native_one(self):
+        from jinja2 import FileSystemLoader, Environment
+        from modern_theme import ThemeLoader
+        self.assertEqual(self.client.get('/aio-theme/filter_grid.js', headers=self.headers).status_code, 404)
+        loader = ThemeLoader(FileSystemLoader(Path(os.environ['CWA_SOURCE']) / 'cps/templates'))
+        source, _, _ = loader.get_source(Environment(), 'grid.html')
+        self.assertIn("url_for('static', filename='js/filter_grid.js')", source)
 
     @unittest.skipUnless(os.environ.get('CWA_SOURCE'), 'requires pinned CWA source')
     def test_pinned_browse_headers_exist_before_script_execution(self):
@@ -135,6 +141,7 @@ class ModernThemeTest(unittest.TestCase):
                     self.assertIn('class="selection-info">0 BOOKS SELECTED</span>', source)
                 else:
                     self.assertEqual(source.count('<div class="filterheader'), 1)
+                    self.assertNotIn('data-toggle="modal"', source)
                     header = source.split('</header>', 1)[0]
                     self.assertIn('<div class="aio-page-tools">', header)
                     self.assertIn('<div class="filterheader', header)
