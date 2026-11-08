@@ -141,6 +141,7 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
  if(out) await page.screenshot({path:path.join(out,`calibre-modern-${width}.png`)});
  console.log(JSON.stringify({width,title:await page.title(),sorts:await page.locator('.aio-sort').count(),errors,upstreamFontWarnings:fontWarnings.size,toolbar:await page.locator('.filterheader').boundingBox(),books:await page.locator('.discover.load-more .book').first().boundingBox()}));
  assert.equal(await page.locator('#asc').innerText(),'A–Z'); assert.equal(await page.locator('#desc').innerText(),'A–Z');
+ for(const [up,down] of [['#old','#new'],['#asc','#desc'],['#auth_az','#auth_za'],['#pub_old','#pub_new']]){const a=await page.locator(up).boundingBox(),b=await page.locator(down).boundingBox();assert(a.x<b.x,`${up} must precede ${down}`);}
  assert.notEqual(await page.locator('#asc .aio-sort-arrow path').first().getAttribute('d'), await page.locator('#desc .aio-sort-arrow path').first().getAttribute('d'));
  await page.locator('#desc').click(); await page.waitForTimeout(300); assert.equal(await page.locator('#desc').getAttribute('aria-current'),'true');assert(page.url().includes('sort_param=zyx'));
  await page.locator('#auth_az').focus();assert.equal(await page.locator('#auth_az').getAttribute('data-sort-kind'),'author');

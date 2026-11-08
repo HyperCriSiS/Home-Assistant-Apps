@@ -73,6 +73,14 @@ class ModernThemeTest(unittest.TestCase):
         self.assertIn("{% if true %}", source)
         self.assertIn('class="aio-back"', source)
         self.assertNotIn('margin-top: 1rem', source)
+
+    def test_sort_pairs_read_ascending_then_descending(self):
+        from jinja2 import FileSystemLoader, Environment
+        from modern_theme import ThemeLoader
+        loader = ThemeLoader(FileSystemLoader(Path(os.environ['CWA_SOURCE']) / 'cps/templates'))
+        source = loader.get_source(Environment(), 'index.html')[0]
+        for first, second in (('id="old"', 'id="new"'), ('id="pub_old"', 'id="pub_new"'), ('id="asc"', 'id="desc"'), ('id="auth_az"', 'id="auth_za"')):
+            self.assertLess(source.index(first), source.index(second), (first, second))
         self.assertNotIn('message[0] == "theme_migration"', source)
 
     @unittest.skipUnless(os.environ.get('CWA_SOURCE'), 'requires pinned CWA source')
