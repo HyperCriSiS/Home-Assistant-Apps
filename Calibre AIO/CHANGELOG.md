@@ -1,3 +1,7 @@
+# 1.2.13
+
+- Follow Shelfmark 1.6.1, which registers its Socket.IO handlers and proxy authentication as closures; the ingress session refresh now takes them from the Flask and Flask-SocketIO registries.
+
 # 1.2.12
 
 - Keep the page title in the desktop sidebar and remove its repeat from the content band; sorting stays centered in the band.
