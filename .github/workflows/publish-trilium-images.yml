@@ -1,0 +1,155 @@
+name: Publish tested Trilium images
+
+# Builds the Trilium App image for both architectures on native runners, boots
+# it once, and publishes immutable version tags to GHCR. main and the generated
+# Dev store advertise these tags, so the Supervisor pulls instead of building.
+on:
+  workflow_call:
+    inputs:
+      bundle:
+        type: string
+        default: ''
+      source_ref:
+        type: string
+        default: main
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: Trusted app source to publish (main or dev-trilium)
+        type: choice
+        options: [main, dev-trilium]
+        default: main
+permissions:
+  contents: read
+  packages: write
+concurrency:
+  group: trilium-publish-${{ inputs.bundle || inputs.source_ref }}
+  cancel-in-progress: false
+env:
+  APP_DIR: TriliumNext Notes
+  VERSION_PATTERN: '^version: "(v[0-9]{4}\.[0-9]{2}\.[0-9]{2}(\.[1-9][0-9]*)?(-dev\.[0-9]+)?)"$'
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        if: inputs.bundle == ''
+        with:
+          ref: ${{ inputs.source_ref }}
+          path: source
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        if: inputs.bundle != ''
+        with:
+          name: ${{ inputs.bundle }}
+          path: /tmp/candidate
+      - if: inputs.bundle != ''
+        run: git clone /tmp/candidate/store.bundle source
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
+      - name: Resolve exact version and source fingerprint
+        id: metadata
+        working-directory: source
+        run: |
+          set -euo pipefail
+          version="$(sed -nE "s/${VERSION_PATTERN}/\1/p" "${APP_DIR}/config.yaml")"
+          [[ -n "$version" ]] || { echo 'Invalid Trilium App version' >&2; exit 1; }
+          grep -Fxq 'image: "ghcr.io/hypercrisis/{arch}-trilium"' "${APP_DIR}/config.yaml" \
+            || { echo 'config.yaml must advertise the published image' >&2; exit 1; }
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tree=$(git rev-parse "HEAD:${APP_DIR}")" >> "$GITHUB_OUTPUT"
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
+        with:
+          context: source/TriliumNext Notes
+          pull: true
+          load: true
+          tags: trilium:test
+          build-args: |
+            BUILD_VERSION=${{ steps.metadata.outputs.version }}
+            BUILD_ARCH=${{ matrix.arch }}
+          labels: |
+            io.trilium.source-tree=${{ steps.metadata.outputs.tree }}
+            org.opencontainers.image.source=https://github.com/HyperCriSiS/Home-Assistant-Apps
+      # validate.yml already ran the full functional suite on this commit; this
+      # proves the exact published artifact starts and answers on each runner.
+      - name: Boot the built image and wait for the health endpoint
+        run: |
+          set -euo pipefail
+          trap 'docker rm -f trilium-smoke >/dev/null 2>&1 || true' EXIT
+          docker run --detach --name trilium-smoke --publish 18080:8080 \
+            --env TRILIUM_DATA_DIR=/home/node/trilium-data \
+            --env TRILIUM_NETWORK_HOST=0.0.0.0 \
+            --env TRILIUM_NETWORK_PORT=8080 \
+            trilium:test >/dev/null
+          for _ in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:18080/api/health-check >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs trilium-smoke >&2 || true
+          echo 'Trilium did not become healthy' >&2
+          exit 1
+      - name: Push tested staging image, never the install tag yet
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARCH: ${{ matrix.arch }}
+        run: |
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          image="ghcr.io/hypercrisis/${ARCH}-trilium:build-${GITHUB_RUN_ID}"
+          docker tag trilium:test "$image"
+          docker push "$image"
+
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        if: inputs.bundle == ''
+        with:
+          ref: ${{ inputs.source_ref }}
+          path: source
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        if: inputs.bundle != ''
+        with:
+          name: ${{ inputs.bundle }}
+          path: /tmp/candidate
+      - if: inputs.bundle != ''
+        run: git clone /tmp/candidate/store.bundle source
+      - name: Publish both tested version tags and verify public access
+        working-directory: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version="$(sed -nE "s/${VERSION_PATTERN}/\1/p" "${APP_DIR}/config.yaml")"
+          tree="$(git rev-parse "HEAD:${APP_DIR}")"
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          format='{{index .Config.Labels "io.trilium.source-tree"}}'
+          for arch in amd64 aarch64; do
+            repo="ghcr.io/hypercrisis/${arch}-trilium"
+            candidate="${repo}:build-${GITHUB_RUN_ID}"
+            docker pull --platform "linux/${arch/aarch64/arm64}" "$candidate"
+            actual="$(docker inspect --format "$format" "$candidate")"
+            [[ "$actual" == "$tree" ]] || { echo 'Source changed during build' >&2; exit 1; }
+            if docker manifest inspect "${repo}:${version}" >/dev/null 2>&1; then
+              docker pull --platform "linux/${arch/aarch64/arm64}" "${repo}:${version}"
+              existing="$(docker inspect --format "$format" "${repo}:${version}")"
+              [[ "$existing" == "$tree" ]] || { echo 'Refusing to replace an existing release' >&2; exit 1; }
+            else
+              docker tag "$candidate" "${repo}:${version}"
+              docker push "${repo}:${version}"
+            fi
+            # Supervisor must be able to pull without a GitHub login.
+            public_config="$(mktemp -d)"
+            DOCKER_CONFIG="$public_config" docker manifest inspect "${repo}:${version}" >/dev/null
+          done
