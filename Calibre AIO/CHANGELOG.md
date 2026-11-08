@@ -1,3 +1,8 @@
+# 1.2.20
+
+- Label the random picks above the library as their own section so their partial row no longer looks like a hole in the grid.
+- Drawer: the section plus follows its heading, the Magic Shelves heading drops the extra upstream gap, and shelf emoji share the icon column.
+
 # 1.2.19
 
 - Extend the standalone theme to the secondary pages: tokens for selects, checkbox labels, progress bars, tabs, tooltips, modal and panel headers, contextual text and buttons, the CWA statistics cards, and skins for bootstrap-table, x-editable, bootstrap-select, typeahead, the date picker and the query builder.

@@ -28,6 +28,9 @@ class User:
     def role_upload(self):
         return True
 
+    def show_detail_random(self):
+        return scenario == "books-random"
+
     def __getattr__(self, key):
         return lambda *a, **k: False
 
@@ -159,6 +162,11 @@ with app.test_request_context("/"):
             entries.append(SeriesRow((book.Books,)))
     if scenario == "magic":
         title, page = "Sehr langer Name eines magischen Bücherregals", "magicshelf"
+    random = []
+    if scenario == "books-random":
+        # Four random books above the library, the first one with a series line.
+        books[0].Books.series = [NS(id=1, name="Inspector Lynley")]
+        random = books[:4]
     duplicate_books = [NS(id=i+1, title="Der stille Garten", author_names="Mara Winter", timestamp=datetime(2026, 1, 1),
                           cover_url=f"/cover/{i+1}", series=[], data=[NS(format="EPUB")]) for i in range(2)]
     if scenario == "duplicates":
@@ -177,7 +185,7 @@ with app.test_request_context("/"):
         entries=entries if scenario in lists or scenario.startswith("series-grid") else read_books if scenario == "books-read" else books * (6 if scenario == "books-many" else 1),
         charlist=[(c,) for c in sorted({name[0] for name in names})] if not scenario.startswith("series-grid") else [NS(char="S")],
         data=data,
-        random=[],
+        random=random,
         order=1 if scenario in lists or scenario.startswith("series-grid") else (sys.argv[1] if len(sys.argv) > 1 else "abc"),
         accept=["epub", "pdf"],
         duplicate_groups=[NS(title="Der stille Garten", author="Mara Winter", count=2, group_hash="fixture", books=duplicate_books)],
