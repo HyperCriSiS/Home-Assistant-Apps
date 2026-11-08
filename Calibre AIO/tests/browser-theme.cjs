@@ -62,6 +62,8 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
    const pagination=await page.locator('.pagination').boundingBox(),tools=await page.locator('.aio-page-tools').boundingBox();
    assert(pagination.y+pagination.height<=tools.y,'Mobile page navigation must have its own row above sorting');
    for(const control of await page.locator('.pagination > .page-item > a').all()) {const box=await control.boundingBox();assert(box.y>=pagination.y&&box.y+box.height<=pagination.y+pagination.height,'Mobile pagination controls must fit their row');}
+   const band=await page.locator('.aio-page-header').boundingBox(),firstCard=await page.locator('.discover.load-more .book').first().boundingBox();
+   assert(firstCard.y>=band.y+band.height-1,`First card must start below the band with pagination: ${firstCard.y} vs ${band.y+band.height}`);
    await page.evaluate(()=>window.scrollTo(0,100));
    const scrolledTools=await page.locator('.aio-page-tools').boundingBox();
    assert(scrolledTools.y>=pagination.y+pagination.height,'Mobile sorting must stay below pagination while scrolling');
@@ -87,6 +89,7 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
    const label=page.locator('.discover.random-books > h2');assert(await label.isVisible());
    assert(Number(await label.evaluate(el=>parseFloat(getComputedStyle(el).fontSize)))<=14,'Random section label must stay compact');
    assert.equal(await page.locator('.discover.random-books .book').count(),4);
+   assert.equal(await page.locator('.discover.random-books .book:visible').count(),width>=768?4:width>=360?3:2,'Phones show only a full row of random picks');
    const section=await page.locator('.discover.random-books').boundingBox(),first=await page.locator('.discover.load-more .book').first().boundingBox();
    assert(first.y>=section.y+section.height,'Library grid starts below the random section');
    assert.equal(await page.locator('.discover.random-books').evaluate(el=>getComputedStyle(el).borderBottomStyle),'solid');
@@ -141,7 +144,10 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
  assert.deepEqual(errors,[]);
  for(const button of await page.locator('.aio-sort').all()) { const box=await button.boundingBox(); if(width>=768)assert(box.x>=0 && box.x+box.width<=width, 'Sort control is clipped'); assert(box.height>=32); assert(await button.getAttribute('aria-label')); }
  if(width<768){await page.locator('.navbar-toggle').click(); await page.waitForTimeout(400); assert(await page.locator('#nav_author').isVisible());
-  assert(await page.evaluate(()=>document.querySelector('.navbar-collapse').contains(document.querySelector('#scnd-nav'))&&!document.querySelector('.col-sm-2').offsetParent),'Drawer must hold the browse navigation while the sidebar is hidden');}
+  assert(await page.evaluate(()=>document.querySelector('.navbar-collapse').contains(document.querySelector('#scnd-nav'))&&!document.querySelector('.col-sm-2').offsetParent),'Drawer must hold the browse navigation while the sidebar is hidden');
+  const drawer=await page.locator('.navbar-collapse').boundingBox();assert(drawer.x>=0&&drawer.x+drawer.width<=width,`Drawer must fill the viewport, not hang over its left edge: ${drawer.x}`);
+  assert(Number((await page.locator('#nav_books a').evaluate(el=>getComputedStyle(el).paddingLeft)).replace('px',''))>=16,'Drawer rows keep a readable left inset');}
+ assert(!(await page.locator('#logout').isVisible()),'Ingress signs in; logout stays hidden');
  assert.equal(await page.locator('#nav_createshelf,#nav_createmagicshelf').count(),0);
  assert.equal(await page.locator('#scnd-nav .aio-section-create').count(),2);
  assert(!(await page.locator('#scnd-nav').innerText()).includes('✨'),'Magic Shelves uses only the separate plus action');
