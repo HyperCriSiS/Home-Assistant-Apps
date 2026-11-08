@@ -1,3 +1,9 @@
+# 1.2.9
+
+- Use the Modern system font for navigation section headings instead of the inherited bold caliBlur face.
+- Remove the decorative sparkle from the Magic Shelves label; its plus action stays.
+- Hide the duplicate desktop sidebar title and keep the title band and mobile navbar title.
+
 # 1.2.8
 
 - Replace separate shelf creation entries with plus actions beside Shelves and Magic Shelves.
