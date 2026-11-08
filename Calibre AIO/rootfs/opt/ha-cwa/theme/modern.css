@@ -217,6 +217,7 @@ html.aio-modern {
 }
 .aio-modern .navbar-default .navbar-nav > li > a:hover, .aio-modern .navbar-default .navbar-nav > li > a:focus { color: var(--aio-text); background: transparent; }
 .aio-modern #main-nav > .cwa-switch-theme { display: none; }
+.aio-modern #main-nav > li:has(> #logout) { display: none; }
 .aio-modern #main-nav > .aio-functions-head { display: none; }
 
 /* Upload: native file upload and directory selection share one plus menu. */
@@ -693,6 +694,7 @@ html.aio-modern {
     display: block !important;
     max-height: none;
     overflow-y: auto;
+    margin: 0;
     padding: 0 0 24px;
     background: var(--aio-sidebar);
     border-top: 1px solid var(--aio-line);
@@ -765,10 +767,13 @@ html.aio-modern {
   }
   .aio-modern .aio-main > .pagination::-webkit-scrollbar { display: none; }
   .aio-modern .pagination > li { flex: none; }
+  .aio-modern .aio-main:has(> .aio-page-header) > .pagination { margin-bottom: 0; }
   .aio-modern .pagination > li:first-child { margin-left: auto; }
   .aio-modern .aio-main > .pagination:has(.dropdown.open) { overflow: visible; }
   .aio-modern .aio-main .book { width: 33.3333%; padding: 0 5px; }
   .aio-modern .aio-main > .discover > h2 { margin: 8px 5px 6px; }
+  /* Only a full row of random picks on phones. */
+  .aio-modern .aio-main > .random-books .book:nth-child(n+4) { display: none; }
   .aio-modern .aio-main .book .meta .title { font-size: 12px; }
   .aio-modern .aio-list-page .list-container, .aio-modern .aio-list-page #second { padding: 0; }
   .aio-modern .duplicates-container .books-grid { grid-template-columns: minmax(0, 1fr); }
@@ -776,7 +781,10 @@ html.aio-modern {
   .aio-modern .duplicate-header > div:last-child { flex-wrap: wrap; }
   .aio-modern .duplicate-header button { font-size: 12px !important; padding: 6px 8px !important; }
 }
-@media (max-width: 359px) { .aio-modern .aio-main .discover .book { width: 50%; } }
+@media (max-width: 359px) {
+  .aio-modern .aio-main .discover .book { width: 50%; }
+  .aio-modern .aio-main > .random-books .book:nth-child(n+3) { display: none; }
+}
 
 /* ---- Secondary pages: tokens for the Bootstrap and CWA pieces the library pages do not use ---- */
 .aio-modern body {

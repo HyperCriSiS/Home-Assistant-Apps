@@ -1,3 +1,8 @@
+# 1.2.21
+
+- Phones: the grid no longer starts under the band on pages with page navigation, the drawer sits flush with the viewport instead of 15px off the left edge, and the random picks show only a full row.
+- Hide the logout entry; ingress signs the user in again anyway.
+
 # 1.2.20
 
 - Label the random picks above the library as their own section so their partial row no longer looks like a hole in the grid.
