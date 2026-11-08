@@ -164,9 +164,9 @@ with app.test_request_context("/"):
         title, page = "Sehr langer Name eines magischen Bücherregals", "magicshelf"
     random = []
     if scenario == "books-random":
-        # Four random books above the library, the first one with a series line.
+        # Twelve random books above the library, the first one with a series line.
         books[0].Books.series = [NS(id=1, name="Inspector Lynley")]
-        random = books[:4]
+        random = books[:12]
     duplicate_books = [NS(id=i+1, title="Der stille Garten", author_names="Mara Winter", timestamp=datetime(2026, 1, 1),
                           cover_url=f"/cover/{i+1}", series=[], data=[NS(format="EPUB")]) for i in range(2)]
     if scenario == "duplicates":

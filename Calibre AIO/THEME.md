@@ -1,5 +1,13 @@
 # Modern theme integration
 
+## Random picks
+
+CWA renders "Discover (Random Books)" above the library when the user setting
+"Show Random Books in Detail View" is on. The theme shows exactly one full row
+of them per column count (2 to 12 cards by width) and hides the rest, so the
+section never ends in a partial row. Set the admin view option "No. of Random
+Books to Display" to 12 so wide screens get a full row too.
+
 The theme assets live in `rootfs/opt/ha-cwa/theme`. They use native CWA links,
 upload permissions, multipart upload handling, duplicate actions and Isotope
 sorting. They do not call Home Assistant or Shelfmark APIs.
