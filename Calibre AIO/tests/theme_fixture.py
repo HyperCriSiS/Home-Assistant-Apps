@@ -163,6 +163,8 @@ with app.test_request_context("/"):
                           cover_url=f"/cover/{i+1}", series=[], data=[NS(format="EPUB")]) for i in range(2)]
     if scenario == "duplicates":
         title, page, template = "Duplicates", "duplicates", "duplicates.html"
+    if scenario == "error":
+        template = "http_error.html"
     pagination = NS(page=6, pages=12, has_next=True, has_prev=True,
                     iter_pages=lambda: [1, None, 5, 6, 7, None, 12]) if scenario == "books-paged" else None
     html = render_template(
@@ -189,5 +191,9 @@ with app.test_request_context("/"):
         pagination=pagination,
         searchterm="",
         config=NS(),
+        error_code=404,
+        error_name="Not Found",
+        error_stack=[],
+        unconfigured=False,
     )
     print(html)
