@@ -293,6 +293,8 @@ html.aio-modern {
 }
 .aio-modern .navigation li a span { margin: 0; }
 .aio-modern .navigation li a .glyphicon { width: 14px; text-align: center; color: var(--aio-muted); }
+/* Glyphicons and magic shelf emoji share one icon column. */
+.aio-modern :is(.navigation, #scnd-nav) li a > span:first-child { flex: none; width: 14px; text-align: center; }
 .aio-modern .navigation li.active > a, .aio-modern .navigation li > a:hover {
   color: var(--aio-accent);
   background: var(--aio-accent-bg);
@@ -361,6 +363,13 @@ html.aio-modern {
 }
 .aio-modern .row-fluid > .col-sm-2 + .col-sm-10.aio-main { margin-left: var(--aio-sidebar-width); }
 .aio-modern .aio-main > .discover { margin: 0; padding: 0; }
+/* The random picks above the library are a labeled section of their own. */
+.aio-modern .aio-main > .discover.random-books { margin-bottom: 12px; border-bottom: 1px solid var(--aio-line); }
+.aio-modern .aio-main > .discover > h2 {
+  margin: 10px 8px 8px;
+  font: 600 13px/18px "Segoe UI", system-ui, -apple-system, sans-serif;
+  color: var(--aio-muted);
+}
 .aio-modern .aio-page-header {
   position: sticky;
   top: var(--aio-bar);
@@ -707,8 +716,8 @@ html.aio-modern {
   .aio-modern .navbar-collapse #scnd-nav > li.active > a { color: var(--aio-accent); background: var(--aio-accent-bg); }
   .aio-modern #main-nav > .aio-functions-head { display: flex; }
   .aio-modern .aio-functions-hidden { display: none !important; }
-  .aio-modern .navbar-collapse .aio-nav-section > button { height: 44px; padding: 11px 16px; font-size: 17px; line-height: 22px; }
-  .aio-modern .navbar-collapse .aio-nav-section > a.aio-section-create { width: 44px; height: 44px; margin-right: 4px; }
+  .aio-modern .navbar-collapse .aio-nav-section > button { flex: none; height: 44px; padding: 11px 16px; font-size: 17px; line-height: 22px; }
+  .aio-modern .navbar-collapse .aio-nav-section > a.aio-section-create { width: 44px; height: 44px; margin: 0; }
   .aio-modern .row-fluid > .col-sm-2 { display: none; }
   .aio-modern .row-fluid > .col-sm-10.aio-main, .aio-modern .row-fluid > .col-sm-2 + .col-sm-10.aio-main { margin-left: 0; padding: 0 12px 20px; }
   .aio-modern .aio-page-header {
@@ -759,6 +768,7 @@ html.aio-modern {
   .aio-modern .pagination > li:first-child { margin-left: auto; }
   .aio-modern .aio-main > .pagination:has(.dropdown.open) { overflow: visible; }
   .aio-modern .aio-main .book { width: 33.3333%; padding: 0 5px; }
+  .aio-modern .aio-main > .discover > h2 { margin: 8px 5px 6px; }
   .aio-modern .aio-main .book .meta .title { font-size: 12px; }
   .aio-modern .aio-list-page .list-container, .aio-modern .aio-list-page #second { padding: 0; }
   .aio-modern .duplicates-container .books-grid { grid-template-columns: minmax(0, 1fr); }

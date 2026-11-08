@@ -26,7 +26,7 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
   if(u.pathname==='/library/'||u.pathname==='/library') {const body=execFileSync(process.env.PYTHON || 'python3',['-X','utf8',path.join(__dirname,'theme_fixture.py'),u.searchParams.get('sort_param')||'abc',u.searchParams.get('scenario')||'books'],{encoding:'utf8'});return route.fulfill({contentType:'text/html; charset=utf-8',headers:{'Referrer-Policy':'no-referrer'},body});}
   return route.fulfill({contentType:'application/json',body:'{}'});
  });
- for(const scenario of ['authors','publishers','books','books-paged','books-many','books-read','magic','series-grid','series-grid-many','duplicates','no-sidebar']) {
+ for(const scenario of ['authors','publishers','books','books-paged','books-many','books-read','books-random','magic','series-grid','series-grid-many','duplicates','no-sidebar']) {
   let release;themeGate=new Promise(resolve=>{release=resolve;});
   await page.goto(`https://calibre.test/library/?scenario=${scenario}`,{waitUntil:'commit'});
   await page.locator('.aio-page-header').waitFor({state:'visible'});
@@ -80,6 +80,16 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
    assert(badge.width<=22&&badge.height<=22,'Read marker must stay small');
    assert(badge.x>=cover.x&&badge.y+badge.height<=cover.y+cover.height+1&&badge.y>cover.y+cover.height/2,'Read marker sits inside the lower left of the cover');
    assert.equal(await badges.first().evaluate(el=>getComputedStyle(el).borderRadius),'50%');
+  }
+  if(scenario==='books-random') {
+   // Four random picks sit above the library as a labeled section, so their
+   // partial last row does not read as a hole in the library grid.
+   const label=page.locator('.discover.random-books > h2');assert(await label.isVisible());
+   assert(Number(await label.evaluate(el=>parseFloat(getComputedStyle(el).fontSize)))<=14,'Random section label must stay compact');
+   assert.equal(await page.locator('.discover.random-books .book').count(),4);
+   const section=await page.locator('.discover.random-books').boundingBox(),first=await page.locator('.discover.load-more .book').first().boundingBox();
+   assert(first.y>=section.y+section.height,'Library grid starts below the random section');
+   assert.equal(await page.locator('.discover.random-books').evaluate(el=>getComputedStyle(el).borderBottomStyle),'solid');
   }
   if(scenario==='no-sidebar') {
    // Pages without the sidebar (login, errors) keep the content at the left edge and the title in the bar.
@@ -157,8 +167,10 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
   const titleBox=await heading.boundingBox(),actionBox=await action.boundingBox();
   const navBox=await page.locator('#scnd-nav').boundingBox();
   assert(titleBox.x>=navBox.x-1&&actionBox.x+actionBox.width<=navBox.x+navBox.width+1,'Heading and plus must fit inside the visible menu');
-  assert(actionBox.width<=44&&titleBox.width>100,'Plus must not take the heading space');
+  assert(actionBox.width<=44&&titleBox.width>80,'Plus must not take the heading space');
   assert(actionBox.x>=titleBox.x+titleBox.width-1&&actionBox.x+actionBox.width<=width,'Plus must sit to the right of its section heading');
+  if(width<768)assert(actionBox.x-titleBox.x-titleBox.width<4,'In the drawer the plus follows its heading instead of the far edge');
+  assert.equal(await heading.locator('..').evaluate(el=>getComputedStyle(el).marginTop),'0px','Section headings keep the menu rhythm');
   assert(Math.abs(actionBox.y+actionBox.height/2-titleBox.y-titleBox.height/2)<2,'Plus must be vertically centered');
   await heading.click();assert(await action.isVisible(),'Plus must remain available when the section is collapsed');await heading.click();
   await action.evaluate(el=>el.addEventListener('click',event=>event.preventDefault(),{once:true}));

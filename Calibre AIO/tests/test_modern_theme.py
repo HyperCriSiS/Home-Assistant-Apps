@@ -72,6 +72,7 @@ class ModernThemeTest(unittest.TestCase):
         self.assertGreaterEqual(source.count('{% if false %}'), 4)
         self.assertIn("{% if true %}", source)
         self.assertIn('class="aio-back"', source)
+        self.assertNotIn('margin-top: 1rem', source)
         self.assertNotIn('message[0] == "theme_migration"', source)
 
     @unittest.skipUnless(os.environ.get('CWA_SOURCE'), 'requires pinned CWA source')
