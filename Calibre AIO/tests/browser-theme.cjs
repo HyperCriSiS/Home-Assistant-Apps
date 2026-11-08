@@ -49,6 +49,8 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
   if(out&&scenario==='publishers')await page.screenshot({path:path.join(out,`first-paint-${width}-before.png`)});
   themeGate=null;release();await page.waitForLoadState('load');await page.waitForTimeout(600);
   const after=await snapshot();
+  assert.deepEqual(await page.evaluate(()=>[...document.querySelectorAll('.discover .row, #list')].filter(node=>window.jQuery(node).data('isotope')).map(node=>window.jQuery(node).data('isotope').options.transitionDuration)),await page.evaluate(()=>[...document.querySelectorAll('.discover .row, #list')].filter(node=>window.jQuery(node).data('isotope')).map(()=>0)),`${scenario} ${width}: Isotope grids must relayout without a slide animation`);
+  if(/books|magic|series/.test(scenario))assert(await page.evaluate(()=>[...document.querySelectorAll('.discover .row, #list')].some(node=>window.jQuery(node).data('isotope'))),`${scenario} ${width}: expected an Isotope grid`);
   const finalCards=await seriesPositions();
   initialCards.forEach((box,i)=>{for(const axis of ['x','y'])assert(Math.abs(box[axis]-finalCards[i][axis])<2,`Series ${width}: card ${i} ${axis} jumped ${box[axis]} -> ${finalCards[i][axis]}`);});
   if(width>=768&&scenario==='books-paged') {

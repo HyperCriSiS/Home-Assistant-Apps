@@ -1,6 +1,9 @@
 /* Native CWA links keep their URLs, tooltips and server-side sorting. */
 (() => {
   'use strict';
+  // CWA lays book grids out with Isotope, whose 0.4 s slide also runs on every
+  // relayout after a viewport change. Read at instantiation by main.js on ready.
+  if (window.Isotope) window.Isotope.defaults.transitionDuration = 0;
   const svg = paths => {
     const node = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     for (const [key, value] of Object.entries({width:'16', height:'16', viewBox:'0 0 24 24', fill:'none',
@@ -129,6 +132,7 @@
   // Re-measure after fallback header setup and cover/font dimensions settle.
   const seriesGrid = document.querySelector('.aio-main > #list');
   if (seriesGrid) {
+    if (window.jQuery && window.jQuery(seriesGrid).data('isotope')) window.jQuery(seriesGrid).isotope('option', {transitionDuration: 0});
     const layout = () => {if (window.jQuery && window.jQuery(seriesGrid).data('isotope')) window.jQuery(seriesGrid).isotope('layout');};
     window.addEventListener('load', layout, {once:true});
     if (document.fonts) document.fonts.ready.then(layout);
