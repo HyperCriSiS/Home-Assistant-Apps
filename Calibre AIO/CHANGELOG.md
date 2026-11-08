@@ -1,3 +1,7 @@
+# 1.2.28
+
+- Sort controls: ascending order (A to Z, oldest first) shows a down arrow, descending an up arrow, matching how a list reads top to bottom.
+
 # 1.2.27
 
 - Sort controls: every pair reads ascending, then descending; the date pairs no longer start with newest first.
