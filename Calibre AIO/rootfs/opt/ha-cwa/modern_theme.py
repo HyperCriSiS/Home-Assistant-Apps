@@ -72,7 +72,14 @@ def _sort_icons(tools):
         return '<' + tag + attributes + '>' + symbol + '</' + tag + '>'
 
     controls = '|'.join((*sorts, 'sort_name'))
-    return re.sub(r'<(a|div)(\b[^>]*\bid="(' + controls + r')"[^>]*)>.*?</\1>', replace, tools, flags=re.S)
+    tools = re.sub(r'<(a|div)(\b[^>]*\bid="(' + controls + r')"[^>]*)>.*?</\1>', replace, tools, flags=re.S)
+    # CWA lists the date pairs newest first; every pair reads ascending, then descending.
+    for first, second in (('old', 'new'), ('pub_old', 'pub_new')):
+        pattern = lambda control: re.compile(r'<(a|div)\b[^>]*\bid="' + control + r'"[^>]*>.*?</\1>', re.S)
+        a, b = pattern(first).search(tools), pattern(second).search(tools)
+        if a and b and b.start() < a.start():
+            tools = tools[:b.start()] + a.group() + tools[b.end():a.start()] + b.group() + tools[a.end():]
+    return tools
 
 
 def _page_header(heading, tools=''):
@@ -124,7 +131,7 @@ class ThemeLoader(BaseLoader):
             source = source.replace('<html class="http-error">', '<html class="http-error aio-modern">', 1)
             source = source.replace('<html lang=', '<html class="aio-modern" lang=', 1)
             source = source.replace('</head>', '''
-    <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=17">
+    <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=18">
   </head>''', 1)
         if template in ('layout.html', 'detail.html'):
             # Modern is a standalone look on CWA's standard templates. CWA forces
@@ -168,7 +175,7 @@ class ThemeLoader(BaseLoader):
             source = source.replace('<span class="btn btn-default btn-file">{{_(\'Upload\')}}<input', '''<details class="aio-upload-menu"><summary aria-label="{{ _('Add books') }}">+</summary><div class="aio-upload-options"><label class="btn btn-default btn-file">{{ _('Upload') }}<input''', 1)
             source = source.replace('multiple></span>', '''multiple></label><button type="button" class="aio-folder-trigger">{% if current_user.locale.startswith('de') %}Ordner hinzufügen …{% else %}Add folder …{% endif %}</button></div></details>''', 1)
             source = source.replace('</head>', '''
-    <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=17">
+    <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=18">
     <script defer src="{{ url_for('aio_theme', filename='modern.js') }}?v=10"></script>
   </head>''', 1)
         elif template == 'list.html':
