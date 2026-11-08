@@ -98,6 +98,17 @@ for i, (title, author) in enumerate(
         tags=[],
     )
     books.append(NS(Books=b))
+
+
+class ReadEntry(tuple):
+    """index.html reads entry.Books and entry[2] (read flag) from the query row."""
+
+    @property
+    def Books(self):
+        return self[0]
+
+
+read_books = [ReadEntry((book.Books, None, i % 2 == 0)) for i, book in enumerate(books)]
 with app.test_request_context("/"):
     g.current_theme = 1
     g.allow_upload = True
@@ -161,7 +172,7 @@ with app.test_request_context("/"):
         title=title,
         page=page,
         bodyClass="",
-        entries=entries if scenario in lists or scenario.startswith("series-grid") else books * (6 if scenario == "books-many" else 1),
+        entries=entries if scenario in lists or scenario.startswith("series-grid") else read_books if scenario == "books-read" else books * (6 if scenario == "books-many" else 1),
         charlist=[(c,) for c in sorted({name[0] for name in names})] if not scenario.startswith("series-grid") else [NS(char="S")],
         data=data,
         random=[],

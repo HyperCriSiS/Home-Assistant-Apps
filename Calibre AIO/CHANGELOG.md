@@ -1,3 +1,7 @@
+# 1.2.18
+
+- Cover the read marker on book cards with a fixture scenario: a small disc inside the lower left of the cover.
+
 # 1.2.17
 
 - Make the Modern theme standalone: CWA's caliBlur theme is no longer loaded; the library pages, sidebar, navbar, search, upload menu, pagination, list pages, series grid and duplicates are styled on CWA's standard templates with the viewport as the only scroll container.
