@@ -1,5 +1,17 @@
 [
   {
+    "revision": 232,
+    "version": "v2026.11.07-1-dev.232",
+    "source_sha": "fffbf0d3110752f6a86a70033d0bde8c39a8f62b",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "fffbf0d3110752f6a86a70033d0bde8c39a8f62b",
+        "subject": "fix(mcphub): exclude the npm cache in home from backups (#195)"
+      }
+    ]
+  },
+  {
     "revision": 211,
     "version": "v2026.11.07-1-dev.211",
     "source_sha": "8cf03fe4ccdca6d84360e41c2a663850eca3b30d",
