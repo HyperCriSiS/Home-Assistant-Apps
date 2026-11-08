@@ -1,5 +1,10 @@
 # Calibre AIO integration plan
 
+This document records the original integration plan and its acceptance history.
+The current behavior is described in [README.md](README.md), [DOCS.md](DOCS.md),
+[TESTING.md](TESTING.md) and [UPDATING.md](UPDATING.md); the current upstream
+pins are in `upstream.json`.
+
 ## Starting point
 
 Copy of `calibre-web-automated/` from
@@ -45,15 +50,15 @@ Supervisor options permission fix. Original add-on attribution is retained.
 - All-in-one packaging and interface, not a replacement for either upstream UI.
 - Ingress SSO is required for this initial AIO version. Native login/device
   sync endpoints do not become an additional network entry point.
-- Start with Shelfmark's core download stack (including Real-Debrid). Sources
-  requiring browser-based challenge handling need the supported external
-  bypass service; do not embed an outdated pinned Chromium merely to hide
-  this dependency. Document this limitation in the app UI/docs.
+- Start with Shelfmark's core download stack (including Real-Debrid). The
+  initial version required an external browser-challenge service. Since 1.1.0
+  the image bundles the Chromium build pinned by Shelfmark's own Dockerfile,
+  and `shelfmark.external_bypass_url` is optional.
 - Do not modify other apps or generated `dev-store`. Develop on `dev-calibre`;
   shared automation publishes Calibre AIO (Dev). Promote to `main` separately
   after operator testing.
 
-## Verification record
+## Verification record (initial acceptance, app revision 0.1.x)
 
 - The application, shared interface, HA adapters and update automation are
   implemented on `feature/calibre-aio`; draft PR #103 tracks acceptance.
@@ -71,7 +76,7 @@ Supervisor options permission fix. Original add-on attribution is retained.
 Full HAOS acceptance and authenticated Real-Debrid downloads require a real
 installation and operator credentials; automated tests must not claim those.
 
-## Current development work
+## Development history (0.1.x)
 
 - German/English HA option labels and AIO navigation/setup are implemented.
 - Empty administrator configuration now opens setup without granting admin.

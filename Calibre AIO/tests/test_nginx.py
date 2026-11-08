@@ -125,10 +125,11 @@ class NginxTest(unittest.TestCase):
     def test_supervisor_identity_forwarded_and_marker_overwritten(self):
         status, body = self.request('172.30.32.2', {
             'X-CWA-Ingress': 'forged', 'X-Remote-User-Id': 'b' * 32,
-            'X-Remote-User-Groups': 'system-users,system-admin'})
+            'X-Remote-User-Groups': 'system-users,system-admin', 'X-Forwarded-Proto': 'https'})
         self.assertEqual(status, 200)
         headers = json.loads(body)
         self.assertEqual(headers['X-CWA-Ingress'], '1')
+        self.assertEqual(headers['X-Forwarded-Proto'], 'https')
         self.assertEqual(headers['X-Remote-User-Id'], 'b' * 32)
         self.assertEqual(headers['X-Remote-User-Groups'], 'system-users,system-admin')
         self.assertEqual(headers['X-Script-Name'], '/api/hassio_ingress/test/library')
@@ -140,5 +141,7 @@ class NginxTest(unittest.TestCase):
         self.assertEqual(status, 200)
         headers = json.loads(body)
         self.assertEqual(headers['Upgrade'], 'websocket')
+        # Without a Supervisor scheme nginx falls back to its own.
+        self.assertEqual(headers['X-Forwarded-Proto'], 'http')
         self.assertEqual(headers['__path__'],
                          '/api/hassio_ingress/test/shelfmark/socket.io/?EIO=4&transport=websocket')
