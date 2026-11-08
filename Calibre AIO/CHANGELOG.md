@@ -1,3 +1,8 @@
+# 1.2.25
+
+- Pages without a band (edit book, admin, settings) start with room below the bar; glyph buttons keep a gap to their label; the edit page cover is capped at 260px and the format upload sits below the convert button.
+- Books List: the bulk action row aligns with the table; the description editor (TinyMCE) is dark; the phone tool rail and table pagination swipe without a visible scrollbar.
+
 # 1.2.24
 
 - Edit book: the metadata form sits beside the cover again instead of hanging below it at the right; on phones it takes the full width.
