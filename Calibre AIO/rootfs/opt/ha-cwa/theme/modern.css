@@ -34,18 +34,16 @@ html.aio-modern {
   backdrop-filter: none;
 }
 .aio-modern .navbar a, .aio-modern .navigation a { color: var(--aio-text); }
-/* Desktop already has a page heading; keep only the band's surface/divider. */
+/* The sidebar brand carries the page title; the content band keeps only the tools. */
 @media (min-width: 768px) {
   html.aio-modern body.blur > .navbar > .container-fluid > .navbar-header > a.navbar-brand {
-    visibility: hidden;
-  }
-  html.aio-modern body.blur > .navbar > .container-fluid > .navbar-header::after {
-    content: '';
-    position: fixed;
-    top: 60px; left: 0; width: 240px; height: 60px;
     background: var(--aio-bg);
     border-bottom: 1px solid var(--aio-line);
-    pointer-events: none;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    font-weight: 600;
+  }
+  html.aio-modern body.blur .aio-page-header > :is(h1,h2) {
+    display: none;
   }
 }
 .aio-modern .navigation li > a { padding-top: 7px !important; padding-bottom: 7px !important; }
