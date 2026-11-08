@@ -22,13 +22,8 @@ def load_options_and_drop_privileges(path='/data/options.json', account='abc'):
     options['admin_username'] = options.get('admin_username', '')
     os.environ.pop('SUPERVISOR_TOKEN', None)
     os.environ.pop('HASSIO_TOKEN', None)
-    bypass = document.get('shelfmark', {}).get('external_bypass_url', '')
-    if bypass:
-        from urllib.parse import urlsplit
-        parsed = urlsplit(bypass)
-        if parsed.scheme not in ('http', 'https') or not parsed.hostname or any(c.isspace() for c in bypass):
-            raise ValueError('shelfmark.external_bypass_url must be an HTTP(S) URL')
-    options['external_bypass_url'] = bypass
+    # Validated by start_shelfmark.py: a bad Shelfmark option must not stop CWA.
+    options['external_bypass_url'] = document.get('shelfmark', {}).get('external_bypass_url', '')
     import pwd
     user = pwd.getpwnam(account)
     os.initgroups(user.pw_name, user.pw_gid)

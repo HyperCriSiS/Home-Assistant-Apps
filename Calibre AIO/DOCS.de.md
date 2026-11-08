@@ -40,6 +40,10 @@ behalten die vollständigen CWA-Beschreibungen. Auf Telefonen bricht die
 Werkzeugleiste um und die Berührungsflächen bleiben größer. Auf dem Desktop ist
 die Sortierung in der Titelzeile zentriert. Listenmarker und Buchstabenfilter
 bleiben an ihrer nativen Position mit kompakter Größe und eingerücktem Rand.
+Auf Telefonen erscheint der aktuelle Seitentitel in der oberen Leiste. Die
+Sortierleiste scrollt horizontal, wenn ihre Elemente nicht passen.
+Abschnittsüberschriften der Navigation lassen sich auf Desktop und Mobilgerät
+einklappen.
 
 `library_theme: modern` ist der Standard, auch für bestehende Konfigurationen.
 Setze `library_theme: upstream` und starte die App neu, um das Originaldesign
@@ -66,10 +70,12 @@ sso:
   zuerst. Nach einer Änderung die App neu starten und die Weboberfläche erneut
   öffnen.
 - `library_dir`: Bibliothekspfad relativ zu `/share`. Der Wert muss ein
-  relativer Pfad ohne `.`- oder `..`-Segmente sein; sonst startet die App nicht.
+  relativer Pfad ohne `.`- oder `..`-Segmente sein; ein leerer oder absoluter
+  Wert verhindert den Start.
 - `ingest_dir`: Übergabepfad für fertige Bücher relativ zu `/share`, mit
-  denselben Regeln. Nicht denselben Pfad wie für die Bibliothek oder den
-  aktiven Downloadordner einer anderen App verwenden.
+  denselben Regeln. Er darf weder der Bibliotheksordner sein noch darin liegen
+  oder ihn enthalten, und sollte nicht der aktive Downloadordner einer anderen
+  App sein.
 - `network_share_mode`: regelmäßige Prüfung statt Dateisystemereignissen für
   SMB/NFS.
 - `shelfmark.external_bypass_url`: optionaler HTTP(S)-Endpunkt eines
@@ -114,6 +120,13 @@ ersetzen. Leser sehen den Shelfmark-Einrichtungsassistenten für
 Administratoren nicht.
 
 ## Downloads und Bibliotheksübergabe
+
+Über das **+**-Menü der Bibliothek lassen sich Dateien hochladen oder mit
+**Ordner hinzufügen …** ein Ordner wählen. Die Ordnerauswahl nimmt unterstützte
+E-Book-Dateien auch aus Unterordnern mit; andere Dateitypen werden übersprungen.
+Die Bücher durchlaufen den normalen Upload- und Importweg. Calibre ordnet die
+Bibliothek selbst; die Ordnerstruktur der Quelle wird nicht als Regale
+übernommen.
 
 Quellen sowie Real-Debrid und andere Clients werden in den
 Shelfmark-Einstellungen konfiguriert, nicht im HA-YAML. Zugangsdaten bleiben in

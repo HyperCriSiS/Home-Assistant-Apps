@@ -3,7 +3,7 @@ name: Propose Calibre AIO upstream updates
 # Opens one pull request per CWA/Shelfmark combination against dev-calibre.
 # merge-due-updates.yml merges it after 12 hours once it matches the trusted
 # updater byte for byte and the full validation passed; auto-promote-calibre.yml
-# releases it to main after another 48 hours. Label a PR "hold" to stop it.
+# releases it to main after another 36 hours. Label a PR "hold" to stop it.
 
 on:
   schedule:

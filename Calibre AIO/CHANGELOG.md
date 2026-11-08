@@ -1,3 +1,12 @@
+# 1.2.11
+
+- Refuse a library folder inside the ingest folder or the reverse, not only identical folders.
+- Keep the Supervisor token out of every upstream CWA service and the ingress proxy.
+- Start Shelfmark only after the library database has been prepared and repaired.
+- Forward the HTTPS scheme reported by the Supervisor instead of the proxy's own.
+- Validate `shelfmark.external_bypass_url` in Shelfmark only, so a bad value no longer stops the library.
+- Document the folder rules in English, folder upload and mobile layout in German, and mark the integration plan as history.
+
 # 1.2.10
 
 - Follow the Shelfmark 1.6 Chromium 156 pin, Python 3.14.9 and uv 0.13.6 so the upstream updater can propose Shelfmark releases again.
