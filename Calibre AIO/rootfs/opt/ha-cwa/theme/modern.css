@@ -464,7 +464,7 @@ html.aio-modern {
   pointer-events: none;
 }
 .aio-modern .aio-main:has(> .aio-page-header) > .pagination { margin-bottom: -60px; }
-.aio-modern .pagination > li { display: block; pointer-events: auto; }
+.aio-modern .aio-main > .pagination > li { display: block; pointer-events: auto; }
 .aio-modern .pagination > li > a {
   position: static;
   float: none;
@@ -770,10 +770,14 @@ html.aio-modern {
     pointer-events: auto;
   }
   .aio-modern .aio-main > .pagination::-webkit-scrollbar { display: none; }
-  .aio-modern .pagination > li { flex: none; }
+  .aio-modern .aio-main > .pagination > li { flex: none; }
   .aio-modern .aio-main:has(> .aio-page-header) > .pagination { margin-bottom: 0; }
-  .aio-modern .pagination > li:first-child { margin-left: auto; }
+  .aio-modern .aio-main > .pagination > li:first-child { margin-left: auto; }
   .aio-modern .aio-main > .pagination:has(.dropdown.open) { overflow: visible; }
+  /* bootstrap-table pages become one swipeable line under the table. */
+  .aio-modern .fixed-table-pagination > .pagination, .aio-modern .fixed-table-pagination > .pagination-detail { float: none; width: 100%; }
+  .aio-modern .fixed-table-pagination > .pagination { overflow-x: auto; scrollbar-width: thin; }
+  .aio-modern .fixed-table-pagination > .pagination > ul.pagination { display: flex; flex-wrap: nowrap; width: max-content; }
   .aio-modern .aio-main .book { width: 33.3333%; padding: 0 5px; }
   .aio-modern .aio-main > .discover > h2 { margin: 8px 5px 6px; }
   .aio-modern .aio-main > .random-books .book:nth-child(n+4) { display: none; }

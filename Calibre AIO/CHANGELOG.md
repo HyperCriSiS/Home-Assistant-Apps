@@ -1,3 +1,7 @@
+# 1.2.23
+
+- Books List: the table pagination keeps its pages in one line; the band pagination layout no longer leaks into bootstrap-table.
+
 # 1.2.22
 
 - Random picks fill exactly one row per screen width (2 to 12 cards); set "No. of Random Books to Display" to 12 in the CWA admin view for wide screens.
