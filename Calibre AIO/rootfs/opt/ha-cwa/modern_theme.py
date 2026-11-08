@@ -133,11 +133,21 @@ class ThemeLoader(BaseLoader):
             source = source.replace('id="query_submit" class="btn btn-default">{{_(\'Search\')}}</button>',
                                     'id="query_submit" class="btn btn-default"><span class="sr-only">{{_(\'Search\')}}</span>'
                                     + _svg(['M4 12h16M14 6l6 6-6 6']) + '</button>', 1)
+            # Render the page navigation before the list. The browser paints the
+            # page while the list is still streaming, and a band that only grows
+            # once the trailing pagination arrives shifts the grid after first paint.
+            start = source.find('{% if pagination and (pagination.has_next or pagination.has_prev) %}')
+            if start >= 0:
+                closing = '</div>\n          {% endif %}'
+                end = source.index(closing, start) + len(closing)
+                pagination = source[start:end]
+                source = source[:start] + source[end:]
+                source = source.replace('{% block body %}{% endblock %}', pagination + '\n          {% block body %}{% endblock %}', 1)
             source = source.replace('<div class="col-sm-10">', '''<div class="col-sm-10 aio-main{% if page is string and page.endswith('list') %} aio-list-page{% endif %}">''', 1)
             source = source.replace('<span class="btn btn-default btn-file">{{_(\'Upload\')}}<input', '''<details class="aio-upload-menu"><summary aria-label="{{ _('Add books') }}">+</summary><div class="aio-upload-options"><label class="btn btn-default btn-file">{{ _('Upload') }}<input''', 1)
             source = source.replace('multiple></span>', '''multiple></label><button type="button" class="aio-folder-trigger">{% if current_user.locale.startswith('de') %}Ordner hinzufügen …{% else %}Add folder …{% endif %}</button></div></details>''', 1)
             source = source.replace('</head>', '''
-    <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=10">
+    <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=11">
     <script defer src="{{ url_for('aio_theme', filename='modern.js') }}?v=8"></script>
   </head>''', 1)
         elif template == 'list.html':

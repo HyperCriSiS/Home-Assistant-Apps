@@ -1,3 +1,8 @@
+# 1.2.16
+
+- Keep the scrollbar gutter of the content column stable, so the book grid is laid out at the same width before and after Isotope measures it where scrollbars take layout space (Android WebView, desktop).
+- Render the page navigation before the list, so the title band has its final height at first paint.
+
 # 1.2.15
 
 - Update CWA to v4.0.8 and Shelfmark to v1.6.1.
