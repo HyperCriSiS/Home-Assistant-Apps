@@ -19,12 +19,15 @@ def _nav_heading(match):
     classes = match[1].split()
     classes = [value for value in classes if value != 'hidden-xs'] + ['aio-nav-section']
     action = ''
+    label = match[3]
     if 'public-shelves' in classes:
         action = '''{% if not current_user.is_anonymous %}<a class="aio-section-create" href="{{url_for('shelf.create_shelf')}}" title="{{_('Create Shelf')}}" aria-label="{{_('Create Shelf')}}">+</a>{% endif %}'''
     elif match[3].strip() == "{{_('Magic Shelves ✨')}}":
+        # Translate the existing catalog key, then remove its decorative emoji.
+        label = "{{_('Magic Shelves ✨')|replace('✨', '')|trim}}"
         action = '''{% if magic_shelf_routes.create %}<a class="aio-section-create" href="{{url_for('web.create_magic_shelf')}}" title="{{_('Create Magic Shelf')}}" aria-label="{{_('Create Magic Shelf')}}">+</a>{% endif %}'''
     return ('<li class="' + ' '.join(classes) + '"' + match[2] + '>'
-            '<button type="button" aria-expanded="true">' + match[3] + '</button>' + action + '</li>')
+            '<button type="button" aria-expanded="true">' + label + '</button>' + action + '</li>')
 
 
 def _div_end(source, start):
@@ -134,7 +137,7 @@ class ThemeLoader(BaseLoader):
             source = source.replace('<span class="btn btn-default btn-file">{{_(\'Upload\')}}<input', '''<details class="aio-upload-menu"><summary aria-label="{{ _('Add books') }}">+</summary><div class="aio-upload-options"><label class="btn btn-default btn-file">{{ _('Upload') }}<input''', 1)
             source = source.replace('multiple></span>', '''multiple></label><button type="button" class="aio-folder-trigger">{% if current_user.locale.startswith('de') %}Ordner hinzufügen …{% else %}Add folder …{% endif %}</button></div></details>''', 1)
             source = source.replace('</head>', '''
-    <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=7">
+    <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=9">
     <script defer src="{{ url_for('aio_theme', filename='modern.js') }}?v=7"></script>
   </head>''', 1)
         elif template == 'list.html':

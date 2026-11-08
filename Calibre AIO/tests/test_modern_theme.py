@@ -67,7 +67,6 @@ class ModernThemeTest(unittest.TestCase):
         self.assertIn('class="aio-search-icon"', source)
         self.assertIn('<button type="button" aria-expanded="true">', source)
 
-    @unittest.skipUnless(os.environ.get('CWA_SOURCE'), 'requires pinned CWA source')
     def test_shelf_heading_actions_preserve_native_visibility(self):
         from types import SimpleNamespace as NS
         from jinja2 import Environment
@@ -93,6 +92,20 @@ class ModernThemeTest(unittest.TestCase):
                 self.assertEqual(result.count('class="aio-section-create"'), expected)
                 self.assertNotIn('nav_createshelf', result)
                 self.assertNotIn('nav_createmagicshelf', result)
+                self.assertNotIn('✨', result)
+                if authenticated and render:
+                    self.assertIn('>Magic Shelves</button>', result)
+
+    def test_magic_heading_keeps_catalog_translation_without_emoji(self):
+        from jinja2 import Environment
+        from types import SimpleNamespace as NS
+        from modern_theme import ThemeLoader
+        env = Environment(loader=ThemeLoader(DictLoader({
+            'layout.html': '<li class="nav-head">{{_(\'Magic Shelves ✨\')}}</li>'})), autoescape=True)
+        env.globals.update(_=lambda key: {'Magic Shelves ✨': 'Magische Regale ✨'}[key])
+        result = env.get_template('layout.html').render(magic_shelf_routes=NS(create=False))
+        self.assertIn('>Magische Regale</button>', result)
+        self.assertNotIn('✨', result)
 
     @unittest.skipUnless(os.environ.get('CWA_SOURCE'), 'requires pinned CWA source')
     def test_series_script_preserves_native_actions_with_stable_rows(self):
