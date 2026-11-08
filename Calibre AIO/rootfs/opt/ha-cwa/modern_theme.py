@@ -138,7 +138,7 @@ class ThemeLoader(BaseLoader):
             source = source.replace('multiple></span>', '''multiple></label><button type="button" class="aio-folder-trigger">{% if current_user.locale.startswith('de') %}Ordner hinzufügen …{% else %}Add folder …{% endif %}</button></div></details>''', 1)
             source = source.replace('</head>', '''
     <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=10">
-    <script defer src="{{ url_for('aio_theme', filename='modern.js') }}?v=7"></script>
+    <script defer src="{{ url_for('aio_theme', filename='modern.js') }}?v=8"></script>
   </head>''', 1)
         elif template == 'list.html':
             source = source.replace('''{% if title == "Downloads" %}
