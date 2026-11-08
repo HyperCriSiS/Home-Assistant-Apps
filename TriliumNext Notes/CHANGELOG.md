@@ -1,5 +1,13 @@
 # Changelog
 
+## v2026.11.08
+
+Trilium itself stays at v0.106.1.
+
+### Changed
+
+- The App now installs a prebuilt image from `ghcr.io/hypercrisis/{arch}-trilium` instead of building it on the Home Assistant host. Updates and restores are faster, and Home Assistant backups no longer contain the container image. Existing installations switch on the next update.
+
 ## v2026.11.05
 
 Trilium itself stays at v0.106.1.
