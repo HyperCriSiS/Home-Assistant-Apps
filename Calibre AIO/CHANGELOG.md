@@ -1,3 +1,7 @@
+# 1.2.14
+
+- Lay book and series grids out without the Isotope slide animation, so relayouts after a viewport change no longer glide into place.
+
 # 1.2.13
 
 - Follow Shelfmark 1.6.1, which registers its Socket.IO handlers and proxy authentication as closures; the ingress session refresh now takes them from the Flask and Flask-SocketIO registries.
