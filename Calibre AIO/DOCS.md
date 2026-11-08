@@ -62,9 +62,12 @@ sso:
 - `start_page`: initial view, `library` (Library, default) or `shelfmark`
   (Discover). The compact navigation always lists Library first. Restart
   the app after changing this option, then reopen its web interface.
-- `library_dir`: library path relative to `/share`.
-- `ingest_dir`: completed-book handoff path relative to `/share`. Do not use
-  the same path for the library or another app's active download directory.
+- `library_dir`: library path relative to `/share`. The value must be a
+  relative path without `.` or `..` segments; an empty or absolute value stops
+  the app from starting.
+- `ingest_dir`: completed-book handoff path relative to `/share`, with the
+  same rules. It must not be the library folder, lie inside it or contain it,
+  and should not be another app's active download directory.
 - `network_share_mode`: polling instead of filesystem notifications for SMB/NFS.
 - `shelfmark.external_bypass_url`: optional HTTP(S) endpoint of a compatible
   external browser-challenge service. Leave empty to use the included Chromium

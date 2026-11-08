@@ -39,8 +39,10 @@ check_share_dir() {
 }
 check_share_dir library_dir "${library_dir}"
 check_share_dir ingest_dir "${ingest_dir}"
-if [[ "${library_dir%/}" == "${ingest_dir%/}" ]]; then
-    bashio::log.fatal "library_dir and ingest_dir must be different folders"
+# The ingest watcher scans its folder recursively, so a library inside the
+# ingest folder (or the reverse) would re-import the library's own books.
+if [[ "${library_dir%/}/" == "${ingest_dir%/}/"* || "${ingest_dir%/}/" == "${library_dir%/}/"* ]]; then
+    bashio::log.fatal "library_dir and ingest_dir must be different folders and must not be nested"
     exit 1
 fi
 
