@@ -72,6 +72,7 @@ class ModernThemeTest(unittest.TestCase):
         self.assertGreaterEqual(source.count('{% if false %}'), 4)
         self.assertIn("{% if true %}", source)
         self.assertIn('class="aio-back"', source)
+        self.assertNotIn('message[0] == "theme_migration"', source)
 
     def test_shelf_heading_actions_preserve_native_visibility(self):
         from types import SimpleNamespace as NS

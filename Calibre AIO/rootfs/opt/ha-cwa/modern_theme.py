@@ -133,6 +133,8 @@ class ThemeLoader(BaseLoader):
             # modern.js moves the browse navigation at the 768px breakpoint that
             # the rest of the layout uses; intention.js would use 510px/840px.
             source = source.replace(' intent in-standard-append="nav.navigation" in-mobile-after="#main-nav" in-mobile-class="nav navbar-nav"', '', 1)
+            # CWA announces its own caliBlur migration daily; this look is not caliBlur.
+            source = source.replace('{%if message[0] == "theme_migration" %}', '{%if false %}', 1)
             source = re.sub(r'<li class="([^"\n]*\bnav-head\b[^"\n]*)"([^>]*)>(.*?)</li>',
                             _nav_heading, source, flags=re.S)
             source = re.sub(r'<li id="nav_create(?:magic)?shelf"[^>]*>.*?</li>', '', source, flags=re.S)
