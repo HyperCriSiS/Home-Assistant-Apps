@@ -97,25 +97,30 @@ html.aio-modern {
 .aio-modern .navbar-header::before, .aio-modern .navbar-header::after,
 .aio-modern .navbar-collapse::before, .aio-modern .navbar-collapse::after { content: none; }
 .aio-modern .navbar-header { display: flex; align-items: center; float: none; height: 100%; margin: 0; }
-/* The brand sits beside the content band as the sidebar's title band. */
 .aio-modern .navbar > .container-fluid .navbar-brand {
-  position: absolute;
-  top: var(--aio-bar);
-  left: 0;
   float: none;
   display: block;
   box-sizing: border-box;
-  width: var(--aio-sidebar-width);
-  height: 60px;
+  height: var(--aio-bar);
   margin: 0;
   padding: 0 16px;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  font: 600 16px/var(--aio-bar) "Segoe UI", system-ui, -apple-system, sans-serif;
+  color: var(--aio-text) !important;
+}
+/* With a sidebar, the brand sits beside the content band as the sidebar's
+   title band. Pages without one (login, errors) keep it in the bar. */
+.aio-modern body:has(.row-fluid > .col-sm-2) .navbar > .container-fluid .navbar-brand {
+  position: absolute;
+  top: var(--aio-bar);
+  left: 0;
+  width: var(--aio-sidebar-width);
+  height: 60px;
+  line-height: 60px;
   background: var(--aio-bg);
   border-bottom: 1px solid var(--aio-line);
-  font: 600 16px/60px "Segoe UI", system-ui, -apple-system, sans-serif;
-  color: var(--aio-text) !important;
 }
 .aio-modern .aio-back {
   display: inline-flex;
@@ -200,7 +205,7 @@ html.aio-modern {
 }
 .aio-modern .navbar-nav { display: flex; align-items: center; float: none; margin: 0; }
 .aio-modern .navbar-nav > li { float: none; }
-.aio-modern #main-nav { margin-left: auto; }
+.aio-modern #main-nav { margin: 0 0 0 auto; }
 .aio-modern .navbar-default .navbar-nav > li > a {
   display: inline-flex;
   align-items: center;
@@ -351,9 +356,10 @@ html.aio-modern {
 .aio-modern .row-fluid > .col-sm-10.aio-main {
   float: none;
   width: auto;
-  margin-left: var(--aio-sidebar-width);
+  margin-left: 0;
   padding: 0 16px 24px;
 }
+.aio-modern .row-fluid > .col-sm-2 + .col-sm-10.aio-main { margin-left: var(--aio-sidebar-width); }
 .aio-modern .aio-main > .discover { margin: 0; padding: 0; }
 .aio-modern .aio-page-header {
   position: sticky;
@@ -442,11 +448,12 @@ html.aio-modern {
   justify-content: flex-end;
   gap: 4px;
   height: 60px;
-  margin: 0 -16px -60px;
+  margin: 0 -16px;
   padding: 0 16px;
   border-radius: 0;
   pointer-events: none;
 }
+.aio-modern .aio-main:has(> .aio-page-header) > .pagination { margin-bottom: -60px; }
 .aio-modern .pagination > li { display: block; pointer-events: auto; }
 .aio-modern .pagination > li > a {
   position: static;
@@ -636,7 +643,8 @@ html.aio-modern {
   .aio-modern .navbar > .container-fluid { padding: 0 6px 0 0; }
   .aio-modern .navbar-header { flex: 1; min-width: 0; }
   .aio-modern .navbar-toggle { display: block; flex: none; width: 36px; height: 40px; padding: 9px 8px; }
-  .aio-modern .navbar > .container-fluid .navbar-brand {
+   .aio-modern .navbar > .container-fluid .navbar-brand,
+  .aio-modern body:has(.row-fluid > .col-sm-2) .navbar > .container-fluid .navbar-brand {
     position: static;
     flex: 1;
     min-width: 0;
@@ -702,7 +710,7 @@ html.aio-modern {
   .aio-modern .navbar-collapse .aio-nav-section > button { height: 44px; padding: 11px 16px; font-size: 17px; line-height: 22px; }
   .aio-modern .navbar-collapse .aio-nav-section > a.aio-section-create { width: 44px; height: 44px; margin-right: 4px; }
   .aio-modern .row-fluid > .col-sm-2 { display: none; }
-  .aio-modern .row-fluid > .col-sm-10.aio-main { margin-left: 0; padding: 0 12px 20px; }
+  .aio-modern .row-fluid > .col-sm-10.aio-main, .aio-modern .row-fluid > .col-sm-2 + .col-sm-10.aio-main { margin-left: 0; padding: 0 12px 20px; }
   .aio-modern .aio-page-header {
     display: block;
     min-height: 0;

@@ -26,7 +26,7 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
   if(u.pathname==='/library/'||u.pathname==='/library') {const body=execFileSync(process.env.PYTHON || 'python3',['-X','utf8',path.join(__dirname,'theme_fixture.py'),u.searchParams.get('sort_param')||'abc',u.searchParams.get('scenario')||'books'],{encoding:'utf8'});return route.fulfill({contentType:'text/html; charset=utf-8',headers:{'Referrer-Policy':'no-referrer'},body});}
   return route.fulfill({contentType:'application/json',body:'{}'});
  });
- for(const scenario of ['authors','publishers','books','books-paged','books-many','magic','series-grid','series-grid-many','duplicates']) {
+ for(const scenario of ['authors','publishers','books','books-paged','books-many','magic','series-grid','series-grid-many','duplicates','no-sidebar']) {
   let release;themeGate=new Promise(resolve=>{release=resolve;});
   await page.goto(`https://calibre.test/library/?scenario=${scenario}`,{waitUntil:'commit'});
   await page.locator('.aio-page-header').waitFor({state:'visible'});
@@ -73,6 +73,13 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
   }
   assert.deepEqual(await symbols(),initialSymbols,'Sort symbols must not switch after first paint');
   assert.equal(await page.locator('link[href*="caliBlur"]').count(),0,'caliBlur must not load');
+  if(scenario==='no-sidebar') {
+   // Pages without the sidebar (login, errors) keep the content at the left edge and the title in the bar.
+   assert.equal(await page.locator('.row-fluid > .col-sm-2').count(),0);
+   const main=await page.locator('.aio-main').boundingBox(),brand=await page.locator('.navbar-brand').boundingBox();
+   assert(main.x<1,`Content must start at the edge without a sidebar: ${main.x}`);
+   assert(brand.y+brand.height<=(width>=768?60:48)+1,'Brand stays inside the bar without a sidebar');
+  }
   assert(!(await page.evaluate(()=>document.body.classList.contains('blur'))),'Standalone theme must not run in blur mode');
   if(scenario==='books-many'&&width>=768) {
    await page.evaluate(()=>window.scrollTo(0,300));
