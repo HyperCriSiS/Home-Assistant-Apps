@@ -497,6 +497,19 @@ html.aio-modern {
 .aio-modern .pagination .dropdown-menu { right: 0; left: auto; min-width: 64px; max-height: 60vh; overflow-y: auto; }
 .aio-modern .pagination .dropdown-menu > li > a { padding: 6px 14px; }
 
+/* book_edit.html places its form with inline styles written for caliBlur
+   (40rem left margin, fill-available width); the theme lays the columns out. */
+.aio-modern #book_edit_frm > .col-sm-9 {
+  width: 75% !important;
+  margin: 0 !important;
+  padding: 20px 24px !important;
+  background: var(--aio-surface) !important;
+  border-radius: 6px;
+}
+@media (max-width: 767px) {
+  .aio-modern #book_edit_frm > .col-sm-9 { width: 100% !important; margin-top: 16px !important; padding: 16px 12px !important; }
+}
+
 /* ---- Book grid cards (browse pages and the series overview) ---- */
 .aio-modern .aio-main .row.display-flex { margin: 0; }
 .aio-modern .aio-main .book {
