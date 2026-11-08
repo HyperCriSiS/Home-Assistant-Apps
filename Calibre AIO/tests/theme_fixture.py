@@ -76,7 +76,11 @@ app.jinja_env.globals.update(
 app.jinja_env.filters["get_cover_srcset"] = lambda b: ""
 app.jinja_env.filters["last_modified"] = lambda b: ""
 app.jinja_env.filters["music"] = lambda b: False
-install_modern_theme(app)
+# AIO_THEME_UPSTREAM=<theme id> renders CWA_SOURCE's own templates without the
+# loader, for a CWA checkout that carries the theme as template branches.
+upstream_theme = os.environ.get("AIO_THEME_UPSTREAM")
+if not upstream_theme:
+    install_modern_theme(app)
 books = []
 scenario = sys.argv[2] if len(sys.argv) > 2 else "books"
 for i, (title, author) in enumerate(
@@ -114,7 +118,7 @@ class ReadEntry(tuple):
 
 read_books = [ReadEntry((book.Books, None, i % 2 == 0)) for i, book in enumerate(books)]
 with app.test_request_context("/"):
-    g.current_theme = 1
+    g.current_theme = int(upstream_theme or 1)
     g.allow_upload = True
     g.google_site_verification = ""
     g.allow_anonymous = False
