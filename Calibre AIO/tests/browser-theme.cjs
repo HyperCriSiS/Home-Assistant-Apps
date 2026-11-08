@@ -4,7 +4,8 @@ const {execFileSync}=require('child_process');
 const playwright=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const root=path.resolve(__dirname,'..'), src=path.join(process.env.CWA_SOURCE,'cps/static');
 const out=process.env.AIO_THEME_SCREENSHOTS; if(out) fs.mkdirSync(out,{recursive:true});
-(async()=>{const browser=await playwright[process.env.AIO_THEME_BROWSER || 'chromium'].launch();try{
+// Headless Chromium hides scrollbars by default; real browsers may give them layout width.
+(async()=>{const browser=await playwright[process.env.AIO_THEME_BROWSER || 'chromium'].launch({ignoreDefaultArgs:['--hide-scrollbars']});try{
 for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split(',').map(Number)){
  const context=await browser.newContext({viewport:{width,height:900}}); const page=await context.newPage(); const errors=[], fontWarnings=new Set();page.on('pageerror',e=>errors.push(e.message));
  page.on('console',msg=>{
@@ -26,7 +27,7 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
   if(u.pathname==='/library/'||u.pathname==='/library') {const body=execFileSync(process.env.PYTHON || 'python3',['-X','utf8',path.join(__dirname,'theme_fixture.py'),u.searchParams.get('sort_param')||'abc',u.searchParams.get('scenario')||'books'],{encoding:'utf8'});return route.fulfill({contentType:'text/html; charset=utf-8',headers:{'Referrer-Policy':'no-referrer'},body});}
   return route.fulfill({contentType:'application/json',body:'{}'});
  });
- for(const scenario of ['authors','publishers','books','books-paged','magic','series-grid','series-grid-many','duplicates']) {
+ for(const scenario of ['authors','publishers','books','books-paged','books-many','magic','series-grid','series-grid-many','duplicates']) {
   let release;themeGate=new Promise(resolve=>{release=resolve;});
   await page.goto(`https://calibre.test/library/?scenario=${scenario}`,{waitUntil:'commit'});
   await page.locator('.aio-page-header').waitFor({state:'visible'});
@@ -57,6 +58,7 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
    const header=await page.locator('.aio-page-header').boundingBox();
    for(const control of await page.locator('.pagination > .page-item > a').all()) {const box=await control.boundingBox();assert(Math.abs(box.y+box.height/2-header.y-header.height/2)<2,'Page controls must be vertically centered');}
   }
+  if(scenario==='books-paged')assert(await page.evaluate(()=>!!(document.querySelector('.pagination').compareDocumentPosition(document.querySelector('.aio-page-header'))&Node.DOCUMENT_POSITION_FOLLOWING)),'Pagination must be rendered before the list so it exists at first paint');
   if(width<768&&scenario==='books-paged') {
    const pagination=await page.locator('.pagination').boundingBox(),tools=await page.locator('.aio-page-tools').boundingBox();
    assert(pagination.y+pagination.height<=tools.y,'Mobile page navigation must have its own row above sorting');
@@ -71,6 +73,12 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
    await jump.locator(':scope > a').click();
   }
   assert.deepEqual(await symbols(),initialSymbols,'Sort symbols must not switch after first paint');
+  if(/books|magic/.test(scenario)) {
+   // Isotope must measure the same grid width the stylesheet laid out, scrollbar gutter included.
+   const row=await page.locator('.discover.load-more .row').boundingBox(),cards=await page.locator('.discover.load-more .book').evaluateAll(nodes=>nodes.slice(0,3).map(node=>{const r=node.getBoundingClientRect();return {x:r.x,right:r.right,width:r.width};}));
+   assert(Math.abs(cards[1].x-cards[0].x-cards[0].width)<1,`${scenario} ${width}: card pitch ${cards[1].x-cards[0].x} must equal card width ${cards[0].width}`);
+   assert(cards[cards.length-1].right<=row.x+row.width+1,`${scenario} ${width}: cards must stay inside the grid row`);
+  }
   for(const [selector,box] of Object.entries(before))if(box)for(const key of ['x','y','width','height'])assert(Math.abs(box[key]-after[selector][key])<2,`${scenario} ${width}: ${selector} ${key} moved from ${box[key]} to ${after[selector][key]}`);
   if(out&&scenario==='publishers')await page.screenshot({path:path.join(out,`first-paint-${width}-after.png`)});
   if(out&&scenario==='books-paged')await page.screenshot({path:path.join(out,`pagination-${width}.png`)});
@@ -85,7 +93,8 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
   const band=await page.locator('.aio-page-header').boundingBox();
   const toolbar=await page.locator('.filterheader').boundingBox();
   assert(Math.abs(band.y+band.height/2-toolbar.y-toolbar.height/2)<2, 'Sorting must be centered in the title band');
-  const content=await page.locator('.aio-main').boundingBox();
+  // Center within the scrollable content box; a classic scrollbar sits outside it.
+  const content=await page.locator('.aio-main').evaluate(el=>{const r=el.getBoundingClientRect();return {x:r.x+el.clientLeft,width:el.clientWidth};});
   assert(Math.abs(toolbar.x+toolbar.width/2-content.x-content.width/2)<2, 'Sorting must be centered in the content area');
  }
  if(out) await page.screenshot({path:path.join(out,`calibre-modern-${width}.png`)});
@@ -138,7 +147,7 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
   await page.goto(`https://calibre.test/library/?scenario=${scenario}`); await page.waitForTimeout(500);
   assert((await page.title()).includes(scenario.startsWith('downloads') ? 'Downloads' : scenario==='authors' ? 'Authors' : scenario==='categories' ? 'Categories' : scenario==='languages' ? 'Languages' : 'Publishers'));
   assert(!(await page.locator('.aio-page-header > h1').isVisible()),'The content band must not repeat the sidebar title');
-  const main=await page.locator('.aio-list-page').boundingBox();
+  const main=await page.locator('.aio-list-page').evaluate(el=>{const r=el.getBoundingClientRect();return {x:r.x+el.clientLeft,y:r.y,width:el.clientWidth,height:r.height};});
   const marker=await page.locator('.aio-list-page').evaluate(el=>{const s=getComputedStyle(el,'::before');return {size:parseFloat(s.fontSize),left:parseFloat(s.left),content:s.content};});
   if(!scenario.startsWith('downloads')) {assert(marker.size<=32, 'List group marker is oversized'); assert(marker.left>=0); assert(!['none','normal','""'].includes(marker.content), 'Keep the native list marker');}
   const band=await page.locator('.aio-page-header').boundingBox();if(width>=768)assert(band.y<100,'Reclaim the old duplicate header strip');

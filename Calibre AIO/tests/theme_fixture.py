@@ -152,7 +152,7 @@ with app.test_request_context("/"):
         title=title,
         page=page,
         bodyClass="",
-        entries=entries if scenario in lists or scenario.startswith("series-grid") else books,
+        entries=entries if scenario in lists or scenario.startswith("series-grid") else books * (6 if scenario == "books-many" else 1),
         charlist=[(c,) for c in sorted({name[0] for name in names})] if not scenario.startswith("series-grid") else [NS(char="S")],
         data=data,
         random=[],
