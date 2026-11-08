@@ -59,6 +59,7 @@ app.jinja_env.globals.update(
         "/library/create-shelf" if endpoint == "shelf.create_shelf" else
         "/library/create-magic-shelf" if endpoint == "web.create_magic_shelf" else
         "/upload" if endpoint == "edit-book.upload" else
+        "/ajax/listbooks" if endpoint == "web.list_books" else
         "/library/aio-theme/" + kw["filename"]
         if endpoint == "aio_theme"
         else (
@@ -173,6 +174,8 @@ with app.test_request_context("/"):
         title, page, template = "Duplicates", "duplicates", "duplicates.html"
     if scenario == "error":
         template = "http_error.html"
+    if scenario == "table":
+        title, page, template = "Books List", "book_table", "book_table.html"
     pagination = NS(page=6, pages=12, has_next=True, has_prev=True,
                     iter_pages=lambda: [1, None, 5, 6, 7, None, 12]) if scenario == "books-paged" else None
     html = render_template(
@@ -199,6 +202,8 @@ with app.test_request_context("/"):
         pagination=pagination,
         searchterm="",
         config=NS(),
+        cc=[],
+        visiblility={},
         error_code=404,
         error_name="Not Found",
         error_stack=[],
