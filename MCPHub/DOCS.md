@@ -482,7 +482,7 @@ not supported through host Docker access in this version.
 The App uses Home Assistant hot backups, so MCPHub and its tunnels keep running while
 a backup is created. The persistent `/data` directory contains the MCPHub configuration
 and generated secrets required to restore the instance. Re-downloadable npm and uv
-package caches below `/data/cache` are excluded from backups.
+package caches below `/data/cache` and `/data/home/.npm` are excluded from backups.
 
 Treat backups as sensitive because they may contain MCP server credentials and tunnel
 configuration.

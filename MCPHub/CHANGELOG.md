@@ -6,6 +6,11 @@
 
 - Updated bundled OpenAI tunnel-client v0.0.19 to v0.0.20.
 
+### Fixed
+
+- Backups no longer include the npm package cache in `/data/home/.npm`, which could add
+  more than 100 MB.
+
 ## v2026.11.07
 
 ### Changed
