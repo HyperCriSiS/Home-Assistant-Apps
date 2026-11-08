@@ -499,6 +499,28 @@ html.aio-modern {
 
 /* book_edit.html places its form with inline styles written for caliBlur
    (40rem left margin, fill-available width); the theme lays the columns out. */
+/* Pages without a band (edit, admin, settings) start below the bar with room. */
+.aio-modern .aio-main:not(:has(> .aio-page-header)) { padding-top: 20px; }
+/* Buttons that lead with a glyph keep a readable gap to their label. */
+.aio-modern .btn > .glyphicon:first-child:not(:only-child) { margin-right: 6px; }
+.aio-modern .editbook-cover-section .cover img { display: block; max-width: 260px; margin: 0 auto; }
+.aio-modern #form-upload-format { margin-top: 12px; }
+/* Books List: the bulk action row is a Bootstrap .row with its -15px gutter. */
+.aio-modern body.book_table .discover > .row.form-group { display: flex !important; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+.aio-modern body.book_table .discover > .row.form-group::before, .aio-modern body.book_table .discover > .row.form-group::after { content: none; }
+/* TinyMCE (description editor) ships only the light oxide skin. */
+.aio-modern .tox-tinymce { border: 1px solid var(--aio-line) !important; border-radius: 5px !important; }
+.aio-modern .tox:not(.tox-tinymce-inline) .tox-editor-header { background: var(--aio-surface) !important; box-shadow: none !important; border-bottom: 1px solid var(--aio-line) !important; }
+.aio-modern .tox .tox-menubar, .aio-modern .tox .tox-toolbar, .aio-modern .tox .tox-toolbar__primary, .aio-modern .tox .tox-toolbar-overlord,
+.aio-modern .tox .tox-statusbar, .aio-modern .tox .tox-edit-area__iframe { background: var(--aio-surface) !important; }
+.aio-modern .tox .tox-statusbar { border-top: 1px solid var(--aio-line) !important; color: var(--aio-muted) !important; }
+.aio-modern .tox .tox-mbtn, .aio-modern .tox .tox-tbtn, .aio-modern .tox .tox-tbtn__select-label, .aio-modern .tox .tox-statusbar a, .aio-modern .tox .tox-statusbar__path-item { color: var(--aio-text) !important; }
+.aio-modern .tox .tox-tbtn svg { fill: var(--aio-text) !important; }
+.aio-modern .tox .tox-tbtn--disabled svg, .aio-modern .tox .tox-tbtn:disabled svg { fill: var(--aio-muted) !important; }
+.aio-modern .tox .tox-mbtn:hover, .aio-modern .tox .tox-mbtn--active, .aio-modern .tox .tox-tbtn:hover, .aio-modern .tox .tox-tbtn--enabled { background: var(--aio-bg) !important; }
+.aio-modern .tox .tox-toolbar__group:not(:last-of-type) { border-right: 1px solid var(--aio-line) !important; }
+.aio-modern .tox .tox-menu, .aio-modern .tox .tox-collection__item { background: var(--aio-surface) !important; color: var(--aio-text) !important; }
+.aio-modern .tox .tox-collection--list .tox-collection__item--active { background: var(--aio-bg) !important; }
 .aio-modern #book_edit_frm > .col-sm-9 {
   width: 75% !important;
   margin: 0 !important;
@@ -632,6 +654,7 @@ html.aio-modern {
 .aio-modern .duplicate-title { font-size: 15px; margin-bottom: 3px; }
 .aio-modern .duplicate-author { font-size: 12px; margin-bottom: 3px; }
 .aio-modern .duplicate-count { font-size: 11px; padding: 2px 6px; background: #3c242b; }
+.aio-modern .no-duplicates { background: var(--aio-surface) !important; border: 1px solid var(--aio-line) !important; border-radius: 6px !important; box-shadow: none !important; }
 .aio-modern .duplicates-container .books-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
 .aio-modern .duplicate-group .book-item { width: 100%; max-width: none; padding: 10px; border-radius: 4px; background: var(--aio-bg); box-shadow: none; }
 .aio-modern .duplicate-group .book-cover { margin: 0 10px 0 0; }
@@ -739,6 +762,7 @@ html.aio-modern {
   .aio-modern .navbar-collapse .aio-nav-section > a.aio-section-create { width: 44px; height: 44px; margin: 0; }
   .aio-modern .row-fluid > .col-sm-2 { display: none; }
   .aio-modern .row-fluid > .col-sm-10.aio-main, .aio-modern .row-fluid > .col-sm-2 + .col-sm-10.aio-main { margin-left: 0; padding: 0 12px 20px; }
+  .aio-modern .aio-main:not(:has(> .aio-page-header)) { padding-top: 16px; }
   .aio-modern .aio-page-header {
     display: block;
     min-height: 0;
@@ -747,7 +771,8 @@ html.aio-modern {
     border-top: 1px solid var(--aio-line);
   }
   .aio-modern .aio-main:has(> .pagination) > .aio-page-header { top: calc(var(--aio-bar) + 44px); }
-  .aio-modern .aio-page-tools { overflow-x: auto; scrollbar-width: thin; width: 100%; }
+  .aio-modern .aio-page-tools { overflow-x: auto; scrollbar-width: none; width: 100%; }
+  .aio-modern .aio-page-tools::-webkit-scrollbar { display: none; }
   .aio-modern .aio-page-tools .filterheader { flex-wrap: nowrap; gap: 0; width: max-content; }
   .aio-modern .aio-page-tools .shelf-actions { width: max-content; gap: 0; }
   .aio-modern .aio-page-tools :is(.aio-sort, .btn) {
@@ -789,7 +814,8 @@ html.aio-modern {
   .aio-modern .aio-main > .pagination:has(.dropdown.open) { overflow: visible; }
   /* bootstrap-table pages become one swipeable line under the table. */
   .aio-modern .fixed-table-pagination > .pagination, .aio-modern .fixed-table-pagination > .pagination-detail { float: none; width: 100%; }
-  .aio-modern .fixed-table-pagination > .pagination { overflow-x: auto; scrollbar-width: thin; }
+  .aio-modern .fixed-table-pagination > .pagination { overflow-x: auto; scrollbar-width: none; }
+  .aio-modern .fixed-table-pagination > .pagination::-webkit-scrollbar { display: none; }
   .aio-modern .fixed-table-pagination > .pagination > ul.pagination { display: flex; flex-wrap: nowrap; width: max-content; }
   .aio-modern .aio-main .book { width: 33.3333%; padding: 0 5px; }
   .aio-modern .aio-main > .discover > h2 { margin: 8px 5px 6px; }
