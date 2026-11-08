@@ -4,6 +4,16 @@
   // CWA lays book grids out with Isotope, whose 0.4 s slide also runs on every
   // relayout after a viewport change. Read at instantiation by main.js on ready.
   if (window.Isotope) window.Isotope.defaults.transitionDuration = 0;
+  // TinyMCE renders its editable area in an iframe with the light oxide skin.
+  if (window.tinymce) {
+    const darken = editor => {
+      const style = () => editor.dom.addStyle('body{background:#0f1217;color:#e6e9ef;font:14px/1.5 "Segoe UI",system-ui,sans-serif;margin:8px}a{color:#d4a85a}');
+      if (editor.initialized) style(); else editor.on('init', style);
+    };
+    tinymce.on('AddEditor', event => darken(event.editor));
+    tinymce.get().forEach(darken);
+  }
+
   const svg = paths => {
     const node = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     for (const [key, value] of Object.entries({width:'16', height:'16', viewBox:'0 0 24 24', fill:'none',
