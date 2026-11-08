@@ -1,3 +1,7 @@
+# 1.2.15
+
+- Update CWA to v4.0.8 and Shelfmark to v1.6.1.
+
 # 1.2.14
 
 - Lay book and series grids out without the Isotope slide animation, so relayouts after a viewport change no longer glide into place.
