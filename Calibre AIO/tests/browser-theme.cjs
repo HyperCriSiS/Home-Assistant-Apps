@@ -21,13 +21,12 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
   if(u.pathname==='/shell')return route.fulfill({contentType:'text/html; charset=utf-8',body:'<!doctype html><title>AIO fixture</title><body style="margin:0"><iframe title="Library" style="width:100vw;height:100vh;border:0" src="/library/?scenario=authors"></iframe></body>'});
   if(u.pathname==='/upload'){uploads.push(route.request().postDataBuffer().toString());return route.fulfill({contentType:'application/json',body:JSON.stringify({location:'/library/?uploaded=1'})});}
   if(u.pathname.startsWith('/static/')){if(u.pathname.endsWith('/filter_grid.js')&&themeGate)await themeGate;const p=path.join(src,decodeURIComponent(u.pathname.slice(8)));if(fs.existsSync(p))return route.fulfill({path:p});return route.fulfill({status:404,body:''});}
-  if(u.pathname==='/library/aio-theme/filter_grid.js'){if(themeGate)await themeGate;return route.fulfill({contentType:'text/javascript',body:fs.readFileSync(path.join(src,'js/filter_grid.js'),'utf8').replace('selectedLayoutMode = "fitRowsCentered";','selectedLayoutMode = "fitRows";')});}
   if(u.pathname.startsWith('/library/aio-theme/')){if(path.basename(u.pathname)==='modern.js'&&themeGate)await themeGate;return route.fulfill({path:path.join(root,'rootfs/opt/ha-cwa/theme',path.basename(u.pathname))});}
   if(u.pathname.startsWith('/cover/')){const i=Number(u.pathname.split('/').pop()); const colors=['#526d67','#4d6176','#a27a50','#5b4b66','#727b62','#435665'];return route.fulfill({contentType:'image/svg+xml',body:`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300"><rect width="200" height="300" fill="${colors[i%6]}"/><rect x="12" y="12" width="176" height="276" fill="none" stroke="#ffffff55"/><path d="M12 210 Q100 80 188 210" fill="none" stroke="#ffffff33" stroke-width="30"/><text x="100" y="72" text-anchor="middle" font-family="serif" font-size="20" fill="#fff">LESEN</text><text x="100" y="125" text-anchor="middle" font-family="serif" font-size="30" fill="#fff">${String(i).padStart(2,'0')}</text></svg>`});}
   if(u.pathname==='/library/'||u.pathname==='/library') {const body=execFileSync(process.env.PYTHON || 'python3',['-X','utf8',path.join(__dirname,'theme_fixture.py'),u.searchParams.get('sort_param')||'abc',u.searchParams.get('scenario')||'books'],{encoding:'utf8'});return route.fulfill({contentType:'text/html; charset=utf-8',headers:{'Referrer-Policy':'no-referrer'},body});}
   return route.fulfill({contentType:'application/json',body:'{}'});
  });
- for(const scenario of ['authors','publishers','books','books-paged','books-many','magic','series-grid','series-grid-many','duplicates']) {
+ for(const scenario of ['authors','publishers','books','books-paged','books-many','magic','series-grid','series-grid-many','duplicates','no-sidebar']) {
   let release;themeGate=new Promise(resolve=>{release=resolve;});
   await page.goto(`https://calibre.test/library/?scenario=${scenario}`,{waitUntil:'commit'});
   await page.locator('.aio-page-header').waitFor({state:'visible'});
@@ -63,16 +62,31 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
    const pagination=await page.locator('.pagination').boundingBox(),tools=await page.locator('.aio-page-tools').boundingBox();
    assert(pagination.y+pagination.height<=tools.y,'Mobile page navigation must have its own row above sorting');
    for(const control of await page.locator('.pagination > .page-item > a').all()) {const box=await control.boundingBox();assert(box.y>=pagination.y&&box.y+box.height<=pagination.y+pagination.height,'Mobile pagination controls must fit their row');}
-   await page.locator('.aio-main').evaluate(el=>el.scrollTop=100);
+   await page.evaluate(()=>window.scrollTo(0,100));
    const scrolledTools=await page.locator('.aio-page-tools').boundingBox();
    assert(scrolledTools.y>=pagination.y+pagination.height,'Mobile sorting must stay below pagination while scrolling');
-   await page.locator('.aio-main').evaluate(el=>el.scrollTop=0);
+   await page.evaluate(()=>window.scrollTo(0,0));
    const jump=page.locator('.pagination .page-jump').first();await jump.locator(':scope > a').click();
    const menu=jump.locator('.page-jump-menu');assert(await menu.isVisible());
    assert(await menu.locator('a').first().evaluate(el=>{const r=el.getBoundingClientRect();return !!document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.closest('.page-jump-menu');}),'Mobile page-jump menu must not be clipped');
    await jump.locator(':scope > a').click();
   }
   assert.deepEqual(await symbols(),initialSymbols,'Sort symbols must not switch after first paint');
+  assert.equal(await page.locator('link[href*="caliBlur"]').count(),0,'caliBlur must not load');
+  if(scenario==='no-sidebar') {
+   // Pages without the sidebar (login, errors) keep the content at the left edge and the title in the bar.
+   assert.equal(await page.locator('.row-fluid > .col-sm-2').count(),0);
+   const main=await page.locator('.aio-main').boundingBox(),brand=await page.locator('.navbar-brand').boundingBox();
+   assert(main.x<1,`Content must start at the edge without a sidebar: ${main.x}`);
+   assert(brand.y+brand.height<=(width>=768?60:48)+1,'Brand stays inside the bar without a sidebar');
+  }
+  assert(!(await page.evaluate(()=>document.body.classList.contains('blur'))),'Standalone theme must not run in blur mode');
+  if(scenario==='books-many'&&width>=768) {
+   await page.evaluate(()=>window.scrollTo(0,300));
+   assert(await page.evaluate(()=>window.scrollY>200),'The viewport must be the scroll container');
+   const stuck=await page.locator('.aio-page-header').boundingBox();assert(Math.abs(stuck.y-60)<1,'Band must stick under the navbar: '+stuck.y);
+   await page.evaluate(()=>window.scrollTo(0,0));
+  }
   if(/books|magic/.test(scenario)) {
    // Isotope must measure the same grid width the stylesheet laid out, scrollbar gutter included.
    const row=await page.locator('.discover.load-more .row').boundingBox(),cards=await page.locator('.discover.load-more .book').evaluateAll(nodes=>nodes.slice(0,3).map(node=>{const r=node.getBoundingClientRect();return {x:r.x,right:r.right,width:r.width};}));
@@ -88,6 +102,9 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
  assert(await page.locator('.discover.load-more .book').count()>0);
  const card=await page.locator('.discover.load-more .book').first().boundingBox();
  assert(card.width>=90 && card.width<180, 'Book cards must retain their compact, readable width');
+ assert.equal(await page.locator('.book a[data-toggle="modal"]').count(),0,'Covers open the book page, not the detail modal');
+ await page.locator('.discover.load-more .book .cover a').first().click();await page.waitForURL(/book_id=/);
+ await page.goto('https://calibre.test/library/');await page.waitForTimeout(1400);
  if(width>=768){
   assert(!(await page.locator('.aio-page-header > h2').isVisible()),'Desktop must not repeat the page title in the content band');
   const band=await page.locator('.aio-page-header').boundingBox();
@@ -105,7 +122,8 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
  await page.locator('#auth_az').focus();assert.equal(await page.locator('#auth_az').getAttribute('data-sort-kind'),'author');
  assert.deepEqual(errors,[]);
  for(const button of await page.locator('.aio-sort').all()) { const box=await button.boundingBox(); if(width>=768)assert(box.x>=0 && box.x+box.width<=width, 'Sort control is clipped'); assert(box.height>=32); assert(await button.getAttribute('aria-label')); }
- if(width<768){await page.locator('.navbar-toggle').click(); await page.waitForTimeout(400); assert(await page.locator('#nav_author').isVisible());}
+ if(width<768){await page.locator('.navbar-toggle').click(); await page.waitForTimeout(400); assert(await page.locator('#nav_author').isVisible());
+  assert(await page.evaluate(()=>document.querySelector('.navbar-collapse').contains(document.querySelector('#scnd-nav'))&&!document.querySelector('.col-sm-2').offsetParent),'Drawer must hold the browse navigation while the sidebar is hidden');}
  assert.equal(await page.locator('#nav_createshelf,#nav_createmagicshelf').count(),0);
  assert.equal(await page.locator('#scnd-nav .aio-section-create').count(),2);
  assert(!(await page.locator('#scnd-nav').innerText()).includes('✨'),'Magic Shelves uses only the separate plus action');
@@ -148,8 +166,6 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
   assert((await page.title()).includes(scenario.startsWith('downloads') ? 'Downloads' : scenario==='authors' ? 'Authors' : scenario==='categories' ? 'Categories' : scenario==='languages' ? 'Languages' : 'Publishers'));
   assert(!(await page.locator('.aio-page-header > h1').isVisible()),'The content band must not repeat the sidebar title');
   const main=await page.locator('.aio-list-page').evaluate(el=>{const r=el.getBoundingClientRect();return {x:r.x+el.clientLeft,y:r.y,width:el.clientWidth,height:r.height};});
-  const marker=await page.locator('.aio-list-page').evaluate(el=>{const s=getComputedStyle(el,'::before');return {size:parseFloat(s.fontSize),left:parseFloat(s.left),content:s.content};});
-  if(!scenario.startsWith('downloads')) {assert(marker.size<=32, 'List group marker is oversized'); assert(marker.left>=0); assert(!['none','normal','""'].includes(marker.content), 'Keep the native list marker');}
   const band=await page.locator('.aio-page-header').boundingBox();if(width>=768)assert(band.y<100,'Reclaim the old duplicate header strip');
   if(width>=768) {const box=await page.locator('.filterheader').boundingBox();assert(Math.abs(box.x+box.width/2-main.x-main.width/2)<2);assert(Math.abs(box.y+box.height/2-band.y-band.height/2)<2);}
   if(scenario==='authors') {
@@ -172,8 +188,6 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
    if(scenario==='authors') {const before=await page.locator('#list_0').innerText();await page.locator('#sort_name').click();assert.notEqual(await page.locator('#list_0').innerText(),before);}
   }
   for(const control of await page.locator('.filterheader .btn').all()) {const box=await control.boundingBox();if(width>=768)assert(box.x>=0 && box.x+box.width<=width,'List filter clipped');assert(box.height>=32);}
-  // Native caliBlur animates reinserted list columns after sorting/filtering.
-  await page.waitForFunction(()=>[...document.querySelectorAll('.list-container .row > div')].every(el=>Number(getComputedStyle(el).opacity)>=0.99));
   if(out) await page.screenshot({path:path.join(out,`calibre-${scenario}-${width}.png`)});
  }
  for(const scenario of ['series','series-grid','duplicates','magic']) {
@@ -203,8 +217,8 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
  await page.goto('https://calibre.test/library/?scenario=authors');
  await page.evaluate(()=>location.assign('/library/?scenario=publishers'));await page.waitForURL(/scenario=publishers/);
  await page.evaluate(()=>location.assign('/library/?scenario=categories'));await page.waitForURL(/scenario=categories/);
- if(width>=768)await page.locator('.plexBack a').click();else await page.locator('.plexBack a').evaluate(el=>el.click());await page.waitForURL(/scenario=publishers/);
- if(width>=768)await page.locator('.plexBack a').click();else await page.locator('.plexBack a').evaluate(el=>el.click());await page.waitForURL(/scenario=authors/);
+ if(width>=768)await page.locator('.aio-back').click();else await page.locator('.aio-back').evaluate(el=>el.click());await page.waitForURL(/scenario=publishers/);
+ if(width>=768)await page.locator('.aio-back').click();else await page.locator('.aio-back').evaluate(el=>el.click());await page.waitForURL(/scenario=authors/);
  if(width<768){await page.locator('.navbar-toggle').click();await page.waitForFunction(()=>document.querySelector('.navbar-collapse').classList.contains('in'));}
  const section=page.locator('#scnd-nav .aio-nav-section button').first();await section.click();assert.equal(await section.getAttribute('aria-expanded'),'false');assert(!(await page.locator('#nav_author').isVisible()));
  await section.click();assert.equal(await section.getAttribute('aria-expanded'),'true');assert(await page.locator('#nav_author').isVisible());
@@ -215,6 +229,8 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
  if(out)await page.screenshot({path:path.join(out,`nav-open-${width}.png`)});
  if(width<768){await page.locator('.navbar-toggle').click();await page.waitForFunction(()=>!document.querySelector('.navbar-collapse').classList.contains('in'));}
  await page.locator('.aio-upload-menu summary').click();assert(await page.locator('.aio-folder-trigger').isVisible());
+ assert.deepEqual(await page.locator('.aio-upload-menu').evaluate(el=>[el.querySelector('summary'),...el.querySelectorAll('.aio-upload-options *')].flatMap(node=>['::before','::after'].map(pseudo=>getComputedStyle(node,pseudo).content)).filter(content=>!['none','normal'].includes(content))),[],'Upload menu must not show stray glyphs');
+ assert.deepEqual((await page.locator('.aio-upload-options').innerText()).split('\n').map(line=>line.trim()).filter(Boolean),['Upload','Ordner hinzufügen …'],'Upload menu shows exactly its two actions');
  const folder=fs.mkdtempSync(path.join(require('os').tmpdir(),'cwa-folder-'));
  try {
   fs.mkdirSync(path.join(folder,'nested'));fs.writeFileSync(path.join(folder,'one.epub'),'fixture epub');fs.writeFileSync(path.join(folder,'nested','two.pdf'),'fixture pdf');fs.writeFileSync(path.join(folder,'nested','ignore.jpg'),'not a book');
@@ -231,13 +247,13 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
  await page.evaluate(()=>sessionStorage.clear());
  await page.goto('https://calibre.test/shell');
  const frame=await (await page.$('iframe')).contentFrame();await frame.waitForSelector('.aio-page-header');
- assert.equal(await frame.locator('.plexBack a').getAttribute('aria-disabled'),'true');
+ assert.equal(await frame.locator('.aio-back').getAttribute('aria-disabled'),'true');
  await frame.evaluate(()=>location.assign('/library/?scenario=publishers'));await frame.waitForURL(/scenario=publishers/);
  await frame.evaluate(()=>location.assign('/library/?scenario=categories'));await frame.waitForURL(/scenario=categories/);
  assert.equal(await frame.evaluate(()=>document.referrer),'','Back must work with the referrer suppressed');
  await Promise.all([frame.waitForNavigation({waitUntil:'load'}),frame.evaluate(()=>location.reload())]);
- await frame.locator('.plexBack a').evaluate(el=>el.click());await frame.waitForURL(/scenario=publishers/);
- await frame.locator('.plexBack a').evaluate(el=>el.click());await frame.waitForURL(/scenario=authors/);
+ await frame.locator('.aio-back').evaluate(el=>el.click());await frame.waitForURL(/scenario=publishers/);
+ await frame.locator('.aio-back').evaluate(el=>el.click());await frame.waitForURL(/scenario=authors/);
  assert.equal(page.url(),'https://calibre.test/shell');
  assert.deepEqual(errors,[]);
  await context.close();
@@ -246,7 +262,7 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
 const initial=await browser.newContext({javaScriptEnabled:false});const first=await initial.newPage();
 const fixture=execFileSync(process.env.PYTHON||'python3',['-X','utf8',path.join(__dirname,'theme_fixture.py'),'abc','authors'],{encoding:'utf8'});
 await first.route('https://calibre.test/**',route=>{const u=new URL(route.request().url());if(u.pathname.startsWith('/library/aio-theme/'))return route.fulfill({path:path.join(root,'rootfs/opt/ha-cwa/theme',path.basename(u.pathname))});if(u.pathname.startsWith('/static/')){const p=path.join(src,decodeURIComponent(u.pathname.slice(8)));if(fs.existsSync(p))return route.fulfill({path:p});}return route.fulfill({contentType:'text/html; charset=utf-8',body:fixture});});
-await first.goto('https://calibre.test/library/');assert.equal(await first.locator('.aio-list-page').count(),1);assert(await first.locator('.aio-list-page').evaluate(el=>parseFloat(getComputedStyle(el,'::before').fontSize)<=32));
+await first.goto('https://calibre.test/library/');assert.equal(await first.locator('.aio-list-page').count(),1);assert.equal(await first.locator('link[href*="caliBlur"]').count(),0);
 await first.evaluate(()=>document.querySelectorAll('style,link[rel="stylesheet"]').forEach(node=>node.remove()));
 for(const icon of await first.locator('.aio-search-icon, #query_submit svg').all()) {const box=await icon.boundingBox();assert(box.width===16&&box.height===16,'Search symbols must stay small without theme CSS or JavaScript');}
 await initial.close();

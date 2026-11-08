@@ -36,6 +36,15 @@ class User:
 
 
 user = User()
+
+
+class Visitor(User):
+    is_authenticated = False
+    is_anonymous = True
+    name = "Gast"
+
+
+visitor = Visitor()
 for p in (source / "cps/templates").glob("*.html"):
     for f in re.findall(r"\|\s*(\w+)", p.read_text(encoding="utf-8")):
         if f not in app.jinja_env.filters:
@@ -147,7 +156,7 @@ with app.test_request_context("/"):
                     iter_pages=lambda: [1, None, 5, 6, 7, None, 12]) if scenario == "books-paged" else None
     html = render_template(
         template,
-        current_user=user,
+        current_user=visitor if scenario == "no-sidebar" else user,
         instance="Calibre-Web",
         title=title,
         page=page,
@@ -162,7 +171,7 @@ with app.test_request_context("/"):
         duplicate_index_needs_full_scan=False,
         shelf=NS(user_id=1),
         id=0,
-        simple=True,
+        simple=False,
         sidebar=sidebar,
         cwa_settings={},
         magic_shelf_routes=NS(render=True, create=True),
