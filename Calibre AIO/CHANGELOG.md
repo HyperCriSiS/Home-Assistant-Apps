@@ -1,3 +1,7 @@
+# 1.2.27
+
+- Sort controls: every pair reads ascending, then descending; the date pairs no longer start with newest first.
+
 # 1.2.26
 
 - Pages without a band (edit book, admin, settings) keep an empty strip of the band height with its divider, so content no longer jumps up when switching from a page with a band.
