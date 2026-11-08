@@ -21,7 +21,7 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
   if(u.pathname==='/shell')return route.fulfill({contentType:'text/html; charset=utf-8',body:'<!doctype html><title>AIO fixture</title><body style="margin:0"><iframe title="Library" style="width:100vw;height:100vh;border:0" src="/library/?scenario=authors"></iframe></body>'});
   if(u.pathname==='/ajax/listbooks'){const rows=Array.from({length:10},(_,i)=>({id:i+1,title:`Buch ${i+1}`,sort:`Buch ${i+1}`,authors:'Mara Winter',author_sort:'Winter, Mara',tags:'',series:'',series_index:'',languages:'Deutsch',publishers:'',pubdate:'',comments:'',read_status:false,is_archived:false}));return route.fulfill({contentType:'application/json',body:JSON.stringify({total:115,rows})});}
   if(u.pathname==='/upload'){uploads.push(route.request().postDataBuffer().toString());return route.fulfill({contentType:'application/json',body:JSON.stringify({location:'/library/?uploaded=1'})});}
-  if(u.pathname.startsWith('/static/')){if(u.pathname.endsWith('/filter_grid.js')&&themeGate)await themeGate;const p=path.join(src,decodeURIComponent(u.pathname.slice(8)));if(fs.existsSync(p))return route.fulfill({path:p});return route.fulfill({status:404,body:''});}
+  if(u.pathname.startsWith('/static/')){if((u.pathname.endsWith('/filter_grid.js')||u.pathname.endsWith('/golden-times.js'))&&themeGate)await themeGate;const p=path.join(src,decodeURIComponent(u.pathname.slice(8)));if(fs.existsSync(p))return route.fulfill({path:p});return route.fulfill({status:404,body:''});}
   if(u.pathname.startsWith('/library/aio-theme/')){if(path.basename(u.pathname)==='modern.js'&&themeGate)await themeGate;return route.fulfill({path:path.join(root,'rootfs/opt/ha-cwa/theme',path.basename(u.pathname))});}
   if(u.pathname.startsWith('/cover/')){const i=Number(u.pathname.split('/').pop()); const colors=['#526d67','#4d6176','#a27a50','#5b4b66','#727b62','#435665'];return route.fulfill({contentType:'image/svg+xml',body:`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300"><rect width="200" height="300" fill="${colors[i%6]}"/><rect x="12" y="12" width="176" height="276" fill="none" stroke="#ffffff55"/><path d="M12 210 Q100 80 188 210" fill="none" stroke="#ffffff33" stroke-width="30"/><text x="100" y="72" text-anchor="middle" font-family="serif" font-size="20" fill="#fff">LESEN</text><text x="100" y="125" text-anchor="middle" font-family="serif" font-size="30" fill="#fff">${String(i).padStart(2,'0')}</text></svg>`});}
   if(u.pathname==='/library/'||u.pathname==='/library') {const body=execFileSync(process.env.PYTHON || 'python3',['-X','utf8',path.join(__dirname,'theme_fixture.py'),u.searchParams.get('sort_param')||'abc',u.searchParams.get('scenario')||'books'],{encoding:'utf8'});return route.fulfill({contentType:'text/html; charset=utf-8',headers:{'Referrer-Policy':'no-referrer'},body});}
@@ -268,7 +268,7 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
  if(width<768){await page.locator('.navbar-toggle').click();await page.waitForFunction(()=>!document.querySelector('.navbar-collapse').classList.contains('in'));}
  await page.locator('.aio-upload-menu summary').click();assert(await page.locator('.aio-folder-trigger').isVisible());
  assert.deepEqual(await page.locator('.aio-upload-menu').evaluate(el=>[el.querySelector('summary'),...el.querySelectorAll('.aio-upload-options *')].flatMap(node=>['::before','::after'].map(pseudo=>getComputedStyle(node,pseudo).content)).filter(content=>!['none','normal'].includes(content))),[],'Upload menu must not show stray glyphs');
- assert.deepEqual((await page.locator('.aio-upload-options').innerText()).split('\n').map(line=>line.trim()).filter(Boolean),['Upload','Ordner hinzufügen …'],'Upload menu shows exactly its two actions');
+ assert.deepEqual((await page.locator('.aio-upload-options').innerText()).split('\n').map(line=>line.trim()).filter(Boolean),['Upload',process.env.AIO_THEME_UPSTREAM?'Add folder …':'Ordner hinzufügen …'],'Upload menu shows exactly its two actions');
  const folder=fs.mkdtempSync(path.join(require('os').tmpdir(),'cwa-folder-'));
  try {
   fs.mkdirSync(path.join(folder,'nested'));fs.writeFileSync(path.join(folder,'one.epub'),'fixture epub');fs.writeFileSync(path.join(folder,'nested','two.pdf'),'fixture pdf');fs.writeFileSync(path.join(folder,'nested','ignore.jpg'),'not a book');
@@ -295,7 +295,7 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
  assert.equal(page.url(),'https://calibre.test/shell');
  // The standalone error page bypasses layout.html and still gets the dark look.
  await page.goto('https://calibre.test/library/?scenario=error');
- assert.equal(await page.locator('link[href*="modern.css"]').count(),1);assert.equal(await page.locator('link[href*="caliBlur"]').count(),0);
+ assert.equal(await page.locator('link[href*="modern.css"],link[href*="golden-times.css"]').count(),1);assert.equal(await page.locator('link[href*="caliBlur"]').count(),0);
  assert.equal(await page.evaluate(()=>getComputedStyle(document.body).backgroundColor),'rgb(15, 18, 23)','Error page must use the theme background');
  assert.equal(await page.evaluate(()=>parseFloat(getComputedStyle(document.body).paddingTop)),0,'Error page has no navbar to make room for');
  assert.deepEqual(errors,[]);
