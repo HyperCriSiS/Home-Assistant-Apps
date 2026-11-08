@@ -1,3 +1,7 @@
+# 1.2.24
+
+- Edit book: the metadata form sits beside the cover again instead of hanging below it at the right; on phones it takes the full width.
+
 # 1.2.23
 
 - Books List: the table pagination keeps its pages in one line; the band pagination layout no longer leaks into bootstrap-table.
