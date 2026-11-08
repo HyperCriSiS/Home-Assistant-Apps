@@ -92,7 +92,7 @@ RUN for service in cwa-init cwa-auto-library cwa-auto-zipper cwa-checksum-backfi
     done
 
 
-FROM ghcr.io/astral-sh/uv:0.12.19@sha256:04d046b13e60d6bcec73cbc5e1cad25d680dea90c8573340950a0ac2d1aef424 AS uv
+FROM ghcr.io/astral-sh/uv:0.13.6@sha256:af22a52f5eafef3d78e551599d405c02df61919d18028f0cea8eda93bc9986d0 AS uv
 
 FROM build AS shelfmark-build
 ARG SHELFMARK_REF
@@ -167,8 +167,8 @@ RUN apt-get update \
 # Chromium for Shelfmark's internal Cloudflare bypass. Keep this pin equal to
 # CHROMIUM_VERSION/CHROMIUM_SNAPSHOT in the pinned Shelfmark Dockerfile: Debian
 # builds can break the DevTools port its driver needs.
-ARG CHROMIUM_VERSION=155.0.8059.79-1~deb13u1
-ARG CHROMIUM_SNAPSHOT=20261016T000000Z
+ARG CHROMIUM_VERSION=156.0.8078.73-1~deb13u1
+ARG CHROMIUM_SNAPSHOT=20261029T020000Z
 RUN echo "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian-security/${CHROMIUM_SNAPSHOT}/ trixie-security main" \
         > /etc/apt/sources.list.d/chromium-pin-snapshot.list \
     && apt-get update -o Acquire::Retries=5 \
