@@ -1,3 +1,4 @@
+from functools import wraps
 from pathlib import Path
 import sys
 from types import SimpleNamespace
@@ -15,7 +16,7 @@ class SocketIdentityTest(unittest.TestCase):
         self.handlers = {}
         self.seen = []
 
-        def authenticate():
+        def proxy_auth_middleware():
             if not request.headers.get('X-AIO-User'):
                 return 'denied', 401
             session['user_id'] = request.headers['X-AIO-User']
@@ -24,10 +25,20 @@ class SocketIdentityTest(unittest.TestCase):
         def observe():
             self.seen.append((session['user_id'], session['is_admin']))
 
+        def registered(handler):
+            # Flask-SocketIO stores a wrapper that keeps the handler in __wrapped__.
+            @wraps(handler)
+            def _handler(sid, *args):
+                raise AssertionError('server-level wrapper must not be called')
+            return _handler
+
         install_socket_auth(SimpleNamespace(
-            socketio=SimpleNamespace(on_event=self.handlers.__setitem__),
-            proxy_auth_middleware=authenticate, handle_connect=observe,
-            handle_status_request=observe))
+            app=SimpleNamespace(before_request_funcs={None: [proxy_auth_middleware]}),
+            socketio=SimpleNamespace(
+                on_event=self.handlers.__setitem__,
+                server=SimpleNamespace(handlers={'/': {
+                    'connect': registered(observe),
+                    'request_status': registered(observe)}}))))
 
     def test_old_admin_session_is_replaced_before_each_status_handler(self):
         for event in ('connect', 'request_status'):
