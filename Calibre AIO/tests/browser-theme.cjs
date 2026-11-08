@@ -19,6 +19,7 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
  await page.route('https://calibre.test/**',async route=>{
   const u=new URL(route.request().url());
   if(u.pathname==='/shell')return route.fulfill({contentType:'text/html; charset=utf-8',body:'<!doctype html><title>AIO fixture</title><body style="margin:0"><iframe title="Library" style="width:100vw;height:100vh;border:0" src="/library/?scenario=authors"></iframe></body>'});
+  if(u.pathname==='/ajax/listbooks'){const rows=Array.from({length:10},(_,i)=>({id:i+1,title:`Buch ${i+1}`,sort:`Buch ${i+1}`,authors:'Mara Winter',author_sort:'Winter, Mara',tags:'',series:'',series_index:'',languages:'Deutsch',publishers:'',pubdate:'',comments:'',read_status:false,is_archived:false}));return route.fulfill({contentType:'application/json',body:JSON.stringify({total:115,rows})});}
   if(u.pathname==='/upload'){uploads.push(route.request().postDataBuffer().toString());return route.fulfill({contentType:'application/json',body:JSON.stringify({location:'/library/?uploaded=1'})});}
   if(u.pathname.startsWith('/static/')){if(u.pathname.endsWith('/filter_grid.js')&&themeGate)await themeGate;const p=path.join(src,decodeURIComponent(u.pathname.slice(8)));if(fs.existsSync(p))return route.fulfill({path:p});return route.fulfill({status:404,body:''});}
   if(u.pathname.startsWith('/library/aio-theme/')){if(path.basename(u.pathname)==='modern.js'&&themeGate)await themeGate;return route.fulfill({path:path.join(root,'rootfs/opt/ha-cwa/theme',path.basename(u.pathname))});}
@@ -218,8 +219,17 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
   for(const control of await page.locator('.filterheader .btn').all()) {const box=await control.boundingBox();if(width>=768)assert(box.x>=0 && box.x+box.width<=width,'List filter clipped');assert(box.height>=32);}
   if(out) await page.screenshot({path:path.join(out,`calibre-${scenario}-${width}.png`)});
  }
- for(const scenario of ['series','series-grid','duplicates','magic']) {
+ for(const scenario of ['series','series-grid','duplicates','magic','table']) {
   await page.goto(`https://calibre.test/library/?scenario=${scenario}`);await page.waitForTimeout(800);
+  if(scenario==='table') {
+   // bootstrap-table paginates with the same class as the band; its items stay in one line.
+   const items=page.locator('.fixed-table-pagination ul.pagination > li');await items.first().waitFor();
+   const boxes=await items.evaluateAll(els=>els.map(el=>{const r=el.getBoundingClientRect();return [Math.round(r.y),r.x];}));
+   assert(boxes.length>=5,'Table pagination renders its pages');
+   assert.equal(new Set(boxes.map(([y])=>y)).size,1,`Table pagination items sit in one row: ${JSON.stringify(boxes)}`);
+   for(let i=1;i<boxes.length;i++)assert(boxes[i][1]>boxes[i-1][1],'Table pagination items run left to right');
+   assert.equal(await page.locator('.fixed-table-pagination .pagination-detail').count(),1);
+  }
   assert.equal(await page.locator('.aio-page-header').count(),1);
   if(scenario==='series-grid') {
    const cards=page.locator('#list .book');assert.equal(await cards.count(),6);const row=await cards.all();const positions=await Promise.all(row.slice(0,3).map(el=>el.boundingBox()));assert(positions.every(b=>Math.abs(b.y-positions[0].y)<2),'Series cards must fill the first row: '+JSON.stringify(await cards.evaluateAll(els=>els.map(el=>({box:el.getBoundingClientRect().toJSON(),style:el.getAttribute('style'),position:getComputedStyle(el).position,transform:getComputedStyle(el).transform,width:getComputedStyle(el).width,margin:getComputedStyle(el).margin})))));
