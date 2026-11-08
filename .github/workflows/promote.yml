@@ -76,7 +76,30 @@ jobs:
             --title "release(calibre): validated development candidate" \
             --body-file /tmp/calibre-release.md
 
+  # main advertises the prebuilt tags, so both are published from the exact
+  # candidate before a release pull request exists; an existing identical tag
+  # is verified instead of replaced.
+  trilium-images:
+    if: >-
+      ${{
+        (
+          github.event_name == 'workflow_dispatch' &&
+          (inputs.app == 'trilium' || inputs.app == 'both')
+        ) ||
+        (
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.head_branch == 'dev-trilium'
+        )
+      }}
+    uses: ./.github/workflows/publish-trilium-images.yml
+    with:
+      source_ref: dev-trilium
+    permissions:
+      contents: read
+      packages: write
+
   promote-trilium:
+    needs: trilium-images
     name: Maintain Trilium release pull request
     if: >-
       ${{

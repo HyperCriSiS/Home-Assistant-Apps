@@ -5,6 +5,8 @@ name: Auto-promote Trilium updates
 # Trilium version bumps that passed every gate in
 # .github/scripts/auto_promote_trilium.py, 36 hours after the newest one
 # reached dev-trilium. Everything else stays manual.
+# main installs prebuilt images, so both release tags are built, tested and
+# published from the gated commit before the merge; a missing tag stops it.
 # Pause at any time: set the repository variable TRILIUM_AUTO_PROMOTE=false
 # or label the Trilium release pull request "hold".
 
@@ -17,6 +19,7 @@ permissions:
   actions: write
   contents: write
   issues: write
+  packages: write
   pull-requests: write
 
 concurrency:
@@ -24,13 +27,18 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  promote:
-    name: Gate and merge bot-only Trilium release
+  gate:
+    name: Gate bot-only Trilium release
     if: vars.TRILIUM_AUTO_PROMOTE == 'true' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
-    timeout-minutes: 100
+    timeout-minutes: 20
     env:
       GH_TOKEN: ${{ secrets.AUTOMATION_TOKEN || github.token }}
+    outputs:
+      action: ${{ steps.gate.outputs.action }}
+      main_sha: ${{ steps.gate.outputs.main_sha }}
+      dev_sha: ${{ steps.gate.outputs.dev_sha }}
+      upstream: ${{ steps.gate.outputs.upstream }}
 
     steps:
       - name: Check out trusted gates from main
@@ -53,13 +61,56 @@ jobs:
         if: steps.gate.outputs.action == 'validate'
         run: gh workflow run validate.yml --repo "$GITHUB_REPOSITORY" --ref dev-trilium
 
+  images:
+    name: Publish tested release images from dev-trilium
+    needs: gate
+    if: needs.gate.outputs.action == 'promote'
+    uses: ./.github/workflows/publish-trilium-images.yml
+    with:
+      source_ref: dev-trilium
+    permissions:
+      contents: read
+      packages: write
+
+  promote:
+    name: Merge the exact gated Trilium commit
+    needs: [gate, images]
+    if: needs.gate.outputs.action == 'promote'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    env:
+      GH_TOKEN: ${{ secrets.AUTOMATION_TOKEN || github.token }}
+
+    steps:
+      - name: Check out trusted gates from main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      # The Supervisor pulls these tags anonymously as soon as main changes.
+      - name: Require both published install images for the gated version
+        env:
+          DEV_SHA: ${{ needs.gate.outputs.dev_sha }}
+        run: |
+          set -euo pipefail
+          version="$(gh api "repos/${GITHUB_REPOSITORY}/contents/TriliumNext%20Notes/config.yaml?ref=${DEV_SHA}" \
+            --jq '.content' | base64 -d | sed -n 's/^version: *"\{0,1\}\([^"]*\)"\{0,1\}$/\1/p')"
+          [[ -n "$version" ]] || { echo 'Could not read the Trilium App version' >&2; exit 1; }
+          public_config="$(mktemp -d)"
+          for arch in amd64 aarch64; do
+            image="ghcr.io/hypercrisis/${arch}-trilium:${version}"
+            DOCKER_CONFIG="$public_config" docker manifest inspect "$image" >/dev/null \
+              || { echo "Install image is not public: ${image}" >&2; exit 1; }
+          done
+
       - name: Re-check and merge the exact validated commit
         id: merge
-        if: steps.gate.outputs.action == 'promote'
         env:
-          MAIN_SHA: ${{ steps.gate.outputs.main_sha }}
-          DEV_SHA: ${{ steps.gate.outputs.dev_sha }}
-          UPSTREAM: ${{ steps.gate.outputs.upstream }}
+          MAIN_SHA: ${{ needs.gate.outputs.main_sha }}
+          DEV_SHA: ${{ needs.gate.outputs.dev_sha }}
+          UPSTREAM: ${{ needs.gate.outputs.upstream }}
         run: |
           python3 .github/scripts/auto_promote_trilium.py merge \
             --main-sha "$MAIN_SHA" --dev-sha "$DEV_SHA" --upstream "$UPSTREAM"
