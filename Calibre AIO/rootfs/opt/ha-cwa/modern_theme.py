@@ -116,6 +116,14 @@ class ThemeLoader(BaseLoader):
 
     def get_source(self, environment, template):
         source, filename, uptodate = self.upstream.get_source(environment, template)
+        if template in ('http_error.html', 'shelfdown.html'):
+            # Standalone pages bypass layout.html; give them the same look.
+            source = source.replace('g.current_theme == 1', 'false')
+            source = source.replace('<html class="http-error">', '<html class="http-error aio-modern">', 1)
+            source = source.replace('<html lang=', '<html class="aio-modern" lang=', 1)
+            source = source.replace('</head>', '''
+    <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=13">
+  </head>''', 1)
         if template in ('layout.html', 'detail.html'):
             # Modern is a standalone look on CWA's standard templates. CWA forces
             # its caliBlur theme in code, so the templates are switched here,
@@ -158,7 +166,7 @@ class ThemeLoader(BaseLoader):
             source = source.replace('<span class="btn btn-default btn-file">{{_(\'Upload\')}}<input', '''<details class="aio-upload-menu"><summary aria-label="{{ _('Add books') }}">+</summary><div class="aio-upload-options"><label class="btn btn-default btn-file">{{ _('Upload') }}<input''', 1)
             source = source.replace('multiple></span>', '''multiple></label><button type="button" class="aio-folder-trigger">{% if current_user.locale.startswith('de') %}Ordner hinzufügen …{% else %}Add folder …{% endif %}</button></div></details>''', 1)
             source = source.replace('</head>', '''
-    <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=12">
+    <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=13">
     <script defer src="{{ url_for('aio_theme', filename='modern.js') }}?v=9"></script>
   </head>''', 1)
         elif template == 'list.html':

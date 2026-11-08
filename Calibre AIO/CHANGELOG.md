@@ -1,3 +1,9 @@
+# 1.2.19
+
+- Extend the standalone theme to the secondary pages: tokens for selects, checkbox labels, progress bars, tabs, tooltips, modal and panel headers, contextual text and buttons, the CWA statistics cards, and skins for bootstrap-table, x-editable, bootstrap-select, typeahead, the date picker and the query builder.
+- Define the caliBlur-only CSS variables that CWA templates reference inline.
+- The error and shelf download pages load the theme as well.
+
 # 1.2.18
 
 - Cover the read marker on book cards with a fixture scenario: a small disc inside the lower left of the cover.

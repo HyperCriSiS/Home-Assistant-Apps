@@ -263,6 +263,11 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
  await frame.locator('.aio-back').evaluate(el=>el.click());await frame.waitForURL(/scenario=publishers/);
  await frame.locator('.aio-back').evaluate(el=>el.click());await frame.waitForURL(/scenario=authors/);
  assert.equal(page.url(),'https://calibre.test/shell');
+ // The standalone error page bypasses layout.html and still gets the dark look.
+ await page.goto('https://calibre.test/library/?scenario=error');
+ assert.equal(await page.locator('link[href*="modern.css"]').count(),1);assert.equal(await page.locator('link[href*="caliBlur"]').count(),0);
+ assert.equal(await page.evaluate(()=>getComputedStyle(document.body).backgroundColor),'rgb(15, 18, 23)','Error page must use the theme background');
+ assert.equal(await page.evaluate(()=>parseFloat(getComputedStyle(document.body).paddingTop)),0,'Error page has no navbar to make room for');
  assert.deepEqual(errors,[]);
  await context.close();
 }
