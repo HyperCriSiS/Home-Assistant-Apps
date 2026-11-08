@@ -31,6 +31,10 @@ class StartupOrderTest(unittest.TestCase):
                 continue
             with self.subTest(service=run.parent.name):
                 self.assertIn('unset SUPERVISOR_TOKEN HASSIO_TOKEN', run.read_text())
+        # The upstream ingest script re-executes itself via its with-contenv shebang
+        # when it runs as root, which would import the token again.
+        self.assertIn('exec s6-setuidgid abc bash /app/calibre-web-automated/root/etc/s6-overlay/s6-rc.d/cwa-ingest-service/run',
+                      (SERVICES / 'cwa-ingest-service/run').read_text())
 
     def test_ingress_proxy_forwards_the_supervisor_scheme(self):
         template = (ROOT / 'rootfs/etc/nginx/cwa-ingress.conf.template').read_text()

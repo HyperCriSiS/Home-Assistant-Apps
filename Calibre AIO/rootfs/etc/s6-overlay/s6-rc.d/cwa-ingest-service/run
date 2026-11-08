@@ -5,4 +5,6 @@ set -euo pipefail
 # Only the HA storage bootstrap needs Supervisor access; upstream services run
 # Calibre, ImageMagick and Ghostscript on untrusted books without the token.
 unset SUPERVISOR_TOKEN HASSIO_TOKEN
-exec bash /app/calibre-web-automated/root/etc/s6-overlay/s6-rc.d/cwa-ingest-service/run
+# Upstream re-executes itself through its with-contenv shebang when started as
+# root, which would restore the token; start it as abc directly instead.
+exec s6-setuidgid abc bash /app/calibre-web-automated/root/etc/s6-overlay/s6-rc.d/cwa-ingest-service/run
