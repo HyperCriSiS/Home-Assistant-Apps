@@ -83,8 +83,6 @@ def _page_header(heading, tools=''):
 def _render_page_header(source, template):
     """Render the final header in HTML instead of moving it after first paint."""
     if template in ('list.html', 'grid.html'):
-        if template == 'grid.html':
-            source = source.replace("url_for('static', filename='js/filter_grid.js')", "url_for('aio_theme', filename='filter_grid.js')")
         heading = '<h1 class="{{page}}">{{_(title)}}</h1>'
         start = source.index('<div class="filterheader')
         end = _div_end(source, start)
@@ -118,12 +116,23 @@ class ThemeLoader(BaseLoader):
 
     def get_source(self, environment, template):
         source, filename, uptodate = self.upstream.get_source(environment, template)
+        if template in ('layout.html', 'detail.html'):
+            # Modern is a standalone look on CWA's standard templates. CWA forces
+            # its caliBlur theme in code, so the templates are switched here,
+            # independently of a user's saved upstream palette.
+            source = source.replace('g.current_theme == 1', 'false').replace('g.current_theme == 0', 'true')
+        # Covers and titles open the book page; the detail modal is not themed.
+        source = re.sub(r'\{% if simple==false %\}data-toggle="modal" data-target="#bookDetailsModal" data-remote="false"\{% endif %\}', '', source)
         if template == 'layout.html':
-            # Modern uses caliBlur's navigation/layout, independently of a
-            # user's saved upstream palette. Never rewrite that saved choice.
-            source = source.replace('g.current_theme == 1', 'true')
             source = source.replace('<html ', '<html class="aio-modern" ', 1)
-            source = source.replace('>{{instance}}</a>', '>{{title|striptags}}</a>', 1)
+            # The sidebar brand carries the page title; a history-driven back
+            # arrow follows it (CWA's own is caliBlur-only markup).
+            source = source.replace('>{{instance}}</a>', '>{{title|striptags}}</a>'
+                                    "<a class=\"aio-back\" href=\"{{url_for('web.index')}}\" aria-label=\"{{_('Back')}}\">"
+                                    + _svg(['M15 18l-6-6 6-6']) + '</a>', 1)
+            # modern.js moves the browse navigation at the 768px breakpoint that
+            # the rest of the layout uses; intention.js would use 510px/840px.
+            source = source.replace(' intent in-standard-append="nav.navigation" in-mobile-after="#main-nav" in-mobile-class="nav navbar-nav"', '', 1)
             source = re.sub(r'<li class="([^"\n]*\bnav-head\b[^"\n]*)"([^>]*)>(.*?)</li>',
                             _nav_heading, source, flags=re.S)
             source = re.sub(r'<li id="nav_create(?:magic)?shelf"[^>]*>.*?</li>', '', source, flags=re.S)
@@ -147,8 +156,8 @@ class ThemeLoader(BaseLoader):
             source = source.replace('<span class="btn btn-default btn-file">{{_(\'Upload\')}}<input', '''<details class="aio-upload-menu"><summary aria-label="{{ _('Add books') }}">+</summary><div class="aio-upload-options"><label class="btn btn-default btn-file">{{ _('Upload') }}<input''', 1)
             source = source.replace('multiple></span>', '''multiple></label><button type="button" class="aio-folder-trigger">{% if current_user.locale.startswith('de') %}Ordner hinzufügen …{% else %}Add folder …{% endif %}</button></div></details>''', 1)
             source = source.replace('</head>', '''
-    <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=11">
-    <script defer src="{{ url_for('aio_theme', filename='modern.js') }}?v=8"></script>
+    <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=12">
+    <script defer src="{{ url_for('aio_theme', filename='modern.js') }}?v=9"></script>
   </head>''', 1)
         elif template == 'list.html':
             source = source.replace('''{% if title == "Downloads" %}
@@ -165,12 +174,6 @@ class ThemeLoader(BaseLoader):
 
 def install_modern_theme(app):
     def asset(filename):
-        if filename == 'filter_grid.js':
-            # Preserve native filtering/sorting while matching the initial CSS
-            # rows. caliBlur's centered mode shifts partial rows after loading.
-            source = (Path(app.static_folder) / 'js/filter_grid.js').read_text(encoding='utf-8')
-            return app.response_class(source.replace('selectedLayoutMode = "fitRowsCentered";',
-                                                    'selectedLayoutMode = "fitRows";'), mimetype='text/javascript')
         # Keep the asset surface explicit; authentication remains CWA's hook.
         if filename not in ('modern.css', 'modern.js'):
             from flask import abort

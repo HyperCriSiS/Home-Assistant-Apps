@@ -162,7 +162,7 @@ with app.test_request_context("/"):
         duplicate_index_needs_full_scan=False,
         shelf=NS(user_id=1),
         id=0,
-        simple=True,
+        simple=False,
         sidebar=sidebar,
         cwa_settings={},
         magic_shelf_routes=NS(render=True, create=True),

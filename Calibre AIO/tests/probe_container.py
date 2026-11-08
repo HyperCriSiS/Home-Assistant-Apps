@@ -46,6 +46,7 @@ assert status == 200 and b'/api/hassio_ingress/aio-test/shelfmark/' in body
 status, body, headers = get('/library/', ADMIN)
 assert status == 200 and b'/api/hassio_ingress/aio-test/library' in body
 assert b'class="aio-modern"' in body
+assert b'caliBlur' not in body and b'class="aio-back"' in body
 assert b'/api/hassio_ingress/aio-test/library/aio-theme/modern.css' in body
 for asset in ('modern.css', 'modern.js'):
     assert get('/library/aio-theme/' + asset, ADMIN)[0] == 200

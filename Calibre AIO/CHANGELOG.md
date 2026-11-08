@@ -1,3 +1,10 @@
+# 1.2.17
+
+- Make the Modern theme standalone: CWA's caliBlur theme is no longer loaded; the library pages, sidebar, navbar, search, upload menu, pagination, list pages, series grid and duplicates are styled on CWA's standard templates with the viewport as the only scroll container.
+- Covers and titles open the book page instead of the detail modal; a history-driven back arrow sits beside the search box.
+- The browse navigation joins the navbar drawer below 768 px.
+- Fix the stray glyph in the upload menu on phones.
+
 # 1.2.16
 
 - Keep the scrollbar gutter of the content column stable, so the book grid is laid out at the same width before and after Isotope measures it where scrollbars take layout space (Android WebView, desktop).
