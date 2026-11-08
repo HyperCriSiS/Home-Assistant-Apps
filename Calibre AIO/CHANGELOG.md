@@ -1,3 +1,8 @@
+# 1.2.26
+
+- Pages without a band (edit book, admin, settings) keep an empty strip of the band height with its divider, so content no longer jumps up when switching from a page with a band.
+- Detail page: every action icon is gold except delete, and every chip uses the same neutral pill style, links included.
+
 # 1.2.25
 
 - Pages without a band (edit book, admin, settings) start with room below the bar; glyph buttons keep a gap to their label; the edit page cover is capped at 260px and the format upload sits below the convert button.
