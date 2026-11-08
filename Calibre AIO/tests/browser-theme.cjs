@@ -88,8 +88,10 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
    // partial last row does not read as a hole in the library grid.
    const label=page.locator('.discover.random-books > h2');assert(await label.isVisible());
    assert(Number(await label.evaluate(el=>parseFloat(getComputedStyle(el).fontSize)))<=14,'Random section label must stay compact');
-   assert.equal(await page.locator('.discover.random-books .book').count(),4);
-   assert.equal(await page.locator('.discover.random-books .book:visible').count(),width>=768?4:width>=360?3:2,'Phones show only a full row of random picks');
+   assert.equal(await page.locator('.discover.random-books .book').count(),12);
+   const libraryRow=await page.locator('.discover.load-more .book').evaluateAll(cards=>cards.filter(card=>card.getBoundingClientRect().y===cards[0].getBoundingClientRect().y).length);
+   assert.equal(await page.locator('.discover.random-books .book:visible').count(),libraryRow,`Random picks fill exactly one row of ${libraryRow} at ${width}`);
+   assert.equal(await page.locator('.discover.random-books .book:visible').evaluateAll(cards=>new Set(cards.map(card=>Math.round(card.getBoundingClientRect().y))).size),1,'Visible random picks sit in one row');
    const section=await page.locator('.discover.random-books').boundingBox(),first=await page.locator('.discover.load-more .book').first().boundingBox();
    assert(first.y>=section.y+section.height,'Library grid starts below the random section');
    assert.equal(await page.locator('.discover.random-books').evaluate(el=>getComputedStyle(el).borderBottomStyle),'solid');

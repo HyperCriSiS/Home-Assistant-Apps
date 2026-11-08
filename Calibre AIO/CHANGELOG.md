@@ -1,3 +1,7 @@
+# 1.2.22
+
+- Random picks fill exactly one row per screen width (2 to 12 cards); set "No. of Random Books to Display" to 12 in the CWA admin view for wide screens.
+
 # 1.2.21
 
 - Phones: the grid no longer starts under the band on pages with page navigation, the drawer sits flush with the viewport instead of 15px off the left edge, and the random picks show only a full row.
