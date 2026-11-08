@@ -1,3 +1,7 @@
+# 1.2.10
+
+- Follow the Shelfmark 1.6 Chromium 156 pin and Python 3.14.9 so the upstream updater can propose Shelfmark releases again.
+
 # 1.2.9
 
 - Use the Modern system font for navigation section headings instead of the inherited bold caliBlur face.
