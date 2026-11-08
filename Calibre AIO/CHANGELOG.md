@@ -1,3 +1,7 @@
+# 1.2.12
+
+- Keep the page title in the desktop sidebar and remove its repeat from the content band; sorting stays centered in the band.
+
 # 1.2.11
 
 - Refuse a library folder inside the ingest folder or the reverse, not only identical folders.

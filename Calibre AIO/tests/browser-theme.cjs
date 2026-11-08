@@ -79,9 +79,10 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
  const card=await page.locator('.discover.load-more .book').first().boundingBox();
  assert(card.width>=90 && card.width<180, 'Book cards must retain their compact, readable width');
  if(width>=768){
-  const title=await page.locator('.aio-page-header > h2').boundingBox();
+  assert(!(await page.locator('.aio-page-header > h2').isVisible()),'Desktop must not repeat the page title in the content band');
+  const band=await page.locator('.aio-page-header').boundingBox();
   const toolbar=await page.locator('.filterheader').boundingBox();
-  assert(Math.abs(title.y+title.height/2-toolbar.y-toolbar.height/2)<2, 'Sorting must align with the page title');
+  assert(Math.abs(band.y+band.height/2-toolbar.y-toolbar.height/2)<2, 'Sorting must be centered in the title band');
   const content=await page.locator('.aio-main').boundingBox();
   assert(Math.abs(toolbar.x+toolbar.width/2-content.x-content.width/2)<2, 'Sorting must be centered in the content area');
  }
@@ -102,9 +103,10 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
  }
  if(width>=768) {
   const brand=page.locator('.navbar-brand'),header=page.locator('.aio-page-header');
-  assert(!(await brand.isVisible()),'Desktop must not repeat the page heading in the sidebar');
-  const bandStyle=(locator,pseudo)=>locator.evaluate((el,pseudo)=>{const s=getComputedStyle(el,pseudo);return [s.backgroundColor,s.borderBottomWidth,s.borderBottomStyle,s.borderBottomColor];},pseudo);
-  assert.deepEqual(await bandStyle(page.locator('.navbar-header'),'::after'),await bandStyle(header),'Sidebar and page title must share one surface and divider');
+  assert(await brand.isVisible(),'Desktop keeps the page title in the sidebar');
+  assert.equal((await brand.textContent()).trim(),(await page.locator('.aio-page-header > h2').textContent()).trim(),'Sidebar title must be the page title');
+  const bandStyle=locator=>locator.evaluate(el=>{const s=getComputedStyle(el);return [s.backgroundColor,s.borderBottomWidth,s.borderBottomStyle,s.borderBottomColor];});
+  assert.deepEqual(await bandStyle(brand),await bandStyle(header),'Sidebar title and page band must share one surface and divider');
   const left=await brand.boundingBox(),right=await header.boundingBox();
   assert(Math.abs(left.y+left.height-right.y-right.height)<1,'Title dividers must align vertically');
   assert(left.x+left.width>=right.x,'Title divider must have no gap at the sidebar edge');
@@ -133,12 +135,12 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
  for(const scenario of ['authors','categories','languages','publishers','downloads','downloads-filled']) {
   await page.goto(`https://calibre.test/library/?scenario=${scenario}`); await page.waitForTimeout(500);
   assert((await page.title()).includes(scenario.startsWith('downloads') ? 'Downloads' : scenario==='authors' ? 'Authors' : scenario==='categories' ? 'Categories' : scenario==='languages' ? 'Languages' : 'Publishers'));
-  assert(width<768 || await page.locator('.aio-page-header > h1').isVisible());
+  assert(!(await page.locator('.aio-page-header > h1').isVisible()),'The content band must not repeat the sidebar title');
   const main=await page.locator('.aio-list-page').boundingBox();
   const marker=await page.locator('.aio-list-page').evaluate(el=>{const s=getComputedStyle(el,'::before');return {size:parseFloat(s.fontSize),left:parseFloat(s.left),content:s.content};});
   if(!scenario.startsWith('downloads')) {assert(marker.size<=32, 'List group marker is oversized'); assert(marker.left>=0); assert(!['none','normal','""'].includes(marker.content), 'Keep the native list marker');}
-  const heading=await page.locator('.aio-page-header > h1').boundingBox();if(width>=768)assert(heading.y<100,'Reclaim the old duplicate header strip');
-  if(width>=768) {const box=await page.locator('.filterheader').boundingBox();assert(Math.abs(box.x+box.width/2-main.x-main.width/2)<2);assert(Math.abs(box.y+box.height/2-heading.y-heading.height/2)<2);}
+  const band=await page.locator('.aio-page-header').boundingBox();if(width>=768)assert(band.y<100,'Reclaim the old duplicate header strip');
+  if(width>=768) {const box=await page.locator('.filterheader').boundingBox();assert(Math.abs(box.x+box.width/2-main.x-main.width/2)<2);assert(Math.abs(box.y+box.height/2-band.y-band.height/2)<2);}
   if(scenario==='authors') {
    const letter=await page.locator('.character .char').first().boundingBox(),group=await page.locator('.character').boundingBox(),all=await page.locator('#all').boundingBox();
    assert(group.height>=letter.height && letter.y>=group.y && letter.y+letter.height<=group.y+group.height+1,'Letter group must contain its full-height buttons');
