@@ -27,6 +27,7 @@ hassio_api: true
 backup: hot
 backup_exclude:
   - "cache/*"
+  - "home/.npm/*"
 # MCP gateway (only /mcp endpoints with a bearer key) on host port 3001, used
 # by LAN clients and by the Cloudflared and Tailscale Apps for remote access.
 # Leave the host port blank to disable it or choose another free port.
