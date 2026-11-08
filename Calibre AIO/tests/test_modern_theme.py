@@ -74,6 +74,19 @@ class ModernThemeTest(unittest.TestCase):
         self.assertIn('class="aio-back"', source)
         self.assertNotIn('message[0] == "theme_migration"', source)
 
+    @unittest.skipUnless(os.environ.get('CWA_SOURCE'), 'requires pinned CWA source')
+    def test_standalone_pages_take_the_theme(self):
+        from jinja2 import FileSystemLoader, Environment
+        from modern_theme import ThemeLoader
+        loader = ThemeLoader(FileSystemLoader(Path(os.environ['CWA_SOURCE']) / 'cps/templates'))
+        for template in ('http_error.html', 'shelfdown.html'):
+            with self.subTest(template=template):
+                source, _, _ = loader.get_source(Environment(), template)
+                self.assertEqual(source.count('aio-modern'), 1)
+                self.assertEqual(source.count("filename='modern.css'"), 1)
+                self.assertNotIn('g.current_theme', source)
+                self.assertLess(source.index('css/style.css'), source.index("filename='modern.css'"))
+
     def test_shelf_heading_actions_preserve_native_visibility(self):
         from types import SimpleNamespace as NS
         from jinja2 import Environment

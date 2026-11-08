@@ -488,8 +488,8 @@ html.aio-modern {
 .aio-modern .pagination .dropdown-menu > li > a { padding: 6px 14px; }
 
 /* ---- Book grid cards (browse pages and the series overview) ---- */
-.aio-modern .aio-main .row.display-flex { margin: 0; }
-.aio-modern .aio-main .book {
+.aio-modern :is(.aio-main, .shelf-down) .row.display-flex { margin: 0; }
+.aio-modern :is(.aio-main, .shelf-down) .book {
   float: none;
   position: relative;
   display: block;
@@ -499,10 +499,10 @@ html.aio-modern {
   margin: 0 0 14px;
   padding: 0 8px;
 }
-.aio-modern .aio-main .book .cover { position: relative; height: auto; margin: 0; }
-.aio-modern .aio-main .book .cover > a { display: block; }
-.aio-modern .aio-main .book .cover span.img { position: relative; display: block; height: auto; bottom: auto; }
-.aio-modern .aio-main .book .cover img {
+.aio-modern :is(.aio-main, .shelf-down) .book .cover { position: relative; height: auto; margin: 0; }
+.aio-modern :is(.aio-main, .shelf-down) .book .cover > a { display: block; }
+.aio-modern :is(.aio-main, .shelf-down) .book .cover span.img { position: relative; display: block; height: auto; bottom: auto; }
+.aio-modern :is(.aio-main, .shelf-down) .book .cover img {
   position: static;
   display: block;
   width: 100%;
@@ -515,8 +515,8 @@ html.aio-modern {
   background: var(--aio-surface);
   box-shadow: 0 2px 6px #0004;
 }
-.aio-modern .aio-main .book .cover > a:hover img { border-color: var(--aio-accent); box-shadow: 0 6px 16px #0008; }
-.aio-modern .aio-main .book .cover .badge {
+.aio-modern :is(.aio-main, .shelf-down) .book .cover > a:hover img { border-color: var(--aio-accent); box-shadow: 0 6px 16px #0008; }
+.aio-modern :is(.aio-main, .shelf-down) .book .cover .badge {
   position: absolute;
   top: 6px;
   right: 6px;
@@ -527,7 +527,7 @@ html.aio-modern {
   color: var(--aio-text);
   font-size: 11px;
 }
-.aio-modern .aio-main .book .cover .badge.read {
+.aio-modern :is(.aio-main, .shelf-down) .book .cover .badge.read {
   top: auto;
   right: auto;
   left: 6px;
@@ -544,17 +544,17 @@ html.aio-modern {
   color: #111;
   font-size: 10px;
 }
-.aio-modern .aio-main .book .meta { margin-top: 7px; padding: 0; }
-.aio-modern .aio-main .book .meta p { margin: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.aio-modern .aio-main .book .meta .title { color: var(--aio-text); font-size: 13px; line-height: 1.35; font-weight: 600; }
-.aio-modern .aio-main .book .meta .author, .aio-modern .aio-main .book .meta .author > a,
-.aio-modern .aio-main .book .meta .series { color: var(--aio-muted); font-size: 12px; line-height: 1.4; }
-.aio-modern .aio-main .book .meta .rating { display: none; }
-@media (min-width: 1500px) { .aio-modern .aio-main .book { width: 12.5%; } }
-@media (min-width: 1800px) { .aio-modern .aio-main .book { width: 10%; } }
-@media (min-width: 2100px) { .aio-modern .aio-main .book { width: 8.3333%; } }
-@media (min-width: 1100px) and (max-width: 1279px) { .aio-modern .aio-main .book { width: 16.6667%; } }
-@media (min-width: 768px) and (max-width: 1099px) { .aio-modern .aio-main .book { width: 25%; } }
+.aio-modern :is(.aio-main, .shelf-down) .book .meta { margin-top: 7px; padding: 0; }
+.aio-modern :is(.aio-main, .shelf-down) .book .meta p { margin: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.aio-modern :is(.aio-main, .shelf-down) .book .meta .title { color: var(--aio-text); font-size: 13px; line-height: 1.35; font-weight: 600; }
+.aio-modern :is(.aio-main, .shelf-down) .book .meta .author, .aio-modern :is(.aio-main, .shelf-down) .book .meta .author > a,
+.aio-modern :is(.aio-main, .shelf-down) .book .meta .series { color: var(--aio-muted); font-size: 12px; line-height: 1.4; }
+.aio-modern :is(.aio-main, .shelf-down) .book .meta .rating { display: none; }
+@media (min-width: 1500px) { .aio-modern :is(.aio-main, .shelf-down) .book { width: 12.5%; } }
+@media (min-width: 1800px) { .aio-modern :is(.aio-main, .shelf-down) .book { width: 10%; } }
+@media (min-width: 2100px) { .aio-modern :is(.aio-main, .shelf-down) .book { width: 8.3333%; } }
+@media (min-width: 1100px) and (max-width: 1279px) { .aio-modern :is(.aio-main, .shelf-down) .book { width: 16.6667%; } }
+@media (min-width: 768px) and (max-width: 1099px) { .aio-modern :is(.aio-main, .shelf-down) .book { width: 25%; } }
 
 /* ---- List pages (authors, series, categories, languages, downloads) ---- */
 .aio-modern .aio-list-page > div.container {
@@ -758,12 +758,114 @@ html.aio-modern {
   .aio-modern .pagination > li { flex: none; }
   .aio-modern .pagination > li:first-child { margin-left: auto; }
   .aio-modern .aio-main > .pagination:has(.dropdown.open) { overflow: visible; }
-  .aio-modern .aio-main .book { width: 33.3333%; padding: 0 5px; }
-  .aio-modern .aio-main .book .meta .title { font-size: 12px; }
+  .aio-modern :is(.aio-main, .shelf-down) .book { width: 33.3333%; padding: 0 5px; }
+  .aio-modern :is(.aio-main, .shelf-down) .book .meta .title { font-size: 12px; }
   .aio-modern .aio-list-page .list-container, .aio-modern .aio-list-page #second { padding: 0; }
   .aio-modern .duplicates-container .books-grid { grid-template-columns: minmax(0, 1fr); }
   .aio-modern .duplicate-header > div { min-width: 0; }
   .aio-modern .duplicate-header > div:last-child { flex-wrap: wrap; }
   .aio-modern .duplicate-header button { font-size: 12px !important; padding: 6px 8px !important; }
 }
-@media (max-width: 359px) { .aio-modern .aio-main .discover .book { width: 50%; } }
+@media (max-width: 359px) { .aio-modern :is(.aio-main, .shelf-down) .discover .book { width: 50%; } }
+
+/* ---- Secondary pages: tokens for the Bootstrap and CWA pieces the library pages do not use ---- */
+.aio-modern body {
+  /* caliBlur-only variables that CWA templates reference inline. */
+  --color-primary: var(--aio-accent);
+  --color-text: var(--aio-text);
+  --color-bg: var(--aio-bg);
+  --color-bg-light: var(--aio-surface);
+  --color-border: var(--aio-line);
+  --color-info-text: var(--aio-muted);
+}
+html.aio-modern.http-error body, .aio-modern body.shelf-down, .aio-modern body.login { padding-top: 0; }
+.aio-modern select, .aio-modern select.cwa-settings-select {
+  color: var(--aio-text);
+  background-color: var(--aio-bg) !important;
+  border: 1px solid var(--aio-line);
+  border-radius: 5px;
+}
+.aio-modern .settings-container .form-control { border-color: var(--aio-line); }
+.aio-modern .checkbox label, .aio-modern .radio label, .aio-modern label { color: var(--aio-text); }
+.aio-modern .input-group-addon { color: var(--aio-muted); background: var(--aio-surface); border-color: var(--aio-line); }
+.aio-modern hr { border-color: var(--aio-line); }
+.aio-modern code { color: var(--aio-accent); background: #282f39; }
+.aio-modern pre { color: var(--aio-text); background: var(--aio-surface); border-color: var(--aio-line); }
+.aio-modern .label { font-weight: 600; }
+.aio-modern .label-default { background: #3a4350; }
+.aio-modern .progress { height: 18px; background: var(--aio-surface); border: 1px solid var(--aio-line); border-radius: 5px; box-shadow: none; }
+.aio-modern .progress-bar { background: var(--aio-accent); color: #111; box-shadow: none; }
+.aio-modern .btn-info { background: #1b3240; border-color: #3d6a85; color: #9ecbe8; }
+.aio-modern .btn-warning { background: #3a2d17; border-color: #8a6d3b; color: #e8c37b; }
+.aio-modern .btn-primary.disabled, .aio-modern .btn-primary[disabled], .aio-modern .open > .dropdown-toggle.btn-primary,
+.aio-modern .btn-primary:active, .aio-modern .btn-primary.active {
+  background: var(--aio-accent-bg);
+  border-color: var(--aio-accent-line);
+  color: var(--aio-accent);
+}
+.aio-modern .text-danger { color: #f1afba; }
+.aio-modern .text-success { color: #91d7c8; }
+.aio-modern .text-warning { color: #e8c37b; }
+.aio-modern .text-info { color: var(--aio-muted); }
+.aio-modern .table-hover > tbody > tr:hover, .aio-modern .table > tbody > tr.active > td { background: #282f39; }
+.aio-modern .table > thead > tr > th { color: var(--aio-muted); }
+.aio-modern .panel-default > .panel-heading { color: var(--aio-text); background: #1f2530; border-color: var(--aio-line); }
+.aio-modern .nav-tabs { border-bottom-color: var(--aio-line); }
+.aio-modern .nav-tabs > li > a { color: var(--aio-muted); border-radius: 5px 5px 0 0; }
+.aio-modern .nav-tabs > li > a:hover { background: var(--aio-surface); border-color: var(--aio-line) var(--aio-line) var(--aio-line); color: var(--aio-text); }
+.aio-modern .nav-tabs > li.active > a, .aio-modern .nav-tabs > li.active > a:hover, .aio-modern .nav-tabs > li.active > a:focus {
+  color: var(--aio-accent); background: var(--aio-bg); border-color: var(--aio-line) var(--aio-line) transparent;
+}
+.aio-modern .dropdown-menu .divider { background: var(--aio-line); }
+.aio-modern .modal-header:is(.bg-info, .bg-danger, .bg-primary, .bg-success, .bg-warning) {
+  color: var(--aio-text);
+  background: var(--aio-surface);
+  border-left: 4px solid var(--aio-accent-line);
+}
+.aio-modern .modal-header.bg-danger { border-left-color: #895563; }
+.aio-modern .modal-header.bg-success { border-left-color: #436e63; }
+.aio-modern .tooltip-inner { color: var(--aio-text); background: var(--aio-surface); border: 1px solid var(--aio-line); }
+.aio-modern .tooltip.top .tooltip-arrow { border-top-color: var(--aio-line); }
+.aio-modern .tooltip.bottom .tooltip-arrow { border-bottom-color: var(--aio-line); }
+.aio-modern .tooltip.left .tooltip-arrow { border-left-color: var(--aio-line); }
+.aio-modern .tooltip.right .tooltip-arrow { border-right-color: var(--aio-line); }
+.aio-modern .cover .badge { color: var(--aio-text); background: #000a; }
+.aio-modern .cwa_stats_section { background: var(--aio-surface); border: 1px solid var(--aio-line); }
+.aio-modern .cwa_stats_header { color: var(--aio-text); }
+.aio-modern .cwa_stats_value { color: var(--aio-accent); }
+.aio-modern #meta-import-alert { color: #91d7c8; background: #1b3630; border-color: #436e63; }
+.aio-modern #meta-info #book-list .media { background: var(--aio-surface); }
+/* Library skins: bootstrap-table, x-editable, bootstrap-select, typeahead, datepicker, query builder. */
+.aio-modern .fixed-table-loading, .aio-modern .bootstrap-table.fullscreen { color: var(--aio-text); background: var(--aio-bg); }
+.aio-modern .fixed-table-container { border-color: var(--aio-line); }
+.aio-modern .popover { color: var(--aio-text); background: var(--aio-surface); border-color: var(--aio-line); }
+.aio-modern .popover-title { color: var(--aio-text); background: #1f2530; border-color: var(--aio-line); }
+.aio-modern .popover > .arrow { border-color: transparent; }
+.aio-modern .popover.top > .arrow::after { border-top-color: var(--aio-surface); }
+.aio-modern .popover.bottom > .arrow::after { border-bottom-color: var(--aio-surface); }
+.aio-modern .popover.left > .arrow::after { border-left-color: var(--aio-surface); }
+.aio-modern .popover.right > .arrow::after { border-right-color: var(--aio-surface); }
+.aio-modern .editable-click, .aio-modern a.editable-click { color: var(--aio-text); border-bottom-color: var(--aio-line); }
+.aio-modern .editable-container .editable-input input, .aio-modern .editable-container .editable-input select,
+.aio-modern .editable-container .editable-input textarea { color: var(--aio-text); background: var(--aio-bg); border-color: var(--aio-line); }
+.aio-modern .editable-bg-transition { background: var(--aio-surface) !important; }
+.aio-modern .bootstrap-select .dropdown-menu > li.selected > a, .aio-modern .dropdown-menu > li.selected > a { color: var(--aio-accent); background: var(--aio-accent-bg); }
+.aio-modern .bootstrap-select .no-results, .aio-modern .bootstrap-select .notify { color: var(--aio-text); background: var(--aio-bg); border-color: var(--aio-line); }
+.aio-modern .tt-menu { color: var(--aio-text); background: var(--aio-surface); border: 1px solid var(--aio-line); border-radius: 5px; }
+.aio-modern .tt-suggestion { color: var(--aio-text); }
+.aio-modern .tt-suggestion:hover, .aio-modern .tt-cursor { color: var(--aio-accent); background: #282f39; }
+.aio-modern .tt-hint { color: var(--aio-muted); }
+.aio-modern .datepicker, .aio-modern .datepicker-dropdown { color: var(--aio-text); background: var(--aio-surface); border-color: var(--aio-line); }
+.aio-modern .datepicker-dropdown::before { border-bottom-color: var(--aio-line); }
+.aio-modern .datepicker-dropdown::after { border-bottom-color: var(--aio-surface); }
+.aio-modern .datepicker table tr td, .aio-modern .datepicker table tr th { color: var(--aio-text); border-radius: 4px; }
+.aio-modern .datepicker table tr td.day:hover, .aio-modern .datepicker table tr td.focused,
+.aio-modern .datepicker .datepicker-switch:hover, .aio-modern .datepicker .prev:hover, .aio-modern .datepicker .next:hover { background: #282f39; }
+.aio-modern .datepicker table tr td.old, .aio-modern .datepicker table tr td.new, .aio-modern .datepicker table tr td.disabled { color: var(--aio-muted); }
+.aio-modern .datepicker table tr td.active, .aio-modern .datepicker table tr td.active:hover,
+.aio-modern .datepicker table tr td.today, .aio-modern .datepicker table tr td.today:hover {
+  color: var(--aio-accent); background: var(--aio-accent-bg); border-color: var(--aio-accent-line); text-shadow: none;
+}
+.aio-modern .wysihtml5-toolbar { background: var(--aio-surface); border-color: var(--aio-line); }
+.aio-modern .query-builder .rules-group-container { background: var(--aio-surface); border-color: var(--aio-line); }
+.aio-modern .query-builder .rule-container, .aio-modern .query-builder .rule-placeholder { color: var(--aio-text); background: var(--aio-bg); border-color: var(--aio-line); }
