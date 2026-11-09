@@ -1,8 +1,8 @@
-name: "Calibre AIO (Dev)"
+name: "Calibre AIO"
 description: "CWA v4.0.8 and Shelfmark v1.6.1 - Book discovery and Calibre library management in one interface"
-version: "v2026.11.09-dev.195"
+version: "v2026.11.09"
 slug: "calibre-aio"
-url: "https://github.com/HyperCriSiS/Home-Assistant-Apps/tree/dev-calibre/Calibre%20AIO"
+url: "https://github.com/HyperCriSiS/Home-Assistant-Apps/tree/main/Calibre%20AIO"
 image: "ghcr.io/hypercrisis/{arch}-calibre-aio"
 init: false
 stage: experimental

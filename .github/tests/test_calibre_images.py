@@ -60,6 +60,16 @@ class ImageMetadataTest(unittest.TestCase):
         self.assertIn('HEAD:refs/heads/dev-store', workflow['jobs']['publish']['steps'][-1]['run'])
         self.assertIn('cancel-in-progress: false', text)
 
+    def test_auto_promote_publishes_install_images_before_merging(self):
+        text = (ROOT / '.github/workflows/auto-promote-calibre.yml').read_text()
+        workflow = yaml.safe_load(text)
+        images = workflow['jobs']['images']
+        self.assertEqual(images['uses'], './.github/workflows/publish-calibre-images.yml')
+        self.assertEqual(images['with']['source_ref'], 'dev-calibre')
+        self.assertEqual(workflow['jobs']['promote']['needs'], ['gate', 'images'])
+        self.assertIn('DOCKER_CONFIG="$public_config" docker manifest inspect', text)
+        self.assertLess(text.index('Require both published install images'), text.index('auto_promote_calibre.py merge'))
+
     def test_release_tags_are_gated_by_both_architectures_and_anonymous_pull(self):
         text = (ROOT / '.github/workflows/publish-calibre-images.yml').read_text()
         self.assertIn('needs: build', text)
