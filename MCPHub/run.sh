@@ -156,6 +156,9 @@ if [[ -r /etc/mcphub-source-revision ]]; then
     log_info "Build source revision: $(cat /etc/mcphub-source-revision)"
 fi
 (
+    # MCPHub hands its environment to every stdio MCP server it starts, so the
+    # Supervisor token must not be part of it. MCPHub itself never uses it.
+    unset SUPERVISOR_TOKEN
     cd /app
     /usr/local/bin/entrypoint.sh node dist/index.js
 ) &

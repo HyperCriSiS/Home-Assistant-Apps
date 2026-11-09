@@ -1,5 +1,11 @@
 # Changelog
 
+## v2026.11.10
+
+### Security
+
+- MCP servers started by MCPHub and the OpenAI tunnel client no longer inherit the Home Assistant Supervisor token or the MCPHub signing and Ingress secrets. A stdio server you added yourself that relied on the inherited `SUPERVISOR_TOKEN` now needs its own Home Assistant token in its server configuration. The managed Home Assistant MCP servers are not affected.
+
 ## v2026.11.07-1
 
 ### Changed
