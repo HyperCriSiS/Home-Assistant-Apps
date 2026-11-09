@@ -72,6 +72,7 @@ class LanAccessTests(unittest.TestCase):
         config = yaml.safe_load((ROOT / "config.yaml").read_text())
         self.assertEqual(config["backup"], "hot")
         self.assertIn("cache/*", config["backup_exclude"])
+        self.assertIn("home/.npm/*", config["backup_exclude"])
 
     def test_gateway_is_the_only_remote_origin(self):
         # Cloudflared and Tailscale Apps forward to port 3001; the App no longer

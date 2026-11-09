@@ -433,6 +433,21 @@ Search MCPHub's Market or Registry for the GitHub MCP implementation you want to
 review its current upstream authentication instructions, and configure the required
 credential in MCPHub.
 
+### Trilium Notes
+
+The [Trilium Notes App](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/TriliumNext%20Notes/README.md#ai-and-mcp-server) (Trilium v0.107.0 or later) has a built-in MCP server. MCPHub reaches it over the internal Home Assistant network, so Trilium's host port stays closed and only MCPHub stores the Trilium token.
+
+1. In Trilium, enable the MCP server under **Options → AI / LLM** and create a token under **Options → ETAPI**.
+2. Open MCPHub as a Home Assistant administrator and add a server:
+   - Type: Streamable HTTP
+   - URL: `http://83d84113-trilium:8080/mcp` (see the Trilium README for other hostnames)
+   - Header `Authorization` with the value `Bearer <token>`
+3. Save. MCPHub lists the Trilium tools, prefixed with the server name.
+
+MCPHub refuses server URLs that resolve to private addresses unless an administrator owns the server. A server added by a Home Assistant user without administrator rights fails with `resolves to blocked address`.
+
+The Trilium tools can change and delete notes. Put the server in its own group or limit the keys of clients that should not have it.
+
 ## Optional GitHub CLI MCP
 
 The App can manage an additional universal GitHub CLI MCP server without requiring a
@@ -482,7 +497,7 @@ not supported through host Docker access in this version.
 The App uses Home Assistant hot backups, so MCPHub and its tunnels keep running while
 a backup is created. The persistent `/data` directory contains the MCPHub configuration
 and generated secrets required to restore the instance. Re-downloadable npm and uv
-package caches below `/data/cache` are excluded from backups.
+package caches below `/data/cache` and `/data/home/.npm` are excluded from backups.
 
 Treat backups as sensitive because they may contain MCP server credentials and tunnel
 configuration.
