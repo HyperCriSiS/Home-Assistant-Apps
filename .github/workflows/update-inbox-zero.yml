@@ -1,0 +1,163 @@
+---
+name: Update Inbox Zero
+
+on:
+  schedule:
+    - cron: "47 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-inbox-zero
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Detect Inbox Zero updates and open a validated PR
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ secrets.AUTOMATION_TOKEN || github.token }}
+      FORK: HyperCriSiS/inbox-zero
+      UPSTREAM: elie222/inbox-zero
+
+    steps:
+      - name: Check out Inbox Zero development branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          ref: dev-inbox-zero
+          fetch-depth: 0
+          persist-credentials: false
+
+      # The fork publishes no releases: the App follows its main branch and
+      # names the newest upstream release that this commit fully contains.
+      - name: Detect the newest fork commit and its upstream base version
+        id: version
+        run: |
+          set -euo pipefail
+          current="$(sed -nE 's#^FROM ghcr\.io/hypercrisis/inbox-zero-base:([0-9a-f]{40})$#\1#p' \
+            'Inbox Zero/Dockerfile')"
+          latest="$(gh api "repos/${FORK}/commits/main" --jq '.sha')"
+          if [[ -z "${current}" || ! "${latest}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Could not determine current/latest Inbox Zero commit" >&2
+            exit 1
+          fi
+          echo "Current: ${current}"
+          echo "Latest:  ${latest}"
+          if [[ "${current}" == "${latest}" ]]; then
+            echo "update=false" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          base=""
+          while read -r tag; do
+            behind="$(gh api "repos/${FORK}/compare/${UPSTREAM%%/*}:${tag}...${FORK%%/*}:${latest}" \
+              --jq '.behind_by')"
+            if [[ "${behind}" == 0 ]]; then
+              base="${tag}"
+              break
+            fi
+          done < <(gh api "repos/${UPSTREAM}/tags?per_page=30" --jq '.[].name' \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -rV)
+          [[ -n "${base}" ]] || { echo "No recent upstream release is contained in ${latest}" >&2; exit 1; }
+          echo "Base:    ${base}"
+          {
+            echo "update=true"
+            echo "latest=${latest}"
+            echo "base=${base}"
+            echo "branch=automation/inbox-zero-${base}-${latest}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Check for an existing update pull request
+        if: steps.version.outputs.update == 'true'
+        id: existing
+        env:
+          BRANCH: ${{ steps.version.outputs.branch }}
+        run: |
+          number="$(gh pr list \
+            --repo "${GITHUB_REPOSITORY}" \
+            --base dev-inbox-zero \
+            --head "${BRANCH}" \
+            --state open \
+            --json number \
+            --jq '.[0].number // empty')"
+          echo "number=${number}" >> "${GITHUB_OUTPUT}"
+
+      # The pull request keeps its original content (and App version date);
+      # merge-due-updates.yml regenerates it only when dev-inbox-zero moves.
+      - name: Update App files with the trusted updater from main
+        if: steps.version.outputs.update == 'true' && steps.existing.outputs.number == ''
+        env:
+          LATEST: ${{ steps.version.outputs.latest }}
+          BASE: ${{ steps.version.outputs.base }}
+        run: |
+          git fetch --no-tags origin main
+          for script in update_inbox_zero.py update_trilium.py; do
+            git show "origin/main:.github/scripts/${script}" > "${RUNNER_TEMP}/${script}"
+          done
+          python3 "${RUNNER_TEMP}/update_inbox_zero.py" \
+            --root . \
+            --base "${BASE}" \
+            --commit "${LATEST}" \
+            --date "$(date -u +%F)"
+
+      # validate-inbox-zero.yml builds the base image for the new commit first.
+      - name: Create update branch and pull request
+        if: steps.version.outputs.update == 'true' && steps.existing.outputs.number == ''
+        env:
+          BRANCH: ${{ steps.version.outputs.branch }}
+          LATEST: ${{ steps.version.outputs.latest }}
+          BASE: ${{ steps.version.outputs.base }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C "${BRANCH}"
+          git add 'Inbox Zero/Dockerfile' \
+            'Inbox Zero/config.yaml' \
+            'Inbox Zero/README.md' \
+            'Inbox Zero/NOTICE.md' \
+            'Inbox Zero/CHANGELOG.md'
+          title="chore(inbox-zero): update to ${LATEST:0:7} (${BASE})"
+          git commit -m "${title}"
+
+          remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force "${remote}" "HEAD:refs/heads/${BRANCH}"
+
+          body="$(printf '%s\n\n%s\n%s\n\nCommit: %s\n' \
+            "Automated Inbox Zero update to ${LATEST:0:7}, based on upstream ${BASE}." \
+            "Merged into dev-inbox-zero automatically 12 hours after opening, once full CI" \
+            "passed for the exact commit. The label hold stops it." \
+            "https://github.com/${FORK}/commit/${LATEST}")"
+          gh pr create \
+            --repo "${GITHUB_REPOSITORY}" \
+            --base dev-inbox-zero \
+            --head "${BRANCH}" \
+            --title "${title}" \
+            --body "${body}"
+
+      - name: Dispatch full validation for update branch
+        if: steps.version.outputs.update == 'true' && steps.existing.outputs.number == ''
+        env:
+          BRANCH: ${{ steps.version.outputs.branch }}
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run validate-inbox-zero.yml --repo "${GITHUB_REPOSITORY}" --ref "${BRANCH}"
+
+      - name: Close superseded Inbox Zero update pull requests
+        if: steps.version.outputs.update == 'true'
+        env:
+          BRANCH: ${{ steps.version.outputs.branch }}
+        run: |
+          gh pr list \
+            --repo "${GITHUB_REPOSITORY}" --base dev-inbox-zero --state open \
+            --author 'app/github-actions' \
+            --json number,headRefName \
+            --jq '.[] | select(.headRefName | startswith("automation/inbox-zero-"))
+              | select(.headRefName != env.BRANCH) | .number' \
+            | while read -r number; do
+                gh pr close "${number}" --repo "${GITHUB_REPOSITORY}" --delete-branch \
+                  --comment "Superseded by ${BRANCH}."
+              done

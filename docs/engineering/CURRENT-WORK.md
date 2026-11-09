@@ -24,4 +24,13 @@ LAN authentication and tools from both Home Assistant MCP servers. Linux unit
 tests also pass. See [publication and rollout](MCPHUB-IMAGES.md); use the actual
 `main` and generated `dev-store` metadata to determine which version is offered.
 
+Inbox Zero was added as a fourth App on 2026-11-09. Its automation is on `main`;
+the App folder lives on `dev-inbox-zero` until the first manual release through
+`promote.yml` (app `inbox-zero`). Before that release: the three GHCR packages
+`inbox-zero-base`, `amd64-inbox-zero` and `aarch64-inbox-zero` must be public,
+`dev-inbox-zero` must be in the ruleset "App development branches", and the App
+must have been installed from the Dev store. `INBOX_ZERO_AUTO_PROMOTE` stays unset
+until that release has proven the chain. Only amd64 was booted locally; aarch64
+is covered by the native runner in `validate-inbox-zero.yml`.
+
 Compare the proposed change with the latest `main` and relevant upstream changes. Review actual tests and unfinished PRs; record verified findings and next steps here with evidence links. Avoid claiming all work is complete from a green documentation check, or adding a repo-wide roadmap merely to populate a template. Leave task-specific history in its existing documents.
