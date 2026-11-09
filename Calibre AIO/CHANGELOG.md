@@ -1,3 +1,7 @@
+# 1.2.32
+
+- Align the App folder with the repository standards: MIT LICENSE for the wrapper, NOTICE.md with packaged versions, README with license badge, troubleshooting, support and license sections, DOCS with one heading per option.
+
 # 1.2.31
 
 - CWA notices (for example the duplicate scan hint) render as one strip right under the bar; the band follows without a gap.

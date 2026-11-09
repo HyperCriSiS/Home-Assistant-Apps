@@ -1,4 +1,4 @@
-# Calibre AIO configuration
+# Calibre AIO documentation
 
 [Deutsch](DOCS.de.md) | English
 
@@ -28,24 +28,10 @@ the selected CWA admin account. Shelfmark keeps separate HA identities.
 
 ## App options
 
-The first **Modern** theme uses restrained graphite surfaces and muted gold
-accents from the Wormhole Connector Modern skin (Designs), derived from PlexTraktSync. Library cards, sort controls and forms use
-less space. Sort criteria use distinct symbols (title, author, added date,
-publication date, series or downloads); a separate arrow indicates direction.
-Alphabetical letters are never mirrored. Hover/focus tooltips retain CWA's
-full descriptions. On phones, the toolbar wraps and touch targets stay larger.
-On desktop, sorting is centered on the title row. List markers and letter
-filters stay in their native positions with compact sizes and an inset gutter.
-On phones, the current page title appears in the top bar. The sorting strip
-scrolls horizontally when its controls do not fit. Navigation section headings
-can be collapsed on either desktop or mobile.
-
-`library_theme: modern` is the default, including for existing configurations.
-Set `library_theme: upstream` and restart the app to use CWA's original theme.
-The theme changes appearance, not library data, sorting logic or permissions.
-Shelfmark retains its native interface; the shared navigation uses matching colors.
+All options with their defaults:
 
 ```yaml
+library_theme: modern
 start_page: library
 library_dir: calibre-aio/library
 ingest_dir: calibre-aio/ingest
@@ -59,34 +45,67 @@ sso:
   auto_create_users: true
 ```
 
-- `start_page`: initial view, `library` (Library, default) or `shelfmark`
-  (Discover). The compact navigation always lists Library first. Restart
-  the app after changing this option, then reopen its web interface.
-- `library_dir`: library path relative to `/share`. The value must be a
-  relative path without `.` or `..` segments; an empty or absolute value stops
-  the app from starting.
-- `ingest_dir`: completed-book handoff path relative to `/share`, with the
-  same rules. It must not be the library folder, lie inside it or contain it,
-  and should not be another app's active download directory.
-- `network_share_mode`: polling instead of filesystem notifications for SMB/NFS.
-- `shelfmark.external_bypass_url`: optional HTTP(S) endpoint of a compatible
-  external browser-challenge service. Leave empty to use the included Chromium
-  and configure the bypass in Shelfmark's settings. A value locks those settings
-  to the external service. This app has no embedded Tor/VPN stack; configure
-  outbound routing separately.
-- `sso.enabled`: must remain `true` in this initial AIO version. Both applications
-  are ingress-only; native standalone login/device clients are not exposed.
-- `sso.admin_username`: HA login name, matched exactly (case-sensitive).
-  Enter the name used to sign in to HA, not the display name or an ID. Empty
-  configuration opens setup; nobody receives administrator access until configured. This option selects the
-  administrator in both applications; other HA users get normal accounts.
-- `sso.admin_account`: name of the existing CWA administrator (default `admin`).
-  The initial CWA database creates this account. A missing or non-admin target
-  prevents CWA from starting. This does not select Shelfmark accounts.
-- `sso.auto_create_users`: create CWA reader accounts for normal HA users.
-  When false, CWA permits only existing bound readers and selected admins.
-  Shelfmark's proxy user provisioning remains controlled by HA identity;
-  this option does not disable its request accounts.
+### `library_theme`
+
+`modern` (default) applies the App's own dark theme with gold accents to CWA; `upstream` keeps CWA's
+original look. Restart the App after changing it. The theme changes appearance only, not library
+data, sorting logic or permissions. Shelfmark keeps its native interface; the shared navigation
+uses matching colors.
+
+### `start_page`
+
+Initial view, `library` (Library, default) or `shelfmark`
+(Discover). The compact navigation always lists Library first. Restart
+the app after changing this option, then reopen its web interface.
+
+### `library_dir`
+
+Library path relative to `/share`. The value must be a
+relative path without `.` or `..` segments; an empty or absolute value stops
+the app from starting.
+
+### `ingest_dir`
+
+Completed-book handoff path relative to `/share`, with the
+same rules. It must not be the library folder, lie inside it or contain it,
+and should not be another app's active download directory.
+
+### `network_share_mode`
+
+Polling instead of filesystem notifications for SMB/NFS.
+
+### `shelfmark.external_bypass_url`
+
+Optional HTTP(S) endpoint of a compatible
+external browser-challenge service. Leave empty to use the included Chromium
+and configure the bypass in Shelfmark's settings. A value locks those settings
+to the external service. This app has no embedded Tor/VPN stack; configure
+outbound routing separately.
+
+### `sso.enabled`
+
+Must remain `true` in this initial AIO version. Both applications
+are ingress-only; native standalone login/device clients are not exposed.
+
+### `sso.admin_username`
+
+HA login name, matched exactly (case-sensitive).
+Enter the name used to sign in to HA, not the display name or an ID. Empty
+configuration opens setup; nobody receives administrator access until configured. This option selects the
+administrator in both applications; other HA users get normal accounts.
+
+### `sso.admin_account`
+
+Name of the existing CWA administrator (default `admin`).
+The initial CWA database creates this account. A missing or non-admin target
+prevents CWA from starting. This does not select Shelfmark accounts.
+
+### `sso.auto_create_users`
+
+Create CWA reader accounts for normal HA users.
+When false, CWA permits only existing bound readers and selected admins.
+Shelfmark's proxy user provisioning remains controlled by HA identity;
+this option does not disable its request accounts.
 
 The app relies on Supervisor's authenticated user ID and login-name headers,
 available in Supervisor 2026.10. It does not trust group headers or need HA API
@@ -165,7 +184,7 @@ If Shelfmark reports a completed download but the book is missing from the
 library, check the subsequent CWA ingest log. `apsw.ReadOnlyError: attempt to
 write a readonly database` means that CWA cannot write the library database;
 the earlier Shelfmark completion only confirms delivery to the ingest folder.
-Version 1.1.4 repairs local library ownership after library initialization,
+The App repairs local library ownership after library initialization,
 including existing installations, and checks write access as UID/GID 911
 before starting CWA. Update and restart the app, then retry the import of the
 affected file. For `network_share_mode: true`, ownership is kept unchanged;
