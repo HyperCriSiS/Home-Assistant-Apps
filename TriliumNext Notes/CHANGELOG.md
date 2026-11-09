@@ -4,7 +4,19 @@
 
 ### Changed
 
-- Updated Trilium from v0.106.1 to v0.107.0.
+- Updated Trilium from v0.106.1 to v0.107.0. Text notes can now compose blocks from other notes, tables support merged cells and sorting, the shared pages and the mobile layout were redesigned, and AI tool calls ask for permission before reading or changing notes. See the [upstream release notes](https://github.com/TriliumNext/Trilium/releases/tag/v0.107.0).
+- The sync protocol moves from 39 to 41. Desktop and mobile clients that sync with this App must be updated to v0.107.0 as well, otherwise sync stops until they match.
+- The database version moves from 240 to 242. Trilium migrates the database on the first start after the update and writes `backup/backup-before-migration.db` into the App data first. An earlier Trilium version cannot open the migrated database, so a rollback means restoring the Home Assistant backup taken before the update.
+
+### Breaking
+
+- The old layout was removed upstream.
+- Multi-level `#sorted` values need a `#` prefix on each name, for example `#sorted="#priority desc, #dueDate"`.
+- ETAPI login requires a TOTP code when TOTP is enabled, and adding a new sync device requires TOTP if one is set.
+
+### Fixed
+
+- Upstream fixes include lost note modifications during sync, failing searches in protected notes on synced instances, and OIDC login behind some reverse proxies.
 
 ## v2026.11.08
 
