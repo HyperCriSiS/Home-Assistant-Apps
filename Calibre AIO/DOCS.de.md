@@ -154,12 +154,18 @@ Hörbuchserver. Audiobookshelf ist nicht enthalten.
 | --- | --- |
 | CWA-Zustand und Kontobindungen | `/data/config` (über `/config`) |
 | Shelfmark-Einstellungen, Konten und Geheimnisse | `/data/shelfmark` |
-| Shelfmark-Zwischenspeicher | `/data/shelfmark-staging` |
+| Shelfmark-Zwischenspeicher und Logs (nicht gesichert) | `/data/shelfmark-staging`, `/data/shelfmark-logs` |
+| Shelfmark-Hörbücher | `/data/shelfmark-audiobooks` |
 | E-Book-Bibliothek | `/share/<library_dir>` |
 | Übergabe fertiger Bücher | `/share/<ingest_dir>` |
 
-HA sichert die privaten App-Daten. Sichere die Bibliothek unter `/share`
-separat oder nimm den Share-Ordner in Deine HA-Sicherung auf. Diese App hat
+Eine HA-Sicherung dieser App enthält nur den privaten Ordner `/data`:
+CWA-Zustand, Shelfmark-Einstellungen und Hörbücher. Shelfmarks Zwischenspeicher
+und Logs sind flüchtig und ausgenommen. Die E-Book-Bibliothek und der
+Übergabeordner liegen unter `/share` und sind nie Teil der App-Sicherung; sie
+gehören zum Ordner **Share** einer HA-Sicherung. Nimm **Share** heraus, wenn
+Du die Bibliothek anderweitig sicherst, oder wähle ihn an, um sie
+einzuschließen. Diese App hat
 einen eigenen Slug und übernimmt nicht die privaten Datenbanken der früheren
 CWA-Testinstallation. Teste mit den getrennten Standardordnern, bevor Du
 vorhandene Bibliotheksdaten kopierst.

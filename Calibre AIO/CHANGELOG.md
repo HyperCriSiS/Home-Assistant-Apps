@@ -1,3 +1,7 @@
+# 1.2.29
+
+- Backups: skip Shelfmark's transient download staging and logs; document that the library and ingest folder under /share are governed by the "Share" folder of an HA backup, not by the App backup.
+
 # 1.2.28
 
 - Sort controls: ascending order (A to Z, oldest first) shows a down arrow, descending an up arrow, matching how a list reads top to bottom.
