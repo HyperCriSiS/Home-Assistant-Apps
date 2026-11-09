@@ -7,6 +7,7 @@
 ![Architecture aarch64](https://img.shields.io/badge/aarch64-supported-success)
 ![Home Assistant](https://img.shields.io/badge/Home%20Assistant-App-41BDF5?logo=homeassistant&logoColor=white)
 ![Ingress](https://img.shields.io/badge/Ingress-SSO-41BDF5)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
 Find books with **Shelfmark** and manage/read them with **Calibre-Web Automated**
 in one Home Assistant App. A shared navigation bar switches between
@@ -98,3 +99,22 @@ instead uses an external service and locks those settings to that service.
 - [Verification](TESTING.md)
 - [Upstream maintenance](UPDATING.md)
 - [Third-party notices](NOTICE.md)
+
+## Troubleshooting
+
+Library imports that fail with a read-only database, SSO sign-in issues and
+backup scope are covered in [DOCS.md](DOCS.md#troubleshooting). The App log
+(Settings, Apps, Calibre AIO, Log) shows both applications and the ingress proxy.
+
+## Support
+
+Open an issue in the
+[repository issue tracker](https://github.com/HyperCriSiS/Home-Assistant-Apps/issues)
+with the App version, the App log and the steps that led to the problem.
+
+## License
+
+The wrapper code in this directory is licensed under the MIT License, see
+[LICENSE](LICENSE). Calibre-Web Automated (GPL-3.0-or-later), Shelfmark (MIT),
+Calibre, kepubify and the original add-on packaging keep their own licenses;
+see [NOTICE.md](NOTICE.md) for the packaged versions and license files.

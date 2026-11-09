@@ -1,4 +1,4 @@
-# Calibre AIO konfigurieren
+# Calibre AIO Dokumentation
 
 Deutsch | [English](DOCS.md)
 
@@ -30,28 +30,10 @@ führt getrennte HA-Identitäten.
 
 ## Optionen
 
-Das Design **Modern** verwendet zurückhaltende Graphitflächen und gedämpfte
-Goldakzente aus dem Modern-Skin des Wormhole Connectors (Designs), abgeleitet
-von PlexTraktSync. Bibliothekskarten, Sortierelemente und Formulare brauchen
-weniger Platz. Sortierkriterien haben eigene Symbole (Titel, Autor,
-Hinzugefügt, Veröffentlichung, Serie oder Downloads); ein separater Pfeil zeigt
-die Richtung. Buchstaben werden nie gespiegelt. Tooltips bei Hover und Fokus
-behalten die vollständigen CWA-Beschreibungen. Auf Telefonen bricht die
-Werkzeugleiste um und die Berührungsflächen bleiben größer. Auf dem Desktop ist
-die Sortierung in der Titelzeile zentriert. Listenmarker und Buchstabenfilter
-bleiben an ihrer nativen Position mit kompakter Größe und eingerücktem Rand.
-Auf Telefonen erscheint der aktuelle Seitentitel in der oberen Leiste. Die
-Sortierleiste scrollt horizontal, wenn ihre Elemente nicht passen.
-Abschnittsüberschriften der Navigation lassen sich auf Desktop und Mobilgerät
-einklappen.
-
-`library_theme: modern` ist der Standard, auch für bestehende Konfigurationen.
-Setze `library_theme: upstream` und starte die App neu, um das Originaldesign
-von CWA zu verwenden. Das Design ändert nur das Aussehen, nicht
-Bibliotheksdaten, Sortierlogik oder Berechtigungen. Shelfmark behält seine
-native Oberfläche; die gemeinsame Navigation verwendet passende Farben.
+Alle Optionen mit ihren Standardwerten:
 
 ```yaml
+library_theme: modern
 start_page: library
 library_dir: calibre-aio/library
 ingest_dir: calibre-aio/ingest
@@ -65,42 +47,75 @@ sso:
   auto_create_users: true
 ```
 
-- `start_page`: Startansicht, `library` (Bibliothek, Standard) oder
-  `shelfmark` (Entdecken). Die kompakte Navigation nennt die Bibliothek immer
-  zuerst. Nach einer Änderung die App neu starten und die Weboberfläche erneut
-  öffnen.
-- `library_dir`: Bibliothekspfad relativ zu `/share`. Der Wert muss ein
-  relativer Pfad ohne `.`- oder `..`-Segmente sein; ein leerer oder absoluter
-  Wert verhindert den Start.
-- `ingest_dir`: Übergabepfad für fertige Bücher relativ zu `/share`, mit
-  denselben Regeln. Er darf weder der Bibliotheksordner sein noch darin liegen
-  oder ihn enthalten, und sollte nicht der aktive Downloadordner einer anderen
-  App sein.
-- `network_share_mode`: regelmäßige Prüfung statt Dateisystemereignissen für
-  SMB/NFS.
-- `shelfmark.external_bypass_url`: optionaler HTTP(S)-Endpunkt eines
-  kompatiblen externen Browser-Challenge-Dienstes. Leer lassen, um das
-  enthaltene Chromium zu nutzen und den Bypass in den Shelfmark-Einstellungen
-  zu konfigurieren. Ein Wert sperrt diese Einstellungen auf den externen
-  Dienst. Die App enthält keinen Tor- oder VPN-Stack; ausgehendes Routing wird
-  separat konfiguriert.
-- `sso.enabled`: muss in dieser AIO-Version `true` bleiben. Beide Anwendungen
-  sind nur über Ingress erreichbar; native Logins und Geräte-Clients werden
-  nicht veröffentlicht.
-- `sso.admin_username`: HA-Anmeldename, exakt und unter Beachtung der
-  Groß-/Kleinschreibung. Den Namen eingeben, mit dem Du Dich bei HA anmeldest,
-  nicht den Anzeigenamen oder eine ID. Leer öffnet die Einrichtung; bis zur
-  Konfiguration erhält niemand Administratorrechte. Diese Option wählt den
-  Administrator in beiden Anwendungen; andere HA-Benutzer erhalten normale
-  Konten.
-- `sso.admin_account`: Name des vorhandenen CWA-Administratorkontos (Standard
-  `admin`). Die erste CWA-Datenbank legt dieses Konto an. Ein fehlendes Konto
-  oder ein Konto ohne Administratorrechte verhindert den Start von CWA. Diese
-  Option wählt keine Shelfmark-Konten.
-- `sso.auto_create_users`: CWA-Lesekonten für normale HA-Benutzer anlegen. Bei
-  `false` erlaubt CWA nur vorhandene gebundene Leser und gewählte
-  Administratoren. Shelfmarks Benutzeranlage über den Proxy bleibt an die
-  HA-Identität gebunden; diese Option schaltet deren Anfragekonten nicht ab.
+### `library_theme`
+
+`modern` (Standard) wendet das eigene dunkle Design der App mit Goldakzenten auf CWA an; `upstream`
+behält das Originaldesign von CWA. Nach einer Änderung die App neu starten. Das Design ändert nur
+das Aussehen, nicht Bibliotheksdaten, Sortierlogik oder Berechtigungen. Shelfmark behält seine
+native Oberfläche; die gemeinsame Navigation verwendet passende Farben.
+
+### `start_page`
+
+Startansicht, `library` (Bibliothek, Standard) oder
+`shelfmark` (Entdecken). Die kompakte Navigation nennt die Bibliothek immer
+zuerst. Nach einer Änderung die App neu starten und die Weboberfläche erneut
+öffnen.
+
+### `library_dir`
+
+Bibliothekspfad relativ zu `/share`. Der Wert muss ein
+relativer Pfad ohne `.`- oder `..`-Segmente sein; ein leerer oder absoluter
+Wert verhindert den Start.
+
+### `ingest_dir`
+
+Übergabepfad für fertige Bücher relativ zu `/share`, mit
+denselben Regeln. Er darf weder der Bibliotheksordner sein noch darin liegen
+oder ihn enthalten, und sollte nicht der aktive Downloadordner einer anderen
+App sein.
+
+### `network_share_mode`
+
+Regelmäßige Prüfung statt Dateisystemereignissen für
+SMB/NFS.
+
+### `shelfmark.external_bypass_url`
+
+Optionaler HTTP(S)-Endpunkt eines
+kompatiblen externen Browser-Challenge-Dienstes. Leer lassen, um das
+enthaltene Chromium zu nutzen und den Bypass in den Shelfmark-Einstellungen
+zu konfigurieren. Ein Wert sperrt diese Einstellungen auf den externen
+Dienst. Die App enthält keinen Tor- oder VPN-Stack; ausgehendes Routing wird
+separat konfiguriert.
+
+### `sso.enabled`
+
+Muss in dieser AIO-Version `true` bleiben. Beide Anwendungen
+sind nur über Ingress erreichbar; native Logins und Geräte-Clients werden
+nicht veröffentlicht.
+
+### `sso.admin_username`
+
+HA-Anmeldename, exakt und unter Beachtung der
+Groß-/Kleinschreibung. Den Namen eingeben, mit dem Du Dich bei HA anmeldest,
+nicht den Anzeigenamen oder eine ID. Leer öffnet die Einrichtung; bis zur
+Konfiguration erhält niemand Administratorrechte. Diese Option wählt den
+Administrator in beiden Anwendungen; andere HA-Benutzer erhalten normale
+Konten.
+
+### `sso.admin_account`
+
+Name des vorhandenen CWA-Administratorkontos (Standard
+`admin`). Die erste CWA-Datenbank legt dieses Konto an. Ein fehlendes Konto
+oder ein Konto ohne Administratorrechte verhindert den Start von CWA. Diese
+Option wählt keine Shelfmark-Konten.
+
+### `sso.auto_create_users`
+
+CWA-Lesekonten für normale HA-Benutzer anlegen. Bei
+`false` erlaubt CWA nur vorhandene gebundene Leser und gewählte
+Administratoren. Shelfmarks Benutzeranlage über den Proxy bleibt an die
+HA-Identität gebunden; diese Option schaltet deren Anfragekonten nicht ab.
 
 Die App verlässt sich auf die authentifizierten Benutzer-ID- und
 Anmeldenamen-Header des Supervisors, verfügbar ab Supervisor 2026.10. Sie
@@ -190,7 +205,7 @@ Wenn Shelfmark einen abgeschlossenen Download meldet, das Buch aber in der
 Bibliothek fehlt, prüfe das anschließende CWA-Importprotokoll.
 `apsw.ReadOnlyError: attempt to write a readonly database` bedeutet, dass CWA
 die Bibliotheksdatenbank nicht schreiben kann; die frühere Shelfmark-Meldung
-bestätigt nur die Zustellung in den Importordner. Version 1.1.4 repariert die
+bestätigt nur die Zustellung in den Importordner. Die App repariert die
 Besitzrechte lokaler Bibliotheken nach der Initialisierung, auch bei
 bestehenden Installationen, und prüft den Schreibzugriff als UID/GID 911 vor
 dem Start von CWA. Aktualisiere die App, starte sie neu und wiederhole den
