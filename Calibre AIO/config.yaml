@@ -1,24 +1,37 @@
 name: "Calibre AIO"
-description: "Shelfmark book discovery and Calibre library management in one interface"
-version: "0.1.2"
-stage: experimental
+description: "CWA v4.0.8 and Shelfmark v1.6.1 - Book discovery and Calibre library management in one interface"
+version: "v2026.11.09"
 slug: "calibre-aio"
+url: "https://github.com/HyperCriSiS/Home-Assistant-Apps/tree/main/Calibre%20AIO"
+image: "ghcr.io/hypercrisis/{arch}-calibre-aio"
 init: false
 arch:
   - aarch64
   - amd64
-icon: false
-url: "https://github.com/HyperCriSiS/Home-Assistant-Apps/tree/main/Calibre%20AIO"
 panel_icon: "mdi:bookshelf"
 panel_title: "Calibre AIO"
 panel_admin: false
-startup: services
+startup: application
+boot: auto
+watchdog: "http://[HOST]:[PORT:8084]/health"
+# Stop the app during backups so its SQLite databases are captured consistently.
+# The library and the ingest folder live under /share and are governed by the
+# "Share" folder of an HA backup, not by this App's backup. Shelfmark's
+# download staging and logs are transient, and CWA's processed_books holds
+# zipped copies of books that already sit in the library; both are skipped.
+backup: cold
+backup_exclude:
+  - "shelfmark-staging/*"
+  - "shelfmark-logs/*"
+  - "config/processed_books/*"
 ingress: true
+ingress_stream: true
 ingress_port: 8084
 ports: {}
 map:
   - share:rw
 options:
+  library_theme: "modern"
   start_page: "library"
   library_dir: "calibre-aio/library"
   ingest_dir: "calibre-aio/ingest"
@@ -31,6 +44,7 @@ options:
     admin_account: "admin"
     auto_create_users: true
 schema:
+  library_theme: "list(modern|upstream)"
   start_page: "list(library|shelfmark)"
   library_dir: "str"
   ingest_dir: "str"
@@ -42,4 +56,3 @@ schema:
     admin_username: "str"
     admin_account: "str"
     auto_create_users: "bool"
-image: "ghcr.io/hypercrisis/{arch}-calibre-aio"

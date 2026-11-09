@@ -2,6 +2,16 @@
 
 ## Automated checks
 
+`browser-theme.cjs` renders the pinned upstream CWA templates and native scripts
+with a small offline sample library. At 1440px, 1920px and 390px it checks real sort-link
+navigation, active state, readable A–Z labels, distinct arrow directions,
+accessible labels, unclipped controls and the mobile hamburger drawer. Set
+`CWA_SOURCE` to the pinned checkout and `PLAYWRIGHT_MODULE` to Playwright's module.
+Optional `AIO_THEME_SCREENSHOTS` stores desktop/mobile evidence outside the repository.
+The container probes additionally verify authenticated theme assets and ingress
+prefixes against the real CWA process on both architectures. `library_theme:
+upstream` is covered by launcher tests; no upstream templates are patched on disk.
+
 ```sh
 python -m pip install -r 'Calibre AIO/tests/requirements.txt'
 python 'Calibre AIO/scripts/upstreams.py' check
@@ -23,15 +33,31 @@ without manually creating `/config` or starting services. A minimal Supervisor
 HTTP fixture supplies the ingress entry. The production ingress ACL stays
 unchanged, and requests originate from the fixture at `172.30.32.2`. The test
 checks both applications after first boot and restart with persistent volumes.
+It also delivers a generated EPUB to the running unprivileged ingest watcher
+and verifies the final library entry. Before restart it makes `metadata.db`
+root-owned to exercise repair of an existing installation. The separate root
+Linux permission regression reproduces the original symlink/chown failure,
+checks real SQLite writes as an unprivileged user, and covers nested libraries,
+read-only files/directories, network-share ownership and internal symlinks.
 
 ## Live HAOS acceptance
 
 1. Add the repository (or the PR branch for pre-merge tests), install
    **Calibre AIO** and verify the app
    name/version. Use the default separate `calibre-aio/` test folders.
-2. Set `sso.admin_username` to the test administrator's HA login name and start
-   the app. Open the interface with that account. Both tabs must work without
-   another login; confirm Shelfmark settings and CWA admin access.
+2. Leave `sso.admin_username` empty and start the app. A normal HA user must
+   not trigger setup writes. Open the interface inside HA with the test HA
+   administrator: setup must save that account's login name and restart without
+   a button click. The interface must reload automatically after both backends
+   become ready. Both tabs must work without another
+   login; confirm Shelfmark settings and CWA admin access. Also verify the manual
+   login-name fallback and that an existing administrator is never replaced.
+   In Shelfmark, click Go To Library and confirm CWA opens inside the shared
+   workspace with the AIO navigation still visible and no new tab.
+   Upload a permitted ebook larger than 16 MiB (for example 25 MiB) through
+   the real HA Ingress path; it must not fail with Supervisor's 16 MiB limit.
+   CI checks the streaming manifest flag and byte-for-byte proxy delivery;
+   the real HA Supervisor upload remains part of this operator check.
 3. Check a normal HA user gets its own Shelfmark request account and CWA
    reader account. Try a second HA admin (a normal app user unless selected)
    and a same-browser user switch. Change `sso.admin_username`, restart the app
@@ -54,4 +80,6 @@ checks both applications after first boot and restart with persistent volumes.
 
 Real provider accounts and live HAOS behavior cannot be certified by unit
 tests. Record HAOS/Supervisor versions, architecture and results in the PR.
-The initial release remains experimental until these checks have passed.
+Run these checks before every manual release of non-automated changes.
+Automated upstream pin updates are released after the gates described in
+[UPDATING.md](UPDATING.md).

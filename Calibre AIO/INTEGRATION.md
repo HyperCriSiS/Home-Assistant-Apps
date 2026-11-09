@@ -1,5 +1,10 @@
 # Calibre AIO integration plan
 
+This document records the original integration plan and its acceptance history.
+The current behavior is described in [README.md](README.md), [DOCS.md](DOCS.md),
+[TESTING.md](TESTING.md) and [UPDATING.md](UPDATING.md); the current upstream
+pins are in `upstream.json`.
+
 ## Starting point
 
 Copy of `calibre-web-automated/` from
@@ -12,7 +17,8 @@ Supervisor options permission fix. Original add-on attribution is retained.
 
 1. Give the new app its own `calibre-aio` slug, version, data directories and
    store entry. Existing CWA installations are not migrated or overwritten.
-2. Pin CWA v4.0.6 and Shelfmark v1.4.0. Build their frontends/dependencies at
+2. Pin CWA and Shelfmark releases in `upstream.json` (initially CWA v4.0.6
+   and Shelfmark v1.4.0; see the manifest for the current pins). Build their frontends/dependencies at
    image build time. Keep CWA's Python environment and Shelfmark's Python 3.14
    environment independent on the official HA Debian base.
 3. Supervise CWA and Shelfmark independently with s6. Bind both backends to
@@ -44,14 +50,15 @@ Supervisor options permission fix. Original add-on attribution is retained.
 - All-in-one packaging and interface, not a replacement for either upstream UI.
 - Ingress SSO is required for this initial AIO version. Native login/device
   sync endpoints do not become an additional network entry point.
-- Start with Shelfmark's core download stack (including Real-Debrid). Sources
-  requiring browser-based challenge handling need the supported external
-  bypass service; do not embed an outdated pinned Chromium merely to hide
-  this dependency. Document this limitation in the app UI/docs.
-- Do not modify other apps or generated `dev-store`. Publish the new app on
-  its feature branch for testing and prepare a draft PR before promotion.
+- Start with Shelfmark's core download stack (including Real-Debrid). The
+  initial version required an external browser-challenge service. Since 1.1.0
+  the image bundles the Chromium build pinned by Shelfmark's own Dockerfile,
+  and `shelfmark.external_bypass_url` is optional.
+- Do not modify other apps or generated `dev-store`. Develop on `dev-calibre`;
+  shared automation publishes Calibre AIO (Dev). Promote to `main` separately
+  after operator testing.
 
-## Verification record
+## Verification record (initial acceptance, app revision 0.1.x)
 
 - The application, shared interface, HA adapters and update automation are
   implemented on `feature/calibre-aio`; draft PR #103 tracks acceptance.
@@ -68,3 +75,39 @@ Supervisor options permission fix. Original add-on attribution is retained.
 
 Full HAOS acceptance and authenticated Real-Debrid downloads require a real
 installation and operator credentials; automated tests must not claim those.
+
+## Development history (0.1.x)
+
+- German/English HA option labels and AIO navigation/setup are implemented.
+- Empty administrator configuration now opens setup without granting admin.
+  Automatic setup uses the signed-in HA administrator's permission-checked
+  auth-list and app-options APIs; the app receives no extra HA API permission.
+- Local adapter suite: 58 tests, with 5 Linux/root checks skipped on Windows.
+  Browser regression covers admin setup, denied access, normal users, restart
+  failure, missing HA context, both languages and compact mobile navigation.
+- Native image builds and real s6 boot/restart remain required in CI for this
+  candidate. Actual frontend embedding in the user's HA installation remains
+  operator acceptance; manual login-name configuration stays available.
+
+### Administrator setup correction (0.1.4)
+
+- Replaced unsupported REST app-management calls with the native HA frontend's
+  `supervisor/api` WebSocket messages. Responses are unwrapped by HA; successful
+  writes need not return a result wrapper. The previous mock incorrectly accepted
+  REST calls and wrapped responses, so its green result did not cover this bug.
+- Setup runs automatically only for an HA administrator on an unconfigured
+  installation, preserves an assignment found during the fresh options read,
+  and identifies the failed step without exposing raw API errors or credentials.
+- Browser regression now rejects the old REST transport and covers automatic
+  setup, denied identity/write access, restart failure, existing assignment,
+  unavailable login/context, normal users and German/English navigation.
+
+### Navigation and setup completion (0.1.5)
+
+- The deployment shell handles same-origin links from Shelfmark to its own
+  CWA library inside the workspace; upstream sources remain unmodified.
+- Successful setup polls the uncached shell and both backends before reload.
+  Temporary connection errors are retried; polling is bounded and never
+  resubmits setup options or restarts the app again.
+- Browser regression covers the native target=_blank library link and
+  automatic reload through a temporary ingress startup failure.

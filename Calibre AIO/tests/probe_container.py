@@ -45,6 +45,14 @@ status, body, _ = get('/shelfmark/', ADMIN)
 assert status == 200 and b'/api/hassio_ingress/aio-test/shelfmark/' in body
 status, body, headers = get('/library/', ADMIN)
 assert status == 200 and b'/api/hassio_ingress/aio-test/library' in body
+assert b'class="aio-modern"' in body
+assert b'css/caliBlur.css' not in body, 'caliBlur stylesheet must not load'
+assert b'class="aio-back"' in body, 'back arrow missing'
+assert b'/api/hassio_ingress/aio-test/library/aio-theme/modern.css' in body
+for asset in ('modern.css', 'modern.js'):
+    assert get('/library/aio-theme/' + asset, ADMIN)[0] == 200
+    assert get('/library/aio-theme/' + asset, READER)[0] == 200
+    assert get('/library/aio-theme/' + asset)[0] == 403
 assert get('/library/', READER)[0] == 200
 status, body, _ = get('/shelfmark/api/auth/check', ADMIN)
 assert status == 200, (status, body)

@@ -11,3 +11,6 @@ This repository does not currently have a dedicated root `ROADMAP.md`; this inde
 - [Calibre AIO upstream maintenance](../Calibre%20AIO/UPDATING.md)
 - [MCPHub prebuilt image publication](engineering/MCPHUB-IMAGES.md)
 - [App automation contract and new-App checklist](engineering/APP-AUTOMATION.md)
+- [App standards: folder layout, manifest, README, DOCS, changelog](engineering/APP-STANDARDS.md)
+- [Calibre AIO theme notes](../Calibre%20AIO/THEME.md)
+- [Calibre AIO verification](../Calibre%20AIO/TESTING.md)
