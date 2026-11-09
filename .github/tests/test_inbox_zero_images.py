@@ -48,7 +48,7 @@ class InboxZeroImagesTest(unittest.TestCase):
             sorted(item['arch'] for item in base['jobs']['build']['strategy']['matrix']['include']),
             ['amd64', 'arm64'])
         # actions/checkout fails on the fork's submodule path without a URL.
-        self.assertNotIn('actions/checkout', text)
+        self.assertNotIn('uses: actions/checkout', text)
         self.assertIn('[[ "$(git rev-parse HEAD)" == "$COMMIT" ]]', text)
         _, validate = workflow('validate-inbox-zero.yml')
         self.assertEqual(validate['jobs']['base']['uses'], './.github/workflows/build-inbox-zero-base.yml')

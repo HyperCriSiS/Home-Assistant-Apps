@@ -69,8 +69,6 @@ jobs:
       # Plain git instead of actions/checkout: the fork tracks a submodule path
       # without a .gitmodules entry, which makes the action's cleanup fail.
       - name: Fetch the fork at the pinned commit
-        env:
-          COMMIT: ${{ inputs.commit }}
         run: |
           set -euo pipefail
           git init --quiet .
