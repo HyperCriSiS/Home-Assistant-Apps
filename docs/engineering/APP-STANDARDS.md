@@ -13,6 +13,7 @@ complete example, MCPHub the most complete one.
 | --- | --- | --- |
 | `config.yaml` | yes | Home Assistant App manifest (see below) |
 | `build.yaml` | if the image is built from a pinned base | Pinned `build_from` per architecture |
+| `publish-<app>-images.yml` (in `.github/workflows`) | yes | Builds, tests and publishes immutable version tags to GHCR; `image:` in `config.yaml` points at them, Home Assistant never builds locally |
 | `Dockerfile` | yes | Build of the App image |
 | `README.md` | yes | Installation and overview for the GitHub and store page (see skeleton) |
 | `DOCS.md` | yes | Configuration reference shown in the Home Assistant "Documentation" tab |

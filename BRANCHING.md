@@ -45,8 +45,11 @@ Old repository URLs are kept operational by GitHub redirects after the rename. F
 
 The generator adds `(Dev)`, `-dev.<run>`, and `stage: experimental` metadata so test installations are clearly distinguishable.
 
-MCPHub versions use prebuilt images. The generator tests and publishes both
+Every App uses prebuilt images. The generator tests and publishes both
 architectures and verifies anonymous access before pushing the Dev store.
+Trilium publishes `ghcr.io/hypercrisis/{arch}-trilium:<version>` the same way
+Calibre does (see below); the common rules are in
+[docs/engineering/APP-AUTOMATION.md](docs/engineering/APP-AUTOMATION.md#prebuilt-images).
 Release-candidate validation publishes stable images before the main merge;
 main verifies the existing immutable tag. See [MCPHub image publication](docs/engineering/MCPHUB-IMAGES.md)
 for the initial package visibility setup and rollout order.

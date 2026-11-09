@@ -12,6 +12,9 @@ command -v "${HA_CLI%% *}" >/dev/null
 rm -rf "${TARGET_DIR}"
 mkdir -p "${TARGET_DIR}"
 rsync -a --delete "TriliumNext Notes/" "${TARGET_DIR}/"
+# Source tests must build the selected commit, including unreleased PRs
+# without a published image. Only this disposable local copy loses image:.
+sed -i '/^image:/d' "${TARGET_DIR}/config.yaml"
 
 ${HA_CLI} addons reload
 

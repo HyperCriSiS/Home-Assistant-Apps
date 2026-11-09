@@ -31,7 +31,7 @@ only on a development branch never runs on its schedule.
 | Due-update merge check | hourly, `23 * * * *` | `merge-due-updates.yml` |
 | Minimum upstream release age | 48 hours | `auto_promote_*.py` `RELEASE_AGE` |
 | Soak time on `dev-<app>` before release | 36 hours after the newest update reached the branch | `auto_promote_*.py` `SOAK` |
-| Distance to the previous stable release | 24 hours (MCPHub only, images are published on release) | `auto_promote_mcphub.py` `COOLDOWN` |
+| Distance to the previous stable release | 24 hours (MCPHub only) | `auto_promote_mcphub.py` `COOLDOWN` |
 | Promotion check | every 3 hours, offset per App (`13`, `43`) | `auto-promote-*.yml` |
 | Promotion switch | repository variable `<APP>_AUTO_PROMOTE=true` | repository settings, variables |
 | Pause one PR | label `hold` on the update or release PR | GitHub labels |
@@ -47,13 +47,34 @@ then skips silently every three hours until a manual release has been made.
 
 | App | Updater | Merge into dev | Auto-promote | Images |
 | --- | --- | --- | --- | --- |
-| Trilium Notes | `update-trilium.yml` | yes | `auto-promote-trilium.yml`, `TRILIUM_AUTO_PROMOTE` | built by Home Assistant |
+| Trilium Notes | `update-trilium.yml` | yes | `auto-promote-trilium.yml`, `TRILIUM_AUTO_PROMOTE` | published to GHCR before the merge |
 | MCPHub | `update-mcphub.yml`, `update-mcphub-tunnel-clients.yml` | yes | `auto-promote-mcphub.yml`, `MCPHUB_AUTO_PROMOTE` | published to GHCR before the merge |
 | Calibre AIO | `update-calibre-aio.yml` | on `dev-calibre` only | `auto-promote-calibre.yml`, `CALIBRE_AUTO_PROMOTE`, on `dev-calibre` only | published to GHCR before the merge |
 
 "On `dev-calibre` only" means the files exist on the development branch but not
 yet on `main`. They become active with the next manual Calibre release and the
 variable `CALIBRE_AUTO_PROMOTE=true`.
+
+## Prebuilt images
+
+Every App installs a prebuilt image from GHCR. Home Assistant must never build
+an App on the host: the Supervisor exports a locally built image into every
+backup (several hundred megabytes per App) and rebuilds it on every update.
+
+- `config.yaml` carries `image:` (`ghcr.io/hypercrisis/{arch}-<app>` per
+  architecture, or one multi-arch manifest as MCPHub does).
+- `publish-<app>-images.yml` builds both architectures from the exact
+  candidate, runs an acceptance check on the built artifact, pushes immutable
+  version tags and verifies anonymous access. An existing tag is never replaced
+  with different content; the App version must be bumped instead.
+- The tag is published before anything advertises it: `sync-dev-store.yml`
+  pushes `dev-store` only after every publisher succeeded, `promote.yml`
+  publishes before the release PR exists, and `auto-promote-<app>.yml` refuses
+  the merge while the tag is not public.
+- A new GHCR package is private after its first push. Set it to public once,
+  otherwise the anonymous-access check fails on purpose.
+- Source tests on Home Assistant OS remove `image:` only from their disposable
+  local copy, so unreleased commits are still built and tested.
 
 ## Checklist for a new App
 
@@ -83,9 +104,11 @@ and shape the folder after [APP-STANDARDS.md](APP-STANDARDS.md).
    does not collide with the other Apps.
 7. Add the App to `promote.yml` (`workflow_dispatch` choice and `workflow_run`
    list) for manual releases.
-8. If the App installs prebuilt images: a `publish-<app>-images.yml`
-   `workflow_call` used by `sync-dev-store.yml`, `promote.yml` and
-   `auto-promote-<app>.yml`, and `image:` in `config.yaml`.
+8. Add `publish-<app>-images.yml` as a `workflow_call` used by
+   `sync-dev-store.yml` (the Dev store waits for it), `promote.yml` and
+   `auto-promote-<app>.yml` (the merge requires the public tag), and
+   `image:` in `config.yaml`. Every App installs prebuilt images; see
+   [Prebuilt images](#prebuilt-images).
 9. Set the repository variable `<APP>_AUTO_PROMOTE=true` only after the first
    manual release has proven the chain.
 10. Add the App row to this page and to the README table.
