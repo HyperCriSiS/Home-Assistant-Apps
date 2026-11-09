@@ -27,7 +27,7 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
   if(u.pathname==='/library/'||u.pathname==='/library') {const body=execFileSync(process.env.PYTHON || 'python3',['-X','utf8',path.join(__dirname,'theme_fixture.py'),u.searchParams.get('sort_param')||'abc',u.searchParams.get('scenario')||'books'],{encoding:'utf8'});return route.fulfill({contentType:'text/html; charset=utf-8',headers:{'Referrer-Policy':'no-referrer'},body});}
   return route.fulfill({contentType:'application/json',body:'{}'});
  });
- for(const scenario of ['authors','publishers','books','books-paged','books-many','books-read','books-random','magic','series-grid','series-grid-many','duplicates','no-sidebar']) {
+ for(const scenario of ['authors','publishers','books','books-paged','books-many','books-read','books-random','books-notice','magic','series-grid','series-grid-many','duplicates','no-sidebar']) {
   let release;themeGate=new Promise(resolve=>{release=resolve;});
   await page.goto(`https://calibre.test/library/?scenario=${scenario}`,{waitUntil:'commit'});
   await page.locator('.aio-page-header').waitFor({state:'visible'});
@@ -83,6 +83,16 @@ for(const width of (process.env.AIO_THEME_WIDTHS || '1440,1920,390,320').split('
    assert(badge.width<=22&&badge.height<=22,'Read marker must stay small');
    assert(badge.x>=cover.x&&badge.y+badge.height<=cover.y+cover.height+1&&badge.y>cover.y+cover.height/2,'Read marker sits inside the lower left of the cover');
    assert.equal(await badges.first().evaluate(el=>getComputedStyle(el).borderRadius),'50%');
+  }
+  if(scenario==='books-notice') {
+   // A CWA notice is a strip right under the bar; the band follows it without a gap.
+   const bar=width>=768?60:48,notice=await page.locator('body > .row-fluid.text-center > .alert:visible').boundingBox(),band=await page.locator('.aio-page-header').boundingBox();
+   assert(Math.abs(notice.y-bar)<1,`Notice must start under the bar: ${notice.y}`);
+   assert(notice.height<=(width>=768?48:120),`Notice stays compact: ${notice.height}`);
+   assert(Math.abs(band.y-notice.y-notice.height)<1,`Band must follow the notice directly: ${band.y} vs ${notice.y+notice.height}`);
+   const mainBox=await page.locator('.aio-main').boundingBox();assert(Math.abs(notice.x-mainBox.x)<1&&Math.abs(notice.width-mainBox.width)<1,'Notice spans the content width');
+   const close=await page.locator('body > .row-fluid.text-center > .alert:visible > .close').boundingBox();
+   assert(Math.abs(close.y+close.height/2-notice.y-notice.height/2)<2,'Close button centered in the notice');
   }
   if(scenario==='books-random') {
    // Four random picks sit above the library as a labeled section, so their

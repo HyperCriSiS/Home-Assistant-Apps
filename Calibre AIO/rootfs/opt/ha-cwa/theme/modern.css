@@ -29,6 +29,21 @@ html.aio-modern {
 .aio-modern a { color: var(--aio-accent); }
 .aio-modern body h1, .aio-modern body h2, .aio-modern body h3, .aio-modern body h4 { color: var(--aio-text); }
 .aio-modern .row-fluid.text-center { margin-top: 0; }
+/* CWA notices (flash messages) are body-level rows above the content: show
+   them as one strip under the bar beside the sidebar, so the band follows
+   without a gap. */
+.aio-modern body > .row-fluid.text-center { margin: 0; }
+.aio-modern body:has(.row-fluid > .col-sm-2) > .row-fluid.text-center { margin-left: var(--aio-sidebar-width); }
+.aio-modern body > .row-fluid.text-center > .alert {
+  position: relative;
+  margin: 0;
+  padding: 10px 48px 10px 16px;
+  border-width: 0 0 1px;
+  border-radius: 0;
+  font-size: 13px;
+  line-height: 20px;
+}
+.aio-modern body > .row-fluid.text-center > .alert > .close { position: absolute; top: 50%; right: 16px; transform: translateY(-50%); }
 /* Bootstrap's input[type=file] rule would otherwise beat the hidden attribute. */
 .aio-modern [hidden] { display: none !important; }
 .aio-modern a:focus-visible, .aio-modern button:focus-visible, .aio-modern summary:focus-visible,
@@ -777,6 +792,9 @@ html.aio-modern {
   .aio-modern .row-fluid > .col-sm-10.aio-main, .aio-modern .row-fluid > .col-sm-2 + .col-sm-10.aio-main { margin-left: 0; padding: 0 12px 20px; }
   .aio-modern .aio-main:not(:has(> .aio-page-header))::before { display: none; }
   .aio-modern .row-fluid > .col-sm-10.aio-main:not(:has(> .aio-page-header)) { padding-top: 22px; }
+  .aio-modern body:has(.row-fluid > .col-sm-2) > .row-fluid.text-center { margin-left: 0; }
+  .aio-modern body > .row-fluid.text-center > .alert { padding: 8px 44px 8px 12px; }
+  .aio-modern body > .row-fluid.text-center > .alert > .close { right: 12px; }
   .aio-modern .aio-page-header {
     display: block;
     min-height: 0;
