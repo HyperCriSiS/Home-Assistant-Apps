@@ -153,6 +153,7 @@ Hörbuchserver. Audiobookshelf ist nicht enthalten.
 | Daten | Containerpfad |
 | --- | --- |
 | CWA-Zustand und Kontobindungen | `/data/config` (über `/config`) |
+| CWA-Kopien importierter und reparierter Bücher (nicht gesichert) | `/data/config/processed_books` |
 | Shelfmark-Einstellungen, Konten und Geheimnisse | `/data/shelfmark` |
 | Shelfmark-Zwischenspeicher und Logs (nicht gesichert) | `/data/shelfmark-staging`, `/data/shelfmark-logs` |
 | Shelfmark-Hörbücher | `/data/shelfmark-audiobooks` |
@@ -168,7 +169,11 @@ Hörbuchserver. Audiobookshelf ist nicht enthalten.
 > sie anderweitig sicherst.
 
 Shelfmarks Zwischenspeicher und Logs sind flüchtig und von der App-Sicherung
-ausgenommen. Diese App hat
+ausgenommen, ebenso CWAs Ordner `processed_books`: Er enthält ZIP-Kopien
+importierter, konvertierter und reparierter Bücher, die bereits in der
+Bibliothek liegen, und kann auf mehrere Gigabyte wachsen. Wer diese Kopien gar
+nicht möchte, schaltet in den CWA Settings die automatischen Sicherungen von
+Importen und Konvertierungen ab. Diese App hat
 einen eigenen Slug und übernimmt nicht die privaten Datenbanken der früheren
 CWA-Testinstallation. Teste mit den getrennten Standardordnern, bevor Du
 vorhandene Bibliotheksdaten kopierst.

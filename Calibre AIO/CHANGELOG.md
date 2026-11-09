@@ -1,3 +1,7 @@
+# 1.2.30
+
+- Backups: skip CWA's processed_books folder (zipped copies of imported, converted and fixed books that already sit in the library).
+
 # 1.2.29
 
 - Backups: skip Shelfmark's transient download staging and logs; document that the library and ingest folder under /share are governed by the "Share" folder of an HA backup, not by the App backup; the start-up log repeats the hint.
