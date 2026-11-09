@@ -1,5 +1,11 @@
 # Changelog
 
+## v2026.11.09
+
+### Changed
+
+- Updated Trilium from v0.106.1 to v0.107.0.
+
 ## v2026.11.08
 
 Trilium itself stays at v0.106.1.
