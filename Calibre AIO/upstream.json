@@ -1,17 +1,25 @@
 {
   "cwa": {
     "repository": "crocodilestick/Calibre-Web-Automated",
-    "version": "v4.0.6",
-    "commit": "1b80f9a74b3db1fe9b35978e38d2e62fcb6a7246",
-    "sha256": "19a5d0825d28f5fba9310b415c0eda91e76038e3534fb4c5d8189070876eb342"
+    "version": "v4.0.8",
+    "commit": "3ce7bf80c8c66485eec7218c6b6c3fef8e6e6ba5",
+    "sha256": "a4364ed3a07058c253bccd6271db856b7fbadd67fbdbb46009a25a200757c1b5"
   },
   "shelfmark": {
     "repository": "calibrain/shelfmark",
-    "version": "v1.4.0",
-    "commit": "d2b4a0290ec118c541803f31329d6e89e5fe9701",
-    "sha256": "6a45e9401b438860a82b99c39a747bcefd8258be7305669ab4497a71c2eb699a"
+    "version": "v1.6.1",
+    "commit": "ed0777a2e0614dcb3104b123bc13ebdf41caf463",
+    "sha256": "c0bd1074e12bef80bd1a53469051c0e8ca5e1367ebb4bc2956b51a75a2e05512"
   },
   "calibre": "9.1.0",
   "kepubify": "v4.0.4",
-  "shelfmark_python": "3.14.7"
+  "shelfmark_python": "3.14.9",
+  "calibre_sha256": {
+    "x86_64": "93a2d3104933366a50b03f8a2ff3889dc16b9c1d739ad22055e95ea35b03c1df",
+    "arm64": "ca1261b71030390d6316fe6e3f722247f05670eec845bcefb62d8c0b1d1478cb"
+  },
+  "kepubify_sha256": {
+    "linux-64bit": "37d7628d26c5c906f607f24b36f781f306075e7073a6fe7820a751bb60431fc5",
+    "linux-arm64": "5a15b8f6f6a96216c69330601bca29638cfee50f7bf48712795cff88ae2d03a3"
+  }
 }

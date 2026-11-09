@@ -3,6 +3,8 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
+from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'rootfs/opt/ha-cwa'))
 from ha_admin import is_configured_admin, AdminBindingUnavailable
@@ -38,8 +40,16 @@ class AdminNameTest(unittest.TestCase):
         with self.assertRaises(AdminBindingUnavailable):
             is_configured_admin('a' * 32, 'admin', 'admin', self.path / 'missing.db')
 
-    def test_aio_requires_a_name_before_privilege_drop_or_app_import(self):
+    def test_empty_name_starts_unprivileged_without_granting_admin(self):
         source = Path(self.temp.name) / 'options.json'
         source.write_text('{"sso":{"enabled":true}}')
-        with self.assertRaisesRegex(ValueError, 'sso.admin_username'):
-            launch.load_options_and_drop_privileges(str(source))
+        account = SimpleNamespace(pw_name='abc', pw_gid=1000, pw_uid=1000)
+        with (patch.dict(sys.modules, {'pwd': SimpleNamespace(getpwnam=lambda _: account)}),
+              patch.object(launch.os, 'initgroups', create=True),
+              patch.object(launch.os, 'setgid', create=True) as gid,
+              patch.object(launch.os, 'setuid', create=True) as uid):
+            options = launch.load_options_and_drop_privileges(str(source))
+            self.assertEqual(options['admin_username'], '')
+            gid.assert_called_once_with(1000)
+            uid.assert_called_once_with(1000)
+        self.assertFalse(is_configured_admin('a' * 32, 'admin', '', self.path))

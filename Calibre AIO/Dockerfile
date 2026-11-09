@@ -12,12 +12,17 @@ ARG KEPUBIFY_RELEASE
 # third-party one.
 # ==============================================================================
 FROM ${BUILD_FROM} AS build
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 ARG CWA_VERSION
 ARG CWA_REF
 ARG CWA_SHA256
 ARG CALIBRE_RELEASE
 ARG KEPUBIFY_RELEASE
+ARG CALIBRE_SHA256_X86_64
+ARG CALIBRE_SHA256_ARM64
+ARG KEPUBIFY_SHA256_64BIT
+ARG KEPUBIFY_SHA256_ARM64
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -54,24 +59,28 @@ RUN python3 -m venv /opt/cwa-venv \
 # kepubify: static binary release, converts EPUB to KEPUB for Kobo devices
 RUN set -eu; \
     case "$(uname -m)" in \
-        x86_64)  kbin=kepubify-linux-64bit ;; \
-        aarch64) kbin=kepubify-linux-arm64 ;; \
+        x86_64)  kbin=kepubify-linux-64bit; ksum="${KEPUBIFY_SHA256_64BIT}" ;; \
+        aarch64) kbin=kepubify-linux-arm64; ksum="${KEPUBIFY_SHA256_ARM64}" ;; \
         *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;; \
     esac; \
     curl -fsSL -o /usr/bin/kepubify \
         "https://github.com/pgaskin/kepubify/releases/download/${KEPUBIFY_RELEASE}/${kbin}" \
+    && echo "${ksum}  /usr/bin/kepubify" | sha256sum -c - \
     && chmod +x /usr/bin/kepubify
 
 # Calibre: official self-contained Linux binary release (bundles its own Qt/Python)
 RUN set -eu; \
     case "$(uname -m)" in \
-        x86_64)  carch=x86_64 ;; \
-        aarch64) carch=arm64 ;; \
+        x86_64)  carch=x86_64; csum="${CALIBRE_SHA256_X86_64}" ;; \
+        aarch64) carch=arm64; csum="${CALIBRE_SHA256_ARM64}" ;; \
         *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;; \
     esac; \
     mkdir -p /app/calibre; \
-    curl -fsSL "https://download.calibre-ebook.com/${CALIBRE_RELEASE}/calibre-${CALIBRE_RELEASE}-${carch}.txz" \
-        | tar -xJ -C /app/calibre
+    curl -fsSL -o /tmp/calibre.txz \
+        "https://download.calibre-ebook.com/${CALIBRE_RELEASE}/calibre-${CALIBRE_RELEASE}-${carch}.txz" \
+    && echo "${csum}  /tmp/calibre.txz" | sha256sum -c - \
+    && tar -xJ -C /app/calibre -f /tmp/calibre.txz \
+    && rm /tmp/calibre.txz
 
 RUN printf '%s' "${CWA_VERSION}" > /app/CWA_RELEASE \
     && printf '%s' "${CALIBRE_RELEASE}" > /CALIBRE_RELEASE
@@ -84,9 +93,10 @@ RUN for service in cwa-init cwa-auto-library cwa-auto-zipper cwa-checksum-backfi
     done
 
 
-FROM ghcr.io/astral-sh/uv:0.12.19@sha256:04d046b13e60d6bcec73cbc5e1cad25d680dea90c8573340950a0ac2d1aef424 AS uv
+FROM ghcr.io/astral-sh/uv:0.13.6@sha256:af22a52f5eafef3d78e551599d405c02df61919d18028f0cea8eda93bc9986d0 AS uv
 
 FROM build AS shelfmark-build
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG SHELFMARK_REF
 ARG SHELFMARK_SHA256
 ARG SHELFMARK_PYTHON
@@ -99,7 +109,10 @@ RUN mkdir -p /app/shelfmark \
     && rm /tmp/shelfmark.tar.gz \
     && uv python install "${SHELFMARK_PYTHON}"
 WORKDIR /app/shelfmark
-RUN uv sync --locked --no-default-groups --python "${SHELFMARK_PYTHON}"
+RUN uv sync --locked --no-default-groups --extra browser --python "${SHELFMARK_PYTHON}"
+# Same Xlib namespace fix as Shelfmark's own image: without it every internal
+# Cloudflare bypass fails at browser startup.
+RUN uv pip uninstall --python .venv/bin/python python3-xlib     && uv pip install --python .venv/bin/python --reinstall python-xlib==0.33     && .venv/bin/python -c "import Xlib.X; assert hasattr(Xlib.X, 'FamilyServerInterpreted')"
 
 FROM node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS shelfmark-frontend
 WORKDIR /frontend
@@ -109,16 +122,15 @@ COPY --from=shelfmark-build /app/shelfmark/src/frontend/ ./
 RUN npm run build
 
 FROM ${BUILD_FROM}
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 ARG CWA_VERSION
-ARG BUILD_VERSION
 
 # Labels
 LABEL \
     io.hass.name="Calibre AIO" \
     io.hass.description="Shelfmark discovery and Calibre-Web Automated library" \
     io.hass.type="addon" \
-    io.hass.version="${BUILD_VERSION}" \
     org.opencontainers.image.source="https://github.com/HyperCriSiS/Home-Assistant-Apps" \
     maintainer="HyperCriSiS"
 
@@ -155,6 +167,26 @@ RUN apt-get update \
         xz-utils \
     && rm -rf /var/lib/apt/lists/*
 
+# Chromium for Shelfmark's internal Cloudflare bypass. Keep this pin equal to
+# CHROMIUM_VERSION/CHROMIUM_SNAPSHOT in the pinned Shelfmark Dockerfile: Debian
+# builds can break the DevTools port its driver needs.
+ARG CHROMIUM_VERSION=156.0.8078.73-1~deb13u1
+ARG CHROMIUM_SNAPSHOT=20261029T020000Z
+RUN echo "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian-security/${CHROMIUM_SNAPSHOT}/ trixie-security main" \
+        > /etc/apt/sources.list.d/chromium-pin-snapshot.list \
+    && apt-get update -o Acquire::Retries=5 \
+    && apt-get install -y --no-install-recommends -o Acquire::Retries=5 \
+        xvfb \
+        ffmpeg \
+        python3-tk \
+        chromium=${CHROMIUM_VERSION} \
+        chromium-common=${CHROMIUM_VERSION} \
+    && printf 'Package: chromium chromium-common\nPin: version %s\nPin-Priority: 1001\n' "${CHROMIUM_VERSION}" \
+        > /etc/apt/preferences.d/chromium-pin \
+    && rm /etc/apt/sources.list.d/chromium-pin-snapshot.list \
+    && rm -rf /var/lib/apt/lists/* \
+    && chromium --version
+
 # Best-effort extras: exact package names/availability can drift between
 # Debian releases, and none of these are required for CWA's core web UI to
 # come up, so a missing one shouldn't fail the whole build.
@@ -188,9 +220,6 @@ COPY --from=shelfmark-frontend /frontend/dist /app/shelfmark/frontend-dist
 ENV PATH="/opt/cwa-venv/bin:${PATH}"
 ENV CALIBRE_CONFIG_DIR="/config/.config/calibre"
 
-# Copy add-on rootfs (HA-specific cont-init.d bootstrap + CWA's own s6-rc.d services)
-COPY rootfs /
-
 # Required directories, ownership and script permissions
 RUN mkdir -p \
         /app/calibre-web-automated/metadata_change_logs \
@@ -198,10 +227,25 @@ RUN mkdir -p \
         /app/calibre-web-automated/cps/cache \
     && touch /app/cwa_update_notice /app/theme_migration_notice \
     && chown abc:abc /app/cwa_update_notice /app/theme_migration_notice \
-    && chown -R abc:abc /app/calibre-web-automated /etc/s6-overlay \
-    && chmod a+x /etc/cont-init.d/*.sh \
-    && chmod a+x /etc/s6-overlay/s6-rc.d/*/run
+    && chown -R abc:abc /app/calibre-web-automated \
+    && drivers="$(/app/shelfmark/.venv/bin/python -c "import pathlib, seleniumbase; print(pathlib.Path(seleniumbase.__file__).resolve().parent / 'drivers')")"     && chown -R abc:abc "${drivers}" \
+    && mkdir -p /tmp/shelfmark/seleniumbase/downloaded_files \
+        /tmp/shelfmark/seleniumbase/archived_files /tmp/.X11-unix \
+    && chmod 1777 /tmp/.X11-unix \
+    && chown -R abc:abc /tmp/shelfmark \
+    && rm -rf /app/shelfmark/downloaded_files /app/shelfmark/archived_files \
+    && ln -s /tmp/shelfmark/seleniumbase/downloaded_files /app/shelfmark/downloaded_files \
+    && ln -s /tmp/shelfmark/seleniumbase/archived_files /app/shelfmark/archived_files \
+    && chmod a+x /app/calibre-web-automated/root/etc/s6-overlay/s6-rc.d/*/run
+
+COPY rootfs /
+# Service scripts run as root, so they stay owned by root.
+RUN chmod a+x /etc/cont-init.d/*.sh /etc/s6-overlay/s6-rc.d/*/run
 
 WORKDIR /
 
 EXPOSE 8084
+
+# Version metadata belongs last: changing it must not invalidate package layers.
+ARG BUILD_VERSION
+LABEL io.hass.version="${BUILD_VERSION}"

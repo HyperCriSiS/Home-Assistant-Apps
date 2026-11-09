@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# CWA services re-execute their own run file after dropping privileges.
+for run in /app/calibre-web-automated/root/etc/s6-overlay/s6-rc.d/*/run; do
+  /command/s6-setuidgid abc test -x "$run"
+done
+# Shelfmark's internal bypass needs its driver, Xlib and a startable Chromium.
+/app/shelfmark/.venv/bin/python -c "import seleniumbase, Xlib.X; assert hasattr(Xlib.X, 'FamilyServerInterpreted')"
+chromium --headless --no-sandbox --disable-gpu --dump-dom about:blank | grep -q '<html'
 export PATH="/opt/cwa-venv/bin:$PATH"
 export CALIBRE_DBPATH=/config
 mkdir -p /data/config /data/shelfmark /data/shelfmark-staging /data/shelfmark-logs /data/shelfmark-audiobooks
@@ -34,8 +41,9 @@ python3 /aio-tests/probe_container.py
   /app/shelfmark/.venv/bin/python /aio-tests/probe_socket_auth.py
 /command/s6-setuidgid abc env 'AIO_SSO_OPTIONS={"enabled":true}' \
   /app/shelfmark/.venv/bin/python /aio-tests/probe_delivery.py
-timeout 90 python3 /app/calibre-web-automated/scripts/ingest_processor.py \
+timeout 90 /command/s6-setuidgid abc python3 /app/calibre-web-automated/scripts/ingest_processor.py \
   "$(cat /data/shelfmark-staging/probe-delivery-path)"
+timeout 240 /command/s6-setuidgid abc /app/shelfmark/.venv/bin/python /aio-tests/probe_browser.py
 python3 - <<'PY'
 import sqlite3
 with sqlite3.connect('/calibre-library/metadata.db') as db:

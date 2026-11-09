@@ -136,14 +136,17 @@ jobs:
             docker pull --platform "linux/${arch/aarch64/arm64}" "$candidate"
             actual="$(docker inspect --format '{{index .Config.Labels "io.calibre-aio.source-tree"}}' "$candidate")"
             [[ "$actual" == "$tree" ]] || { echo 'Source changed during build' >&2; exit 1; }
-            if docker manifest inspect "${repo}:${version}" >/dev/null 2>&1; then
+            if existing_manifest="$(docker manifest inspect "${repo}:${version}" 2>&1)"; then
               docker pull --platform "linux/${arch/aarch64/arm64}" "${repo}:${version}"
               format='{{index .Config.Labels "io.calibre-aio.source-tree"}}'
               existing="$(docker inspect --format "$format" "${repo}:${version}")"
               [[ "$existing" == "$tree" ]] || { echo 'Refusing to replace an existing release' >&2; exit 1; }
-            else
+            elif grep -qiE 'manifest unknown|not found|no such manifest' <<< "$existing_manifest"; then
               docker tag "$candidate" "${repo}:${version}"
               docker push "${repo}:${version}"
+            else
+              # A registry or network error must never overwrite a release tag.
+              echo "Cannot check ${repo}:${version}: ${existing_manifest}" >&2; exit 1
             fi
             # Supervisor must be able to pull without a GitHub login.
             public_config="$(mktemp -d)"
