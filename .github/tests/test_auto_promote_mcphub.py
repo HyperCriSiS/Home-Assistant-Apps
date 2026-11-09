@@ -146,6 +146,17 @@ class CiTests(unittest.TestCase):
         with patch.object(mod, "api", return_value={"workflow_runs": runs}):
             self.assertEqual(mod.ci_state(REPO, "w", lambda r: r["head_sha"] == "s"), "failed")
 
+    def test_validated_ignores_pull_request_runs(self):
+        base = {"head_sha": "s", "head_branch": "dev-mcphub",
+                "head_repository": {"full_name": REPO}, "status": "completed"}
+        push = {**base, "event": "push", "conclusion": "success",
+                "created_at": "2026-01-01T00:00:00Z"}
+        waiting = {**base, "event": "pull_request", "conclusion": "action_required",
+                   "created_at": "2026-01-01T01:00:00Z"}
+        with patch.dict(os.environ, {"GITHUB_REPOSITORY": REPO}), \
+             patch.object(mod, "api", return_value={"workflow_runs": [waiting, push]}):
+            self.assertEqual(mod.ci_state(REPO, "w", mod.validated("s", "dev-mcphub")), "success")
+
     def test_latest_run_decides(self):
         runs = [
             {"head_sha": "s", "status": "completed", "conclusion": "failure", "created_at": "1"},
