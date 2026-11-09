@@ -1,6 +1,6 @@
 name: "Calibre AIO (Dev)"
 description: "Shelfmark book discovery and Calibre library management in one interface"
-version: "1.2.29-dev.191"
+version: "1.2.30-dev.192"
 slug: "calibre-aio"
 init: false
 stage: experimental
@@ -17,11 +17,13 @@ watchdog: "http://[HOST]:[PORT:8084]/health"
 # Stop the app during backups so its SQLite databases are captured consistently.
 # The library and the ingest folder live under /share and are governed by the
 # "Share" folder of an HA backup, not by this App's backup. Shelfmark's
-# download staging and logs are transient and skipped.
+# download staging and logs are transient, and CWA's processed_books holds
+# zipped copies of books that already sit in the library; both are skipped.
 backup: cold
 backup_exclude:
   - "shelfmark-staging/*"
   - "shelfmark-logs/*"
+  - "config/processed_books/*"
 ingress: true
 ingress_stream: true
 ingress_port: 8084

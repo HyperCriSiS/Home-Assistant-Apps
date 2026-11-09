@@ -132,6 +132,7 @@ audiobook library server. No Audiobookshelf integration is bundled.
 | Data | Container path |
 | --- | --- |
 | CWA state and account bindings | `/data/config` (via `/config`) |
+| CWA copies of imported and fixed books (not backed up) | `/data/config/processed_books` |
 | Shelfmark settings, accounts and secrets | `/data/shelfmark` |
 | Shelfmark staging and logs (not backed up) | `/data/shelfmark-staging`, `/data/shelfmark-logs` |
 | Shelfmark audiobooks | `/data/shelfmark-audiobooks` |
@@ -146,7 +147,10 @@ audiobook library server. No Audiobookshelf integration is bundled.
 > library, untick it when you back up the library by other means.
 
 Shelfmark's download staging and logs are transient and excluded from the
-App backup. This app has a distinct slug
+App backup, as is CWA's `processed_books` folder: it holds zipped copies of
+imported, converted and fixed books that already sit in the library, and it
+can grow to several gigabytes. Disable CWA's automatic import and conversion
+backups in CWA Settings if you do not want these copies at all. This app has a distinct slug
 and does not adopt the private databases of the previous CWA test installation.
 Test with the default separate folders before copying existing library data.
 
