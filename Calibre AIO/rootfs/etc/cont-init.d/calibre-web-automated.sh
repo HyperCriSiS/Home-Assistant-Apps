@@ -89,6 +89,7 @@ else
 fi
 
 bashio::log.info "Calibre library: ${LIBRARY_TARGET} (/calibre-library)"
+bashio::log.warning "The library under /share is not part of App backups; include the Share folder in HA backups or back it up separately"
 bashio::log.info "Book ingest folder: ${INGEST_TARGET} (/cwa-book-ingest)"
 bashio::log.info "App config/state: ${CONFIG_TARGET} (/config)"
 bashio::log.info "Network share mode: ${network_share_mode}"

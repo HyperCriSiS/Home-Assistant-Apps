@@ -1,6 +1,6 @@
 # 1.2.29
 
-- Backups: skip Shelfmark's transient download staging and logs; document that the library and ingest folder under /share are governed by the "Share" folder of an HA backup, not by the App backup.
+- Backups: skip Shelfmark's transient download staging and logs; document that the library and ingest folder under /share are governed by the "Share" folder of an HA backup, not by the App backup; the start-up log repeats the hint.
 
 # 1.2.28
 

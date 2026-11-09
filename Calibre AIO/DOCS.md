@@ -138,12 +138,15 @@ audiobook library server. No Audiobookshelf integration is bundled.
 | Ebook library | `/share/<library_dir>` |
 | Completed-book handoff | `/share/<ingest_dir>` |
 
-An HA backup of this App contains only the private `/data` folder: CWA state,
-Shelfmark settings and audiobooks. Shelfmark's download staging and logs are
-transient and excluded. The ebook library and the ingest folder live under
-`/share` and are never part of the App backup; they are covered by the
-**Share** folder of an HA backup. Untick **Share** when you back up the
-library by other means, or tick it to include the library. This app has a distinct slug
+> [!WARNING]
+> An HA backup of this App contains only the private `/data` folder: CWA state,
+> Shelfmark settings and audiobooks. The ebook library and the ingest folder
+> live under `/share` and are **never part of the App backup**. They are covered
+> by the **Share** folder of an HA backup: tick **Share** to include the
+> library, untick it when you back up the library by other means.
+
+Shelfmark's download staging and logs are transient and excluded from the
+App backup. This app has a distinct slug
 and does not adopt the private databases of the previous CWA test installation.
 Test with the default separate folders before copying existing library data.
 
