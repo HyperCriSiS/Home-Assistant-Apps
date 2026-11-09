@@ -1,7 +1,9 @@
 ---
 name: "Trilium Notes"
-version: "v2026.11.05"
+version: "v2026.11.08"
 slug: trilium
+# Prebuilt on GitHub Actions; the Supervisor pulls instead of building locally.
+image: "ghcr.io/hypercrisis/{arch}-trilium"
 description: >-
   Trilium v0.106.1 - hierarchical note-taking and personal knowledge base.
 url: "https://github.com/HyperCriSiS/Home-Assistant-Apps/tree/main/TriliumNext%20Notes"

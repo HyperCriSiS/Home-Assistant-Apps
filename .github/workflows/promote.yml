@@ -76,17 +76,33 @@ jobs:
             --title "release(calibre): validated development candidate" \
             --body-file /tmp/calibre-release.md
 
+  # main advertises the prebuilt tags. A manual release publishes both from the
+  # exact candidate before the pull request exists; the tag is immutable, so
+  # this runs only on request, not after every validated dev-trilium commit.
+  trilium-images:
+    if: github.event_name == 'workflow_dispatch' && (inputs.app == 'trilium' || inputs.app == 'both')
+    uses: ./.github/workflows/publish-trilium-images.yml
+    with:
+      source_ref: dev-trilium
+    permissions:
+      contents: read
+      packages: write
+
   promote-trilium:
+    needs: trilium-images
     name: Maintain Trilium release pull request
     if: >-
       ${{
+        !cancelled() && needs.trilium-images.result != 'failure' &&
         (
-          github.event_name == 'workflow_dispatch' &&
-          (inputs.app == 'trilium' || inputs.app == 'both')
-        ) ||
-        (
-          github.event.workflow_run.conclusion == 'success' &&
-          github.event.workflow_run.head_branch == 'dev-trilium'
+          (
+            github.event_name == 'workflow_dispatch' &&
+            (inputs.app == 'trilium' || inputs.app == 'both')
+          ) ||
+          (
+            github.event.workflow_run.conclusion == 'success' &&
+            github.event.workflow_run.head_branch == 'dev-trilium'
+          )
         )
       }}
     runs-on: ubuntu-24.04
@@ -166,7 +182,8 @@ jobs:
             --base main \
             --head dev-trilium \
             --title "release(trilium): promote validated candidate" \
-            --body "Promotes only the validated Trilium development branch to main."; then
+            --body "Promotes only the validated Trilium development branch to main.
+          Run promote.yml for trilium before merging so both install images exist for this version."; then
             echo "GitHub Actions could not create the release PR; manual promotion remains available." >&2
           fi
 
