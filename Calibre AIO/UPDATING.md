@@ -13,7 +13,7 @@ python 'Calibre AIO/scripts/upstreams.py' check
 Use `update --component cwa` or `update --component shelfmark` to isolate an
 upgrade. The script resolves stable releases via GitHub, verifies the tag's
 commit, downloads the exact archive, hashes it, updates the manifest and
-generated HA build arguments, bumps the app patch version and adds release
+generated HA build arguments, sets the next CalVer App version (vYYYY.MM.DD, -N on the same day), rewrites the App description, README badges and NOTICE versions, and adds release
 notes. It refuses prereleases, downgrades and changed provenance for an
 already-pinned release. Network/provenance failures stop the proposal.
 

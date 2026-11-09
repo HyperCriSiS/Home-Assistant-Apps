@@ -3,6 +3,8 @@
 **Book discovery and your Calibre library in one Home Assistant App.**
 
 [![Validate Calibre AIO](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate-calibre-aio.yml/badge.svg?branch=main)](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate-calibre-aio.yml)
+[![CWA version](https://img.shields.io/badge/CWA-v4.0.8-B49A64)](https://github.com/crocodilestick/Calibre-Web-Automated/releases/tag/v4.0.8)
+[![Shelfmark version](https://img.shields.io/badge/Shelfmark-v1.6.1-B49A64)](https://github.com/calibrain/shelfmark/releases/tag/v1.6.1)
 ![Architecture amd64](https://img.shields.io/badge/amd64-supported-success)
 ![Architecture aarch64](https://img.shields.io/badge/aarch64-supported-success)
 ![Home Assistant](https://img.shields.io/badge/Home%20Assistant-App-41BDF5?logo=homeassistant&logoColor=white)
@@ -105,6 +107,14 @@ instead uses an external service and locks those settings to that service.
 Library imports that fail with a read-only database, SSO sign-in issues and
 backup scope are covered in [DOCS.md](DOCS.md#troubleshooting). The App log
 (Settings, Apps, Calibre AIO, Log) shows both applications and the ingress proxy.
+
+## Versioning
+
+The App version follows the repository's CalVer scheme `vYYYY.MM.DD`, with
+`-N` for a further release on the same day. The packaged Calibre-Web Automated
+and Shelfmark versions are separate: the badges above and the App description
+in the store name them, and [CHANGELOG.md](CHANGELOG.md) lists every change.
+Development builds carry a `-dev.<n>` suffix.
 
 ## Support
 

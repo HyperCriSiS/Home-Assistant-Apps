@@ -22,16 +22,24 @@ MANIFEST = {
     "calibre_sha256": {"x86_64": "3" * 64, "arm64": "4" * 64},
     "kepubify_sha256": {"linux-64bit": "5" * 64, "linux-arm64": "6" * 64},
 }
-CONFIG = 'name: "Calibre AIO"\nversion: "1.0.0"\nslug: "calibre-aio"\n'
-NOTES = "# 1.0.0\n\n- Stable release.\n"
+CONFIG = ('name: "Calibre AIO"\ndescription: "CWA v4.0.8 and Shelfmark v1.5.1 - '
+          + mod.upstreams.DESCRIPTION + '"\nversion: "v2026.11.01"\nslug: "calibre-aio"\n')
+NOTES = "# Changelog\n\n## v2026.11.01\n\n### Changed\n\n- Stable release.\n"
+README = (mod.upstreams.badge("cwa", MANIFEST) + "\n" + mod.upstreams.badge("shelfmark", MANIFEST)
+          + "\n\nIntro.\n")
+NOTICE = ("# Third-party components\n\n## Calibre-Web Automated\n\n- Project: https://x/cwa\n"
+          "- Version currently packaged: v4.0.8\n- License: GPL\n\n## Shelfmark\n\n- Project: https://x/sm\n"
+          "- Version currently packaged: v1.5.1\n- License: MIT\n")
 
 
-def files(manifest, config=CONFIG, notes=NOTES):
+def files(manifest, config=CONFIG, notes=NOTES, readme=README, notice=NOTICE):
     return {
         f"{APP}/upstream.json": json.dumps(manifest, indent=2) + "\n",
         f"{APP}/build.yaml": mod.upstreams.render(manifest),
         f"{APP}/config.yaml": config,
         f"{APP}/CHANGELOG.md": notes,
+        f"{APP}/README.md": readme,
+        f"{APP}/NOTICE.md": notice,
     }
 
 
@@ -42,11 +50,10 @@ def bumped(cwa="v4.0.10", shelfmark="v1.6.0", **overrides):
     manifest = json.loads(json.dumps(MANIFEST))
     manifest["cwa"].update(version=cwa, commit="e" * 40, sha256="f" * 64)
     manifest["shelfmark"].update(version=shelfmark, commit="1" * 40, sha256="2" * 64)
-    result = files(
-        manifest, CONFIG.replace('"1.0.0"', '"1.0.2"'),
-        f"# 1.0.2\n\n- Update CWA to {cwa} and Shelfmark to {shelfmark}.\n\n"
-        f"# 1.0.1\n\n- Update CWA to v4.0.9 and Shelfmark to v1.5.1.\n\n" + NOTES,
-    )
+    generated = mod.upstreams.apply_versions(
+        manifest, "v2026.11.09", {name: STABLE[f"{APP}/{name}"] for name in mod.upstreams.VERSIONED_FILES})
+    result = files(manifest, generated["config.yaml"], generated["CHANGELOG.md"],
+                   generated["README.md"], generated["NOTICE.md"])
     result.update(overrides)
     return result
 
@@ -85,6 +92,19 @@ class ContentTests(unittest.TestCase):
                      notes.replace("v1.6.0.\n", "v1.6.0.\n- Also something manual.\n", 1)):
             with self.subTest(text=text[:60]), self.assertRaises(ValueError):
                 mod.check_content(STABLE, bumped(**{f"{APP}/CHANGELOG.md": text}))
+
+    def test_rejects_readme_and_notice_edits_beyond_the_versions(self):
+        for name in ("README.md", "NOTICE.md"):
+            text = bumped()[f"{APP}/{name}"] + "Extra line.\n"
+            with self.subTest(file=name), self.assertRaisesRegex(ValueError, name):
+                mod.check_content(STABLE, bumped(**{f"{APP}/{name}": text}))
+
+    def test_next_version_is_today_or_a_same_day_suffix(self):
+        self.assertEqual(mod.upstreams.next_version("v2026.11.01", "2026.11.09"), "v2026.11.09")
+        self.assertEqual(mod.upstreams.next_version("v2026.11.09", "2026.11.09"), "v2026.11.09-2")
+        self.assertEqual(mod.upstreams.next_version("v2026.11.09-2", "2026.11.09"), "v2026.11.09-3")
+        self.assertEqual(mod.upstreams.next_version("1.2.32", "2026.11.09"), "v2026.11.09")
+        self.assertGreater(mod.as_tuple("v2026.11.09-2"), mod.as_tuple("v2026.11.09"))
 
     def test_rejects_downgrade_and_unchanged_app_version(self):
         with self.assertRaises(ValueError):
