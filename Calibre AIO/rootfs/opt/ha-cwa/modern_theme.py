@@ -65,7 +65,8 @@ def _sort_icons(tools):
         elif control in sorts:
             kind, ascending = sorts[control]
             symbol = ('<span aria-hidden="true">A–Z</span>' if kind == 'title' else _svg(icons[kind]))
-            symbol += _svg(['M12 20V4M6 10l6-6 6 6'] if ascending else ['M12 4v16M6 14l6 6 6-6'], 'aio-sort-arrow')
+            # A down arrow reads as A to Z (the list runs top to bottom), an up arrow as Z to A.
+            symbol += _svg(['M12 4v16M6 14l6 6 6-6'] if ascending else ['M12 20V4M6 10l6-6 6 6'], 'aio-sort-arrow')
         else:
             return match[0]
         attributes = attributes.replace('class="', 'class="aio-sort ', 1)
@@ -131,7 +132,7 @@ class ThemeLoader(BaseLoader):
             source = source.replace('<html class="http-error">', '<html class="http-error aio-modern">', 1)
             source = source.replace('<html lang=', '<html class="aio-modern" lang=', 1)
             source = source.replace('</head>', '''
-    <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=18">
+    <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=19">
   </head>''', 1)
         if template in ('layout.html', 'detail.html'):
             # Modern is a standalone look on CWA's standard templates. CWA forces
@@ -175,7 +176,7 @@ class ThemeLoader(BaseLoader):
             source = source.replace('<span class="btn btn-default btn-file">{{_(\'Upload\')}}<input', '''<details class="aio-upload-menu"><summary aria-label="{{ _('Add books') }}">+</summary><div class="aio-upload-options"><label class="btn btn-default btn-file">{{ _('Upload') }}<input''', 1)
             source = source.replace('multiple></span>', '''multiple></label><button type="button" class="aio-folder-trigger">{% if current_user.locale.startswith('de') %}Ordner hinzufügen …{% else %}Add folder …{% endif %}</button></div></details>''', 1)
             source = source.replace('</head>', '''
-    <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=18">
+    <link rel="stylesheet" href="{{ url_for('aio_theme', filename='modern.css') }}?v=19">
     <script defer src="{{ url_for('aio_theme', filename='modern.js') }}?v=10"></script>
   </head>''', 1)
         elif template == 'list.html':
