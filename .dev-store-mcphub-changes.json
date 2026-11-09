@@ -1,5 +1,33 @@
 [
   {
+    "revision": 247,
+    "version": "v2026.11.07-1-dev.247",
+    "source_sha": "c3c2315d3c0f3f8a31f28c95774f39329dbad8ad",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "c3c2315d3c0f3f8a31f28c95774f39329dbad8ad",
+        "subject": "Merge remote-tracking branch 'origin/main' into dev-mcphub"
+      },
+      {
+        "sha": "b65a570f587fc316fe6cb02538a9decee2dd48cb",
+        "subject": "ci(promote): gate on the push-triggered validation run (#210)"
+      },
+      {
+        "sha": "d1d912314d8fb0851d36a70076d58d832c4450c3",
+        "subject": "Merge remote-tracking branch 'origin/main' into dev-mcphub"
+      },
+      {
+        "sha": "ef2e03e1ecdb61e62e1b170c238601e9e6962df5",
+        "subject": "Merge remote-tracking branch 'origin/main' into dev-mcphub"
+      },
+      {
+        "sha": "79336e4f59500f121118d98273dd95189eb78ab2",
+        "subject": "Merge remote-tracking branch 'origin/main' into dev-mcphub"
+      }
+    ]
+  },
+  {
     "revision": 236,
     "version": "v2026.11.07-1-dev.236",
     "source_sha": "9a5406d15f286098b8ee4730cf305cae44481137",
