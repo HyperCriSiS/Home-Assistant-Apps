@@ -4,16 +4,16 @@
     "tree": "db44d943c35c106faa73042f29e306acb17b9643"
   },
   "mcphub": {
-    "fingerprint": "5ae5f748d7643ffb121f044cd98c1a83e139e5afcccef3376507a54c2a168ea8",
-    "revision": 247,
-    "tree": "449ad521111da792becf8ff766c44a58def0d725"
+    "fingerprint": "68233cc09d6f0e6126e2076e60670923e18eeacf5f339500f184b1f2c415dc9a",
+    "revision": 248,
+    "tree": "89ab66f69a95f210ca69999a1d261264a66fbd48"
   },
   "plextraktsync": {
     "revision": 160,
     "tree": "3e6df9efbafcaa7df86453dd25eea6dbc70932b9"
   },
   "trilium": {
-    "revision": 245,
-    "tree": "8ce75291a782776d550a0f975690f569d691f3fe"
+    "revision": 248,
+    "tree": "59d0b260db05d94e1c6392a9761c315b8105201c"
   }
 }

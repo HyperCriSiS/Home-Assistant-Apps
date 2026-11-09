@@ -1,5 +1,17 @@
 [
   {
+    "revision": 248,
+    "version": "v2026.11.07-1-dev.248",
+    "source_sha": "da580f0c71d291c7789cd2397e4b1f605f51fd4d",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "da580f0c71d291c7789cd2397e4b1f605f51fd4d",
+        "subject": "docs(mcphub): add Trilium Notes as an MCP server (#212)"
+      }
+    ]
+  },
+  {
     "revision": 247,
     "version": "v2026.11.07-1-dev.247",
     "source_sha": "c3c2315d3c0f3f8a31f28c95774f39329dbad8ad",
