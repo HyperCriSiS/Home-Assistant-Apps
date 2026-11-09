@@ -173,7 +173,7 @@ class WorkflowTests(unittest.TestCase):
         workflow = yaml.safe_load((ROOT / ".github/workflows/sync-dev-store.yml").read_text())
         self.assertIs(workflow["concurrency"]["cancel-in-progress"], False)
         jobs = workflow["jobs"]
-        self.assertEqual(set(jobs["publish"]["needs"]), {"images", "mcphub-images"})
+        self.assertEqual(set(jobs["publish"]["needs"]), {"images", "mcphub-images", "trilium-images"})
         self.assertEqual(jobs["mcphub-images"]["needs"], "sync")
         self.assertEqual(jobs["mcphub-images"]["with"]["bundle"], jobs["images"]["with"]["bundle"])
         self.assertNotIn("continue-on-error", jobs["mcphub-images"])
@@ -210,7 +210,9 @@ class WorkflowTests(unittest.TestCase):
                 # The next run must not reuse 101 or 102 for a different source.
                 changed = generate(103, "changed-source")
                 self.assertEqual(changed["mcphub"]["revision"], 103)
-                self.assertEqual(changed["trilium"]["revision"], 101)
+                # Trilium publishes images too, so it reserves the run tag as well.
+                self.assertEqual(changed["trilium"]["revision"], 103)
+                self.assertEqual(changed["calibre"]["revision"], 101)
                 self.assertIn("-dev.103", Path("MCPHub/config.yaml").read_text())
             finally:
                 os.chdir(original_cwd)
