@@ -5,6 +5,7 @@ Home Assistant Apps maintained by HyperCriSiS.
 [![Validate Trilium](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate.yml/badge.svg?branch=main)](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate.yml)
 [![Validate MCPHub](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate-mcphub.yml/badge.svg?branch=main)](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate-mcphub.yml)
 [![Validate Calibre AIO](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate-calibre-aio.yml/badge.svg?branch=main)](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate-calibre-aio.yml)
+[![Validate Inbox Zero](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate-inbox-zero.yml/badge.svg?branch=main)](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate-inbox-zero.yml)
 
 ## 📦 Install the repository
 
@@ -35,6 +36,7 @@ https://github.com/HyperCriSiS/Home-Assistant-Apps
 | <img src="MCPHub/icon.png" alt="" width="32"> | **MCPHub** | Central management for local and remote Model Context Protocol servers | ✅ Stable | [README](MCPHub/README.md) · [Documentation](MCPHub/DOCS.md) |
 | <img src="TriliumNext%20Notes/icon.png" alt="" width="32"> | **Trilium Notes** | Self-hosted hierarchical notes and personal knowledge base | ✅ Stable | [README](TriliumNext%20Notes/README.md) |
 | <img src="Calibre%20AIO/icon.png" alt="" width="32"> | **Calibre AIO** | Shelfmark book discovery/downloads and Calibre-Web Automated library in one interface | ✅ Stable | [README](Calibre%20AIO/README.md) · [Documentation](Calibre%20AIO/DOCS.md) |
+| <img src="Inbox%20Zero/icon.png" alt="" width="32"> | **Inbox Zero** | AI email assistant for IMAP, Gmail and Outlook with bundled PostgreSQL and Redis | ✅ Stable | [README](Inbox%20Zero/README.md) · [Documentation](Inbox%20Zero/DOCS.md) |
 
 &nbsp;
 
@@ -75,6 +77,22 @@ See [MCPHub/README.md](MCPHub/README.md) for installation and [MCPHub/DOCS.md](M
 - Restricted trusted reverse-proxy handling for Home Assistant Ingress
 
 See [TriliumNext Notes/README.md](TriliumNext%20Notes/README.md) for installation, configuration, backups, networking, and troubleshooting.
+
+&nbsp;
+
+### <img src="Inbox%20Zero/icon.png" alt="Inbox Zero" width="28" align="absmiddle"> Inbox Zero
+
+**Inbox Zero** runs the [Inbox Zero fork with IMAP/SMTP and CalDAV support](https://github.com/HyperCriSiS/inbox-zero) as a Home Assistant App.
+
+✨ **Highlights:**
+
+- AI assistant that sorts, labels and drafts replies for IMAP, Gmail and Outlook mailboxes
+- PostgreSQL, Redis and the scheduler run inside the App; nothing else to install
+- Secrets are generated on the first start and kept in the App data
+- Cold Home Assistant backups for a consistent database
+- Opened on its own port (`3000`); Home Assistant Ingress is not supported by Inbox Zero
+
+See [Inbox Zero/README.md](Inbox%20Zero/README.md) for installation and [Inbox Zero/DOCS.md](Inbox%20Zero/DOCS.md) for configuration, sign-in, mail providers and troubleshooting.
 
 &nbsp;
 
