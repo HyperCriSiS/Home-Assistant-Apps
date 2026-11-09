@@ -1,3 +1,7 @@
+# 1.2.31
+
+- CWA notices (for example the duplicate scan hint) render as one strip right under the bar; the band follows without a gap.
+
 # 1.2.30
 
 - Backups: skip CWA's processed_books folder (zipped copies of imported, converted and fixed books that already sit in the library).

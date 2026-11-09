@@ -5,7 +5,7 @@ from types import SimpleNamespace as NS
 from datetime import datetime
 import re, sys, os
 from urllib.parse import urlencode
-from flask import Flask, g, render_template
+from flask import Flask, flash, g, render_template
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "rootfs/opt/ha-cwa"))
@@ -117,8 +117,12 @@ class ReadEntry(tuple):
 
 
 read_books = [ReadEntry((book.Books, None, i % 2 == 0)) for i, book in enumerate(books)]
+app.secret_key = "fixture"
 with app.test_request_context("/"):
     g.current_theme = int(upstream_theme or 1)
+    if scenario == "books-notice":
+        # CWA flashes its duplicate scan notice on every page until dismissed.
+        flash("Duplicate scanning needs a one-time full scan before fast duplicate checks can run after imports and metadata changes.", "duplicate_scan_setup")
     g.allow_upload = True
     g.google_site_verification = ""
     g.allow_anonymous = False
