@@ -1,10 +1,10 @@
 ---
 name: "MCPHub"
-version: "v2026.11.05"
+version: "v2026.11.07-1"
 image: "ghcr.io/hypercrisis/mcphub"
 slug: mcphub
 description: >-
-  MCPHub 1.2.1 - central MCP server management with optional Home Assistant,
+  MCPHub 1.2.2 - central MCP server management with optional Home Assistant,
   OpenAI and remote access integrations
 url: "https://github.com/HyperCriSiS/Home-Assistant-Apps/tree/main/MCPHub"
 startup: application
@@ -27,6 +27,7 @@ hassio_api: true
 backup: hot
 backup_exclude:
   - "cache/*"
+  - "home/.npm/*"
 # MCP gateway (only /mcp endpoints with a bearer key) on host port 3001, used
 # by LAN clients and by the Cloudflared and Tailscale Apps for remote access.
 # Leave the host port blank to disable it or choose another free port.
