@@ -2,9 +2,21 @@ name: Validate Calibre AIO
 on:
   push:
     branches: [main, dev-calibre]
-    paths: ['Calibre AIO/**', '.github/workflows/validate-calibre-aio.yml']
+    paths:
+      - 'Calibre AIO/**'
+      - '.github/workflows/validate-calibre-aio.yml'
+      - '.github/scripts/auto_promote_calibre.py'
+      - '.github/scripts/calibre_images.py'
+      - '.github/tests/test_*calibre*.py'
+      - '.yamllint'
   pull_request:
-    paths: ['Calibre AIO/**', '.github/workflows/validate-calibre-aio.yml']
+    paths:
+      - 'Calibre AIO/**'
+      - '.github/workflows/validate-calibre-aio.yml'
+      - '.github/scripts/auto_promote_calibre.py'
+      - '.github/scripts/calibre_images.py'
+      - '.github/tests/test_*calibre*.py'
+      - '.yamllint'
   workflow_dispatch:
 permissions:
   contents: read
@@ -21,6 +33,55 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
         with:
           python-version: '3.11'
+      - name: Lint App YAML and Dockerfile
+        run: |
+          python -m pip install 'yamllint==1.37.1'
+          find 'Calibre AIO' -type f \( -name '*.yaml' -o -name '*.yml' \) -print0 | xargs -0 yamllint
+          yamllint .github/workflows/validate-calibre-aio.yml .github/workflows/update-calibre-aio.yml
+          image="ghcr.io/hadolint/hadolint:v2.15.0-debian"
+          digest="sha256:cc00266a16707bbbdfd29517cccd76164ac46a956e2ba8222515df5691fa54b5"
+          # DL3008: packages come from the pinned Home Assistant Debian base image.
+          docker run --rm -i "${image}@${digest}" hadolint --ignore DL3008 - < 'Calibre AIO/Dockerfile'
+      - name: Validate manifest, changelog, badges and translations
+        run: |
+          python -m pip install 'pyyaml==6.0.2'
+          python - <<'PY'
+          import json, re
+          from pathlib import Path
+          import yaml
+          app = Path('Calibre AIO')
+          config = yaml.safe_load((app / 'config.yaml').read_text(encoding='utf-8'))
+          pins = json.loads((app / 'upstream.json').read_text(encoding='utf-8'))
+          cwa, shelfmark = pins['cwa']['version'], pins['shelfmark']['version']
+          version = str(config['version'])
+          assert re.fullmatch(r'v\d{4}\.\d{2}\.\d{2}(-\d+)?', version), version
+          prefix = f'CWA {cwa} and Shelfmark {shelfmark} - '
+          assert config['description'].startswith(prefix), config['description']
+          assert list(config)[:6] == ['name', 'description', 'version', 'slug', 'url', 'image'], list(config)[:6]
+          assert config['slug'] == 'calibre-aio' and config['backup'] == 'cold' and config['ports'] == {}
+          assert config['image'] == 'ghcr.io/hypercrisis/{arch}-calibre-aio'
+          assert list(config['options']) == list(config['schema'])
+          for group in config['options']:
+              if isinstance(config['options'][group], dict):
+                  assert list(config['options'][group]) == list(config['schema'][group]), group
+          changelog = (app / 'CHANGELOG.md').read_text(encoding='utf-8')
+          assert changelog.startswith(f'# Changelog\n\n## {version}\n'), changelog[:60]
+          readme = (app / 'README.md').read_text(encoding='utf-8')
+          for label, pin in (('CWA', cwa), ('Shelfmark', shelfmark)):
+              assert f'/badge/{label}-{pin}-' in readme, label
+          notice = (app / 'NOTICE.md').read_text(encoding='utf-8')
+          for pin in (cwa, shelfmark):
+              assert f'- Version currently packaged: {pin}' in notice, pin
+          options = set(config['schema'])
+          for path in sorted((app / 'translations').glob('*.yaml')):
+              translation = yaml.safe_load(path.read_text(encoding='utf-8')) or {}
+              missing = options - set(translation.get('configuration', {}))
+              assert not missing, (path.name, sorted(missing))
+          assert (app / 'translations' / 'en.yaml').is_file()
+          print('manifest ok', version, cwa, shelfmark)
+          PY
+      - name: Automation gates for this App
+        run: python3 -m unittest discover -s .github/tests -p 'test_*calibre*.py' -v
       - name: Verify pins and resolve CWA test source
         id: pins
         run: |
@@ -48,11 +109,21 @@ jobs:
           CWA_TEST_NGINX: '1'
         run: python -m unittest discover -s 'Calibre AIO/tests' -v
       - name: Real privilege transition
-        run: sudo "$(command -v python)" -m unittest discover -s 'Calibre AIO/tests' -p test_launch_permissions.py -v
+        run: |
+          sudo "$(command -v python)" -m unittest discover -s 'Calibre AIO/tests' -p test_launch_permissions.py -v
+          sudo "$(command -v python)" -m unittest discover -s 'Calibre AIO/tests' -p test_library_permissions.py -v
       - name: Shell syntax
         run: |
           find 'Calibre AIO/rootfs' -type f \( -name '*.sh' -o -name run \) -print0 |
             while IFS= read -r -d '' script; do bash -n "$script"; done
+      - name: Administrator setup and language browser regression
+        if: hashFiles('Calibre AIO/tests/browser-setup.cjs') != ''
+        run: |
+          npm install --prefix /tmp/aio-browser playwright@1.62.1
+          /tmp/aio-browser/node_modules/.bin/playwright install --with-deps chromium
+          PLAYWRIGHT_MODULE=/tmp/aio-browser/node_modules/playwright node 'Calibre AIO/tests/browser-setup.cjs'
+          CWA_SOURCE=.cwa-test-source PLAYWRIGHT_MODULE=/tmp/aio-browser/node_modules/playwright \
+            node 'Calibre AIO/tests/browser-theme.cjs'
   build:
     needs: test
     strategy:
@@ -84,10 +155,12 @@ jobs:
           load: true
           tags: calibre-aio:test
           build-args: |
-            BUILD_FROM=ghcr.io/home-assistant/${{ matrix.arch }}-base-debian:bookworm
+            BUILD_FROM=ghcr.io/home-assistant/${{ matrix.arch }}-base-debian:trixie
             ${{ steps.args.outputs.values }}
           cache-from: type=gha,scope=calibre-aio-${{ matrix.arch }}
           cache-to: type=gha,mode=max,scope=calibre-aio-${{ matrix.arch }}
+      - name: Verify version-only updates reuse filesystem layers
+        run: python3 'Calibre AIO/tests/check_image_layers.py' '${{ matrix.arch }}'
       - name: Full container acceptance
         run: |
           trap 'docker rm -f calibre-aio-smoke >/dev/null 2>&1 || true' EXIT

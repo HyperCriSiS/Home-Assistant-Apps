@@ -10,7 +10,7 @@ import launch
 
 
 class LaunchTest(unittest.TestCase):
-    def run_launcher(self, enabled):
+    def run_launcher(self, enabled, theme='modern'):
         cps = ModuleType('cps')
         module = ModuleType('cps.main')
         cps.main = module
@@ -24,12 +24,14 @@ class LaunchTest(unittest.TestCase):
         environment = dict(LISTEN_FDS='1', LISTEN_PID='1', CALIBRE_UNIX_SOCKET='/tmp/old',
                            CWA_PORT_OVERRIDE='9000')
         options = launch.read_options({'sso': {'enabled': enabled}})
+        options['library_theme'] = theme
         with (patch.dict(sys.modules, {'cps': cps, 'cps.main': module}),
               patch.dict(os.environ, environment, clear=True),
               patch.object(sys, 'argv', ['launch.py']),
               patch.object(os, 'chdir'),
               patch.object(launch, 'load_options_and_drop_privileges', return_value=options) as load,
-              patch.object(launch, 'install') as install):
+              patch.object(launch, 'install') as install,
+              patch.object(launch, 'install_modern_theme') as install_theme):
             launch.main()
             load.assert_called_once_with()
             if enabled:
@@ -41,6 +43,7 @@ class LaunchTest(unittest.TestCase):
                 self.assertEqual(cps.web_server.listen_port, 8083)
                 self.assertIsNone(cps.web_server.ssl_args)
                 install.assert_called_once()
+                self.assertEqual(install_theme.call_count, 1 if theme == 'modern' else 0)
             else:
                 self.assertEqual(sys.argv, ['launch.py'])
                 self.assertEqual(dict(os.environ), environment)
@@ -52,6 +55,9 @@ class LaunchTest(unittest.TestCase):
 
     def test_disabled_preserves_normal_startup(self):
         self.run_launcher(False)
+
+    def test_upstream_theme_keeps_cwa_unmodified(self):
+        self.run_launcher(True, 'upstream')
 
     def test_privileges_drop_before_cwa_import(self):
         # A failed privilege change must prevent all CWA application imports.
