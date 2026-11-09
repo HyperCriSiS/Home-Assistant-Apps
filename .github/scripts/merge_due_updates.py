@@ -92,6 +92,8 @@ MCPHUB_UPSTREAM_FILES = (
 )
 CALIBRE_FILES = (
     "Calibre AIO/CHANGELOG.md",
+    "Calibre AIO/NOTICE.md",
+    "Calibre AIO/README.md",
     "Calibre AIO/build.yaml",
     "Calibre AIO/config.yaml",
     "Calibre AIO/upstream.json",

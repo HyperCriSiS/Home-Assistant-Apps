@@ -12,6 +12,7 @@ ARG KEPUBIFY_RELEASE
 # third-party one.
 # ==============================================================================
 FROM ${BUILD_FROM} AS build
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 ARG CWA_VERSION
 ARG CWA_REF
@@ -95,6 +96,7 @@ RUN for service in cwa-init cwa-auto-library cwa-auto-zipper cwa-checksum-backfi
 FROM ghcr.io/astral-sh/uv:0.13.6@sha256:af22a52f5eafef3d78e551599d405c02df61919d18028f0cea8eda93bc9986d0 AS uv
 
 FROM build AS shelfmark-build
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG SHELFMARK_REF
 ARG SHELFMARK_SHA256
 ARG SHELFMARK_PYTHON
@@ -120,6 +122,7 @@ COPY --from=shelfmark-build /app/shelfmark/src/frontend/ ./
 RUN npm run build
 
 FROM ${BUILD_FROM}
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 ARG CWA_VERSION
 

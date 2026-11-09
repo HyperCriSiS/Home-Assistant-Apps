@@ -1,98 +1,151 @@
-# 1.2.32
+# Changelog
+
+## v2026.11.09
+
+### Changed
+
+- Switch to the repository's CalVer scheme (vYYYY.MM.DD); the packaged CWA and Shelfmark versions are shown as README badges and in the App description.
+- Changelog in the repository format; the validation workflow checks YAML, the Dockerfile and the manifest like the other Apps.
+
+## 1.2.32
+
+### Changed
 
 - Align the App folder with the repository standards: MIT LICENSE for the wrapper, NOTICE.md with packaged versions, README with license badge, troubleshooting, support and license sections, DOCS with one heading per option.
 
-# 1.2.31
+## 1.2.31
+
+### Changed
 
 - CWA notices (for example the duplicate scan hint) render as one strip right under the bar; the band follows without a gap.
 
-# 1.2.30
+## 1.2.30
+
+### Changed
 
 - Backups: skip CWA's processed_books folder (zipped copies of imported, converted and fixed books that already sit in the library).
 
-# 1.2.29
+## 1.2.29
+
+### Changed
 
 - Backups: skip Shelfmark's transient download staging and logs; document that the library and ingest folder under /share are governed by the "Share" folder of an HA backup, not by the App backup; the start-up log repeats the hint.
 
-# 1.2.28
+## 1.2.28
+
+### Changed
 
 - Sort controls: ascending order (A to Z, oldest first) shows a down arrow, descending an up arrow, matching how a list reads top to bottom.
 
-# 1.2.27
+## 1.2.27
+
+### Changed
 
 - Sort controls: every pair reads ascending, then descending; the date pairs no longer start with newest first.
 
-# 1.2.26
+## 1.2.26
+
+### Changed
 
 - Pages without a band (edit book, admin, settings) keep an empty strip of the band height with its divider, so content no longer jumps up when switching from a page with a band.
 - Detail page: every action icon is gold except delete, and every chip uses the same neutral pill style, links included.
 
-# 1.2.25
+## 1.2.25
+
+### Changed
 
 - Pages without a band (edit book, admin, settings) start with room below the bar; glyph buttons keep a gap to their label; the edit page cover is capped at 260px and the format upload sits below the convert button.
 - Books List: the bulk action row aligns with the table; the description editor (TinyMCE) is dark; the phone tool rail and table pagination swipe without a visible scrollbar.
 
-# 1.2.24
+## 1.2.24
+
+### Changed
 
 - Edit book: the metadata form sits beside the cover again instead of hanging below it at the right; on phones it takes the full width.
 
-# 1.2.23
+## 1.2.23
+
+### Changed
 
 - Books List: the table pagination keeps its pages in one line; the band pagination layout no longer leaks into bootstrap-table.
 
-# 1.2.22
+## 1.2.22
+
+### Changed
 
 - Random picks fill exactly one row per screen width (2 to 12 cards); set "No. of Random Books to Display" to 12 in the CWA admin view for wide screens.
 
-# 1.2.21
+## 1.2.21
+
+### Changed
 
 - Phones: the grid no longer starts under the band on pages with page navigation, the drawer sits flush with the viewport instead of 15px off the left edge, and the random picks show only a full row.
 - Hide the logout entry; ingress signs the user in again anyway.
 
-# 1.2.20
+## 1.2.20
+
+### Changed
 
 - Label the random picks above the library as their own section so their partial row no longer looks like a hole in the grid.
 - Drawer: the section plus follows its heading, the Magic Shelves heading drops the extra upstream gap, and shelf emoji share the icon column.
 
-# 1.2.19
+## 1.2.19
+
+### Changed
 
 - Extend the standalone theme to the secondary pages: tokens for selects, checkbox labels, progress bars, tabs, tooltips, modal and panel headers, contextual text and buttons, the CWA statistics cards, and skins for bootstrap-table, x-editable, bootstrap-select, typeahead, the date picker and the query builder.
 - Define the caliBlur-only CSS variables that CWA templates reference inline.
 - The error and shelf download pages load the theme as well.
 
-# 1.2.18
+## 1.2.18
+
+### Changed
 
 - Cover the read marker on book cards with a fixture scenario: a small disc inside the lower left of the cover.
 
-# 1.2.17
+## 1.2.17
+
+### Changed
 
 - Make the Modern theme standalone: CWA's caliBlur theme is no longer loaded; the library pages, sidebar, navbar, search, upload menu, pagination, list pages, series grid and duplicates are styled on CWA's standard templates with the viewport as the only scroll container.
 - Covers and titles open the book page instead of the detail modal; a history-driven back arrow sits beside the search box.
 - The browse navigation joins the navbar drawer below 768 px.
 - Fix the stray glyph in the upload menu on phones.
 
-# 1.2.16
+## 1.2.16
+
+### Changed
 
 - Keep the scrollbar gutter of the content column stable, so the book grid is laid out at the same width before and after Isotope measures it where scrollbars take layout space (Android WebView, desktop).
 - Render the page navigation before the list, so the title band has its final height at first paint.
 
-# 1.2.15
+## 1.2.15
+
+### Changed
 
 - Update CWA to v4.0.8 and Shelfmark to v1.6.1.
 
-# 1.2.14
+## 1.2.14
+
+### Changed
 
 - Lay book and series grids out without the Isotope slide animation, so relayouts after a viewport change no longer glide into place.
 
-# 1.2.13
+## 1.2.13
+
+### Changed
 
 - Follow Shelfmark 1.6.1, which registers its Socket.IO handlers and proxy authentication as closures; the ingress session refresh now takes them from the Flask and Flask-SocketIO registries.
 
-# 1.2.12
+## 1.2.12
+
+### Changed
 
 - Keep the page title in the desktop sidebar and remove its repeat from the content band; sorting stays centered in the band.
 
-# 1.2.11
+## 1.2.11
+
+### Changed
 
 - Refuse a library folder inside the ingest folder or the reverse, not only identical folders.
 - Keep the Supervisor token out of every upstream CWA service and the ingress proxy.
@@ -101,22 +154,30 @@
 - Validate `shelfmark.external_bypass_url` in Shelfmark only, so a bad value no longer stops the library.
 - Document the folder rules in English, folder upload and mobile layout in German, and mark the integration plan as history.
 
-# 1.2.10
+## 1.2.10
+
+### Changed
 
 - Follow the Shelfmark 1.6 Chromium 156 pin, Python 3.14.9 and uv 0.13.6 so the upstream updater can propose Shelfmark releases again.
 
-# 1.2.9
+## 1.2.9
+
+### Changed
 
 - Use the Modern system font for navigation section headings instead of the inherited bold caliBlur face.
 - Remove the decorative sparkle from the Magic Shelves label; its plus action stays.
 - Hide the duplicate desktop sidebar title and keep the title band and mobile navbar title.
 
-# 1.2.8
+## 1.2.8
+
+### Changed
 
 - Replace separate shelf creation entries with plus actions beside Shelves and Magic Shelves.
 - Make navigation section headings slightly larger than their menu items on desktop and mobile.
 
-# 1.2.7
+## 1.2.7
+
+### Changed
 
 - Keep Series grid rows in place while the view loads.
 - Vertically center page numbers and navigation arrows in the desktop title bar.
@@ -124,17 +185,23 @@
 - Match the spacing below navigation section headings to the spacing between menu items.
 - Keep Back navigation working when the browser suppresses referrers, including after a reload.
 
-# 1.2.6
+## 1.2.6
+
+### Changed
 
 - Show Modern sorting icons immediately when switching library views.
 - Keep the search icon compact while the page loads.
 
-# 1.2.5
+## 1.2.5
+
+### Changed
 
 - Prevent titles, sorting controls and the search field from shifting while library views load.
 - Keep the Duplicates layout steady while its controls initialize.
 
-# 1.2.4
+## 1.2.4
+
+### Changed
 
 - Add a folder picker to the Add Books menu, including supported ebooks in subfolders.
 - Align Browse and Duplicates titles and sort controls in a shared page header.
@@ -145,7 +212,9 @@
 - Fix Series grid cards being affected by list-row styles.
 - Make Back return through the library's browser history.
 
-# 1.2.3
+## 1.2.3
+
+### Changed
 
 - Refuse an empty or absolute `library_dir` or `ingest_dir`, dot segments and
   identical folders instead of using `/share` itself or container-local paths.
@@ -164,19 +233,25 @@
 - Explain the user-download overview and show an empty state when no Calibre
   Web downloads have been recorded; Shelfmark imports are separate.
 
-# 1.2.2
+## 1.2.2
+
+### Changed
 
 - Keep version labels and deployment files after large package/ownership layers,
   so small updates can reuse the Calibre, Python and Chromium downloads.
 - Verify identical filesystem layers when only the build version changes.
 
-# 1.2.1
+## 1.2.1
+
+### Changed
 
 - Install prebuilt, tested amd64/aarch64 images from GHCR instead of building
   Calibre, Shelfmark and Chromium on the Home Assistant host.
 - Publish development updates only after both public image versions are ready.
 
-# 1.2.0
+## 1.2.0
+
+### Changed
 
 - Add the first Modern library theme: restrained graphite surfaces, muted gold
   accents, denser book grids, compact controls and consistent sort symbols.
@@ -184,24 +259,32 @@
   upright. Native sort links and tooltips remain available, including on mobile.
 - Set `library_theme: upstream` to return to the original CWA appearance.
 
-# 1.1.4
+## 1.1.4
+
+### Changed
 
 - Fix library ownership behind the persistent storage symlink, including
   metadata.db created on first boot, so CWA can import Shelfmark downloads.
 - Verify database and library-directory write access as the service user
   before starting CWA; report inaccessible network shares clearly.
 
-# 1.1.3
+## 1.1.3
+
+### Changed
 
 - Remove the retired local browser service from existing installs, so Shelfmark
   uses its built-in browser after updating.
 
-# 1.1.2
+## 1.1.2
+
+### Changed
 
 - Fix the book import service restart loop: upstream CWA service scripts are
   now executable, so completed downloads reach the library.
 
-# 1.1.1
+## 1.1.1
+
+### Changed
 
 - Give Shelfmark's internal browser the writable runtime paths it needs as the
   service user, so bypass requests can start it.
@@ -209,18 +292,24 @@
   watchdog restart the app when its web server stops responding.
 - Stop the app during backups so its databases are captured consistently.
 
-# 1.1.0
+## 1.1.0
+
+### Changed
 
 - Include Shelfmark's browser stack and Chromium, so browser-challenge sources
   work without an extra service. The image grows accordingly.
 - Move to the Debian trixie Home Assistant base image required by that Chromium.
 - Unlock Shelfmark's bypass settings unless `shelfmark.external_bypass_url` is set.
 
-# 1.0.1
+## 1.0.1
+
+### Changed
 
 - Remove the tagline from the navigation bar.
 
-# 1.0.0
+## 1.0.0
+
+### Changed
 
 - First stable release; the experimental designation is removed.
 - Add store icon and logo.
@@ -231,17 +320,23 @@
   automatically with the signed-in HA administrator when the interface is
   first opened; an existing assignment is kept.
 
-# 0.1.7
+## 0.1.7
+
+### Changed
 
 - Update CWA to v4.0.8 and Shelfmark to v1.5.1.
 
-# 0.1.6
+## 0.1.6
+
+### Changed
 
 - Enable Supervisor ingress streaming so POST uploads larger than 16 MiB reach
   the app instead of failing in Supervisor's request-body buffer.
 - Verify uploads over 25 MiB through both production nginx backend routes.
 
-# 0.1.5
+## 0.1.5
+
+### Changed
 
 - Keep Shelfmark's native Go To Library link inside the shared AIO workspace,
   retaining navigation and avoiding an extra browser tab on a normal click.
@@ -249,7 +344,9 @@
   and both applications are reachable. Wait through temporary startup failures
   and stop polling with a clear message if readiness cannot be confirmed.
 
-# 0.1.4
+## 0.1.4
+
+### Changed
 
 - Fix administrator setup: use HA's supervisor/api WebSocket transport and its
   unwrapped responses, matching the native HA app configuration interface.
@@ -259,7 +356,9 @@
 - Cover denied writes, empty successful responses, existing configuration and
   missing login names in browser regression tests.
 
-# 0.1.3
+## 0.1.3
+
+### Changed
 
 - Add German and English HA option labels, navigation and setup.
 - Start safely with an empty administrator setting and offer to adopt the
@@ -267,7 +366,9 @@
 - Keep manual setup available without granting the app HA API access.
 - Develop on dev-calibre and publish separately through the shared dev store.
 
-# 0.1.2
+## 0.1.2
+
+### Changed
 
 - Use a compact navigation bar with Bibliothek first.
 - Open the library by default; make the initial page configurable with start_page.
@@ -276,13 +377,17 @@
   login to its HA ID, and ignore group headers. Works on stable Supervisor
   without additional HA API access. Configure the login name before starting.
 
-# 0.1.1
+## 0.1.1
+
+### Changed
 
 - Fix first boot: wait for HA storage and ingress preparation before CWA init.
 - Test the actual s6 container boot and restart with persistent storage on both architectures.
 - Remove the manual administrator ID list from the HA options; roles come from HA automatically.
 
-# 0.1.0
+## 0.1.0
+
+### Changed
 
 - Introduce Calibre AIO with Shelfmark discovery/downloads and CWA library
   management in a shared Home Assistant ingress interface.

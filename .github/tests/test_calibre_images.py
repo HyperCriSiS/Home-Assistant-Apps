@@ -20,7 +20,7 @@ class ImageMetadataTest(unittest.TestCase):
             app = root / 'Calibre AIO'
             app.mkdir()
             config = app / 'config.yaml'
-            config.write_text('version: "1.2.0"\n')
+            config.write_text('version: "v2026.11.01"\n')
             for arguments in (['init', '-q'], ['config', 'user.name', 'Test'],
                               ['config', 'user.email', 'test@localhost'],
                               ['add', '.'], ['commit', '-qm', 'Initial source']):
@@ -31,11 +31,11 @@ class ImageMetadataTest(unittest.TestCase):
             subprocess.run(['git', 'commit', '-qm', 'Enable store pulls'], cwd=root, check=True)
             store = subprocess.check_output(command, cwd=root, text=True)
             self.assertEqual(source, store)
-            config.write_text(config.read_text().replace('1.2.0', '1.2.1'))
+            config.write_text(config.read_text().replace('2026.11.01', '2026.11.02'))
             self.assertNotEqual(source, subprocess.check_output(command, cwd=root, text=True))
 
     def test_stable_and_generated_dev_versions_match_supervisor_tags(self):
-        for version in ('0.1.2', '1.2.0', '1.2.0-dev.162'):
+        for version in ('v2026.11.09', 'v2026.11.09-2', 'v2026.11.09-dev.162'):
             text = f'name: Calibre\nversion: "{version}"\n'
             enabled = images.enable(text)
             self.assertEqual(images.read_version(enabled), version)
@@ -43,11 +43,11 @@ class ImageMetadataTest(unittest.TestCase):
             self.assertEqual(enabled.count('image:'), 1)
 
     def test_invalid_or_foreign_metadata_fails_closed(self):
-        for version in ('latest', '1.2.0;echo bad', '1.2.0-dev.bad', '../1.2.0'):
+        for version in ('latest', '1.2.0', 'v2026.11.09;echo bad', 'v2026.11.09-dev.bad', '../v2026.11.09'):
             with self.assertRaises(ValueError):
                 images.enable(f'version: "{version}"\n')
         with self.assertRaises(ValueError):
-            images.enable('version: "1.2.0"\nimage: "unrelated/image"\n')
+            images.enable('version: "v2026.11.09"\nimage: "unrelated/image"\n')
 
     def test_dev_store_waits_for_public_tested_images(self):
         text = (ROOT / '.github/workflows/sync-dev-store.yml').read_text()

@@ -5,7 +5,7 @@ import re
 import subprocess
 
 IMAGE = 'ghcr.io/hypercrisis/{arch}-calibre-aio'
-VERSION = r'\d+\.\d+\.\d+(?:-dev\.\d+)?'
+VERSION = r'v\d{4}\.\d{2}\.\d{2}(?:-\d+)?(?:-dev\.\d+)?'
 
 
 def read_version(text):

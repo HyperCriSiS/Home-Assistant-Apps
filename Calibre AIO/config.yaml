@@ -1,12 +1,13 @@
 name: "Calibre AIO"
-description: "Shelfmark book discovery and Calibre library management in one interface"
-version: "1.2.32"
+description: "CWA v4.0.8 and Shelfmark v1.6.1 - Book discovery and Calibre library management in one interface"
+version: "v2026.11.09"
 slug: "calibre-aio"
+url: "https://github.com/HyperCriSiS/Home-Assistant-Apps/tree/main/Calibre%20AIO"
+image: "ghcr.io/hypercrisis/{arch}-calibre-aio"
 init: false
 arch:
   - aarch64
   - amd64
-url: "https://github.com/HyperCriSiS/Home-Assistant-Apps/tree/main/Calibre%20AIO"
 panel_icon: "mdi:bookshelf"
 panel_title: "Calibre AIO"
 panel_admin: false
@@ -55,4 +56,3 @@ schema:
     admin_username: "str"
     admin_account: "str"
     auto_create_users: "bool"
-image: "ghcr.io/hypercrisis/{arch}-calibre-aio"

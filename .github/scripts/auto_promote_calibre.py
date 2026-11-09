@@ -43,6 +43,8 @@ TITLE = "release(calibre): automated update release"
 COMPONENTS = {"cwa": "CWA", "shelfmark": "Shelfmark"}
 ALLOWED_FILES = frozenset({
     f"{APP}/CHANGELOG.md",
+    f"{APP}/NOTICE.md",
+    f"{APP}/README.md",
     f"{APP}/build.yaml",
     f"{APP}/config.yaml",
     f"{APP}/upstream.json",
@@ -52,16 +54,11 @@ UPDATE_TITLES = (
     re.compile(rf"chore\(calibre-aio\): update CWA to {VERSION} and Shelfmark to {VERSION}"),
 )
 SYNC_SUBJECT = f"Merge remote-tracking branch 'origin/{MAIN}' into {DEV}"
-WRAPPER_VERSION = re.compile(r'^version: "([0-9]+\.[0-9]+\.[0-9]+)"$', re.M)
-CHANGELOG_LINES = (
-    re.compile(r""),
-    re.compile(r"# [0-9]+\.[0-9]+\.[0-9]+"),
-    re.compile(rf"- Update CWA to {VERSION} and Shelfmark to {VERSION}\."),
-)
+WRAPPER_VERSION = upstreams.VERSION_LINE
 
 
 def as_tuple(version: str) -> tuple[int, ...]:
-    return tuple(int(part) for part in version.removeprefix("v").split("."))
+    return tuple(int(part) for part in re.split(r"[.-]", version.removeprefix("v")))
 
 
 def manifest(text: str) -> dict:
@@ -105,19 +102,13 @@ def check_content(stable: dict[str, str], candidate: dict[str, str]) -> dict[str
     new_app = shared.single(WRAPPER_VERSION, candidate[f"{APP}/config.yaml"], "App version")
     if as_tuple(new_app) <= as_tuple(old_app):
         raise ValueError("App version must increase")
-    expected = stable[f"{APP}/config.yaml"].replace(f'version: "{old_app}"', f'version: "{new_app}"', 1)
-    if expected != candidate[f"{APP}/config.yaml"]:
-        raise ValueError(f"{APP}/config.yaml changes more than the App version")
-
-    before, after = stable[f"{APP}/CHANGELOG.md"], candidate[f"{APP}/CHANGELOG.md"]
-    if not after.endswith(before):
-        raise ValueError("Changelog history was modified")
-    added = after[:len(after) - len(before)]
-    if not added.startswith(f"# {new_app}\n") or any(
-        not any(pattern.fullmatch(line) for pattern in CHANGELOG_LINES)
-        for line in added.splitlines()
-    ):
-        raise ValueError("Changelog contains notes beyond the generated update lines")
+    # The updater rewrites version, description, badges, notices and the
+    # changelog entry from the pins; anything else keeps the release manual.
+    expected = upstreams.apply_versions(
+        new, new_app, {name: stable[f"{APP}/{name}"] for name in upstreams.VERSIONED_FILES})
+    for name, text in expected.items():
+        if candidate[f"{APP}/{name}"] != text:
+            raise ValueError(f"{APP}/{name} changes more than the generated update")
     return bumps
 
 

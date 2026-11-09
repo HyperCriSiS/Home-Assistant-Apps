@@ -5,10 +5,20 @@ import json
 import os
 from pathlib import Path
 import re
+import time
 import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
 REPOSITORIES = {'cwa': 'crocodilestick/Calibre-Web-Automated', 'shelfmark': 'calibrain/shelfmark'}
+LABELS = {'cwa': 'CWA', 'shelfmark': 'Shelfmark'}
+# App releases use the repository's CalVer scheme: vYYYY.MM.DD, -N for a further release on one day.
+APP_VERSION = r'v\d{4}\.\d{2}\.\d{2}(?:-\d+)?'
+VERSION_LINE = re.compile(r'^version: "(' + APP_VERSION + r')"$', re.M)
+DESCRIPTION = 'Book discovery and Calibre library management in one interface'
+CHANGELOG_HEAD = '# Changelog\n\n'
+# Files the updater rewrites besides upstream.json and build.yaml; the release
+# gate regenerates them from the stable branch and accepts no other change.
+VERSIONED_FILES = ('config.yaml', 'CHANGELOG.md', 'README.md', 'NOTICE.md')
 
 
 def load_manifest():
@@ -49,6 +59,81 @@ def render(data):
               '  amd64: ghcr.io/home-assistant/amd64-base-debian:trixie\n'
               'squash: false\nargs:\n')
     return header + ''.join(f'  {key}: "{value}"\n' for key, value in arguments(data).items())
+
+
+def app_version(config):
+    match = VERSION_LINE.search(config)
+    if not match:
+        raise ValueError('Unexpected app version format')
+    return match[1]
+
+
+def next_version(current, today=None):
+    """The next CalVer release: today's date, or -N when a release already exists for today."""
+    base = 'v' + (today or time.strftime('%Y.%m.%d', time.gmtime()))
+    if not re.fullmatch(APP_VERSION, current):
+        return base
+    stem, _, suffix = current.partition('-')
+    if stem != base:
+        return base
+    return f'{base}-{int(suffix or 1) + 1}'
+
+
+def description(data):
+    return f'CWA {data["cwa"]["version"]} and Shelfmark {data["shelfmark"]["version"]} - {DESCRIPTION}'
+
+
+def badge(name, data):
+    version = data[name]['version']
+    return (f'[![{LABELS[name]} version](https://img.shields.io/badge/{LABELS[name]}-{version}-B49A64)]'
+            f'(https://github.com/{REPOSITORIES[name]}/releases/tag/{version})')
+
+
+def _replace_line(text, pattern, line, label):
+    text, count = re.subn(pattern, lambda _: line, text, count=1, flags=re.M)
+    if count != 1:
+        raise ValueError('Cannot update ' + label)
+    return text
+
+
+def apply_versions(data, version, files, note=None):
+    """Rewrite the App version, description, badges and notices for the given pins.
+
+    `files` maps the names in VERSIONED_FILES to their current text; the result
+    maps them to the updated text. The release gate feeds the stable files in
+    and accepts a candidate only when it equals this output.
+    """
+    result = {}
+    config = files['config.yaml']
+    config = _replace_line(config, VERSION_LINE.pattern, f'version: "{version}"', 'config.yaml version')
+    config = _replace_line(config, r'^description: ".*"$', f'description: "{description(data)}"',
+                           'config.yaml description')
+    result['config.yaml'] = config
+
+    changelog = files['CHANGELOG.md']
+    if not changelog.startswith(CHANGELOG_HEAD):
+        raise ValueError('CHANGELOG.md must start with "# Changelog"')
+    note = note or (f'Update CWA to {data["cwa"]["version"]} and '
+                    f'Shelfmark to {data["shelfmark"]["version"]}.')
+    result['CHANGELOG.md'] = (f'{CHANGELOG_HEAD}## {version}\n\n### Changed\n\n- {note}\n\n'
+                              + changelog[len(CHANGELOG_HEAD):])
+
+    readme = files['README.md']
+    for name in REPOSITORIES:
+        readme = _replace_line(readme, r'^\[!\[' + LABELS[name] + r' version\]\(.*$', badge(name, data),
+                               'README.md ' + LABELS[name] + ' badge')
+    result['README.md'] = readme
+
+    notice = files['NOTICE.md']
+    for name, heading in (('cwa', 'Calibre-Web Automated'), ('shelfmark', 'Shelfmark')):
+        pattern = r'(?<=## ' + heading + r'\n\n- Project: )(.*)\n- Version currently packaged: .*$'
+        match = re.search(pattern, notice, re.M)
+        if not match:
+            raise ValueError('Cannot update NOTICE.md ' + heading)
+        notice = notice[:match.start()] + match[1] + '\n- Version currently packaged: ' + \
+            data[name]['version'] + notice[match.end():]
+    result['NOTICE.md'] = notice
+    return result
 
 
 def request(url, github=False):
@@ -110,11 +195,7 @@ def main():
         print('\n'.join(f'{name}={data[name]["version"]}' for name in REPOSITORIES))
         return
     if args.command == 'args':
-        config = (ROOT / 'config.yaml').read_text()
-        version = re.search(r'^version: "([0-9.]+)"$', config, re.M)
-        if not version:
-            raise ValueError('Unexpected app version')
-        print('BUILD_VERSION=' + version[1])
+        print('BUILD_VERSION=' + app_version((ROOT / 'config.yaml').read_text()))
         print('\n'.join(f'{key}={value}' for key, value in arguments(data).items()))
         return
     if args.command == 'update':
@@ -138,23 +219,28 @@ def main():
             print('No upstream updates')
             return
         data = updated
-        config = (ROOT / 'config.yaml').read_text()
-        match = re.search(r'^version: "(\d+)\.(\d+)\.(\d+)"$', config, re.M)
-        if not match:
-            raise ValueError('Unexpected app version format')
-        version = f'{match[1]}.{match[2]}.{int(match[3]) + 1}'
+        files = {name: (ROOT / name).read_text() for name in VERSIONED_FILES}
+        version = next_version(app_version(files['config.yaml']))
         (ROOT / 'upstream.json').write_text(json.dumps(data, indent=2) + '\n')
-        (ROOT / 'config.yaml').write_text(config.replace(match[0], f'version: "{version}"', 1))
-        changelog = ROOT / 'CHANGELOG.md'
-        changelog.write_text(f'# {version}\n\n- Update CWA to {data["cwa"]["version"]} and '
-                             f'Shelfmark to {data["shelfmark"]["version"]}.\n\n'
-                             + changelog.read_text())
+        for name, text in apply_versions(data, version, files).items():
+            (ROOT / name).write_text(text)
     generated = render(data)
     if args.command == 'check':
         if (ROOT / 'build.yaml').read_text() != generated:
             raise SystemExit('build.yaml differs from upstream.json; run scripts/upstreams.py render')
+        files = {name: (ROOT / name).read_text() for name in VERSIONED_FILES}
+        expected = apply_versions(data, app_version(files['config.yaml']), files, note='x')
+        # The versioned files must already carry the pinned versions.
+        for name in ('config.yaml', 'README.md', 'NOTICE.md'):
+            if expected[name] != files[name]:
+                raise SystemExit(name + ' does not carry the pinned versions; run scripts/upstreams.py render')
     else:
         (ROOT / 'build.yaml').write_text(generated)
+        if args.command == 'render':
+            files = {name: (ROOT / name).read_text() for name in VERSIONED_FILES}
+            for name, value in apply_versions(data, app_version(files['config.yaml']), files, note='x').items():
+                if name != 'CHANGELOG.md':
+                    (ROOT / name).write_text(value)
 
 
 if __name__ == '__main__':
