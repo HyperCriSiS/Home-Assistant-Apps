@@ -57,7 +57,8 @@ variable `CALIBRE_AUTO_PROMOTE=true`.
 
 ## Checklist for a new App
 
-Copy the Trilium files as the template; they are the smallest complete set.
+Copy the Trilium files as the template; they are the smallest complete set,
+and shape the folder after [APP-STANDARDS.md](APP-STANDARDS.md).
 
 1. Create `dev-<app>` from `main` and add it to the ruleset
    "App development branches" (blocks deletion and force pushes).
