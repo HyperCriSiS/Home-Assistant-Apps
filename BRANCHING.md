@@ -24,6 +24,13 @@ upstream update proposals target this branch. Bot-only upstream updates are
 promoted to `main` automatically (see below); everything else is a separate
 manual release after testing.
 
+## `dev-inbox-zero`
+
+Long-lived release-candidate branch for **Inbox Zero only**. App changes and
+the daily fork commit proposals target this branch. Bot-only commit bumps are
+promoted to `main` automatically (see below); everything else is a separate
+manual release after testing.
+
 Development branches periodically merge the latest `main` so they inherit already released changes from the other Apps without inheriting their unreleased work.
 
 ## `dev-store`
@@ -33,6 +40,7 @@ Development branches periodically merge the latest `main` so they inherit alread
 - `TriliumNext Notes/` from `dev-trilium`
 - `MCPHub/` from `dev-mcphub`
 - `Calibre AIO/` from `dev-calibre`
+- `Inbox Zero/` from `dev-inbox-zero`
 - shared repository content from `main`
 
 Home Assistant development repository URL:
@@ -62,6 +70,7 @@ for the initial package visibility setup and rollout order.
 Trilium work -> dev-trilium -> dev-store -> HA test -> main
 MCPHub work  -> dev-mcphub  -> dev-store -> HA test -> main
 Calibre work -> dev-calibre -> dev-store -> HA test -> main
+Inbox Zero work -> dev-inbox-zero -> dev-store -> HA test -> main
 ```
 
 A Trilium release PR is always `dev-trilium -> main`. An MCPHub release PR is always `dev-mcphub -> main`. This prevents one App's unreleased work from being published with the other App.
@@ -126,3 +135,42 @@ Any other change keeps the manual release PR prepared by `promote.yml` (app
 `calibre`) after live HAOS testing. Enable with the repository variable
 `CALIBRE_AUTO_PROMOTE=true`; pause by setting it to `false` or by labelling the
 release PR `hold`.
+
+## Inbox Zero
+
+Inbox Zero packages the fork
+[HyperCriSiS/inbox-zero](https://github.com/HyperCriSiS/inbox-zero), which
+publishes no releases and no images. The App therefore pins one commit of the
+fork's `main` branch:
+
+- `build-inbox-zero-base.yml` builds the fork's own `docker/Dockerfile.prod` at
+  that commit for both architectures and publishes
+  `ghcr.io/hypercrisis/inbox-zero-base:<commit>` once per commit.
+  `validate-inbox-zero.yml` calls it, so the base image exists before a pull
+  request can be merged.
+- `Inbox Zero/Dockerfile` starts `FROM` that image and adds PostgreSQL, Redis,
+  the Redis HTTP adapter and the scheduler. `publish-inbox-zero-images.yml`
+  publishes it as `ghcr.io/hypercrisis/{arch}-inbox-zero:<version>`.
+- `update-inbox-zero.yml` proposes the newest fork commit daily against
+  `dev-inbox-zero` and names the newest upstream release that commit contains.
+
+All three GHCR packages must be public.
+
+### Automatic Inbox Zero update releases
+
+`auto-promote-inbox-zero.yml` merges `dev-inbox-zero` into `main` without manual
+review only when every gate in `.github/scripts/auto_promote_inbox_zero.py`
+passes: `dev-inbox-zero` holds nothing but GitHub-signed squash merges of bot
+PRs titled `chore(inbox-zero): update to <commit> (<base version>)` plus clean
+merges of `main`; the diff changes only the commit pin, the base version, the
+App version and generated changelog lines; a new upstream major version stays
+manual; the new commit continues the history of the released one, is on the
+fork's `main` branch and is at least 48 hours old; the newest update has been
+on `dev-inbox-zero` for 36 hours; and `validate-inbox-zero.yml` passed for that
+exact commit. A failing stable validation after the merge opens a revert PR and
+an issue.
+
+Any other change keeps the manual release PR prepared by `promote.yml` (app
+`inbox-zero`) after testing in Home Assistant. Enable with the repository
+variable `INBOX_ZERO_AUTO_PROMOTE=true`; pause by setting it to `false` or by
+labelling the release PR `hold`.
