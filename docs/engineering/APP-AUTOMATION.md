@@ -22,6 +22,13 @@ puts the pull request on hold with the label `hold`. Removing the label resumes
 the automation. Scheduled workflows run only from `main`; a workflow that exists
 only on a development branch never runs on its schedule.
 
+A release reaches `main` as one squashed commit, so `sync-dev-bases.yml` can
+meet a conflict in the App changelog that the release pull request reworded.
+`resolve_release_changelog.py` settles exactly that case: `main` keeps the
+released text and the development branch keeps the sections it added above the
+released version. Any other conflict fails the run for that branch only; the
+remaining branches and the development store are still synced.
+
 ## Shared timings and settings
 
 | Setting | Value | Where it lives |
