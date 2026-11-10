@@ -168,8 +168,10 @@ Hörbuchserver. Audiobookshelf ist nicht enthalten.
 | Daten | Containerpfad |
 | --- | --- |
 | CWA-Zustand und Kontobindungen | `/data/config` (über `/config`) |
-| CWA-Kopien importierter und reparierter Bücher (nicht gesichert) | `/data/config/processed_books` |
+| CWA-Sicherheitskopien verarbeiteter Bücher | `/data/config/processed_books` |
+| CWA-Cover-Vorschaubilder (nicht gesichert) | `/data/config/thumbnails` |
 | Shelfmark-Einstellungen, Konten und Geheimnisse | `/data/shelfmark` |
+| Shelfmark-Cover-Cache der Suchergebnisse (nicht gesichert) | `/data/shelfmark/covers` |
 | Shelfmark-Zwischenspeicher und Logs (nicht gesichert) | `/data/shelfmark-staging`, `/data/shelfmark-logs` |
 | Shelfmark-Hörbücher | `/data/shelfmark-audiobooks` |
 | E-Book-Bibliothek | `/share/<library_dir>` |
@@ -183,12 +185,20 @@ Hörbuchserver. Audiobookshelf ist nicht enthalten.
 > **Share** an, um die Bibliothek einzuschließen, oder nimm ihn heraus, wenn Du
 > sie anderweitig sicherst.
 
-Shelfmarks Zwischenspeicher und Logs sind flüchtig und von der App-Sicherung
-ausgenommen, ebenso CWAs Ordner `processed_books`: Er enthält ZIP-Kopien
-importierter, konvertierter und reparierter Bücher, die bereits in der
-Bibliothek liegen, und kann auf mehrere Gigabyte wachsen. Wer diese Kopien gar
-nicht möchte, schaltet in den CWA Settings die automatischen Sicherungen von
-Importen und Konvertierungen ab. Diese App hat
+Die App-Sicherung lässt alles aus, was nach einer Wiederherstellung neu
+entsteht oder nicht gebraucht wird: CWAs Cover-Vorschaubilder (beim ersten
+Aufruf und durch die nächtliche Aufgabe aus den Bibliothekscovern neu erzeugt),
+Shelfmarks Cover-Cache der Suchergebnisse (standardmäßig bis 500 MB, bei der
+nächsten Suche neu geladen), Caches, Logs, temporäre Konvertierungsdateien,
+Laufzeitmarkierungen, Shelfmarks Download-Zwischenspeicher und CWAs Kopien in
+`processed_books/imported`, die Dateien der Bibliothek doppeln.
+
+Der Rest von `processed_books` bleibt in der Sicherung, weil es ihn sonst
+nirgends gibt: Originale vor einer automatischen Konvertierung (`converted`)
+oder EPUB-Reparatur (`fixed_originals`), gescheiterte Importe (`failed`) und
+beim Auflösen von Duplikaten entfernte Bücher (`duplicate_resolutions`). Wer
+diese Kopien nicht möchte, schaltet in den CWA Settings die automatischen
+Sicherungen von Importen und Konvertierungen ab. Diese App hat
 einen eigenen Slug und übernimmt nicht die privaten Datenbanken der früheren
 CWA-Testinstallation. Teste mit den getrennten Standardordnern, bevor Du
 vorhandene Bibliotheksdaten kopierst.

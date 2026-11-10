@@ -44,6 +44,34 @@ class StartupOrderTest(unittest.TestCase):
                       template)
 
     @unittest.skipUnless(shutil.which('bash'), 'requires bash')
+    def test_interrupted_ingest_follow_up_is_requeued(self):
+        import tempfile
+        script = (ROOT / 'rootfs/etc/cont-init.d/calibre-web-automated.sh').read_text()
+        start = script.index('requeue_interrupted_follow_up() {')
+        function = script[start:script.index(chr(10) + '}' + chr(10), start) + 3]
+        stub = 'bashio::log.info() { :; }' + chr(10)
+        for present, expected in (({'running'}, {'dirty'}), ({'running', 'dirty'}, {'dirty'}), (set(), set())):
+            with self.subTest(present=present), tempfile.TemporaryDirectory() as directory:
+                names = {'dirty': 'cwa_ingest_batch_dirty', 'running': 'cwa_ingest_batch_dirty.running'}
+                for name in present:
+                    (Path(directory) / names[name]).write_text('x')
+                subprocess.run([shutil.which('bash'), '-c', stub + function + 'requeue_interrupted_follow_up "$1"',
+                                'test', Path(directory).as_posix()], check=True, capture_output=True)
+                left = {key for key, name in names.items() if (Path(directory) / name).exists()}
+                self.assertEqual(left, expected)
+
+    def test_backups_skip_caches_but_keep_unique_cwa_copies(self):
+        excluded = yaml.safe_load((ROOT / 'config.yaml').read_text())['backup_exclude']
+        for pattern in ('config/thumbnails/*', 'shelfmark/covers/*', 'config/processed_books/imported/*',
+                        'config/cwa_ingest_batch_dirty.running'):
+            self.assertIn(pattern, excluded)
+        # Originals before conversion or EPUB fixing, failed imports and resolved
+        # duplicates exist nowhere else and stay in the backup.
+        self.assertNotIn('config/processed_books/*', excluded)
+        for kept in ('app.db', 'cwa.db', '.key', 'ha_admin_bindings.db'):
+            self.assertFalse(any(Path('config', kept).match(pattern) for pattern in excluded), kept)
+
+    @unittest.skipUnless(shutil.which('bash'), 'requires bash')
     def test_nested_library_and_ingest_folders_are_refused(self):
         script = (ROOT / 'rootfs/etc/cont-init.d/calibre-web-automated.sh').read_text()
         checks = script[script.index('check_share_dir() {'):script.index('CONFIG_TARGET=')]

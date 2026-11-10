@@ -151,8 +151,10 @@ audiobook library server. No Audiobookshelf integration is bundled.
 | Data | Container path |
 | --- | --- |
 | CWA state and account bindings | `/data/config` (via `/config`) |
-| CWA copies of imported and fixed books (not backed up) | `/data/config/processed_books` |
+| CWA safety copies of processed books | `/data/config/processed_books` |
+| CWA cover thumbnails (not backed up) | `/data/config/thumbnails` |
 | Shelfmark settings, accounts and secrets | `/data/shelfmark` |
+| Shelfmark cover cache of search results (not backed up) | `/data/shelfmark/covers` |
 | Shelfmark staging and logs (not backed up) | `/data/shelfmark-staging`, `/data/shelfmark-logs` |
 | Shelfmark audiobooks | `/data/shelfmark-audiobooks` |
 | Ebook library | `/share/<library_dir>` |
@@ -165,11 +167,19 @@ audiobook library server. No Audiobookshelf integration is bundled.
 > by the **Share** folder of an HA backup: tick **Share** to include the
 > library, untick it when you back up the library by other means.
 
-Shelfmark's download staging and logs are transient and excluded from the
-App backup, as is CWA's `processed_books` folder: it holds zipped copies of
-imported, converted and fixed books that already sit in the library, and it
-can grow to several gigabytes. Disable CWA's automatic import and conversion
-backups in CWA Settings if you do not want these copies at all. This app has a distinct slug
+The App backup skips everything that is rebuilt or not needed after a
+restore: CWA's cover thumbnails (regenerated from the library covers on first
+view and by the nightly thumbnail task), Shelfmark's cover cache of search
+results (up to 500 MB by default, downloaded again on the next search), caches,
+logs, temporary conversion files, runtime markers, Shelfmark's download
+staging and CWA's `processed_books/imported` copies, which duplicate files in
+the library.
+
+The rest of `processed_books` stays in the backup because it exists nowhere
+else: originals before an automatic conversion (`converted`) or EPUB fix
+(`fixed_originals`), failed imports (`failed`) and books removed while
+resolving duplicates (`duplicate_resolutions`). Disable CWA's automatic import
+and conversion backups in CWA Settings if you do not want these copies. This app has a distinct slug
 and does not adopt the private databases of the previous CWA test installation.
 Test with the default separate folders before copying existing library data.
 

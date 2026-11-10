@@ -1,5 +1,15 @@
 # Changelog
 
+## v2026.11.10
+
+### Changed
+
+- Backups skip CWA cover thumbnails, the Shelfmark cover cache, caches, logs, temporary files, runtime markers and the `processed_books/imported` copies; originals before conversion or EPUB fixing, failed imports and resolved duplicates are backed up again.
+
+### Fixed
+
+- A CWA post-import follow-up interrupted by a stop (cold backup, restart) no longer leaves the duplicates page reporting an import in progress; the App requeues it at start.
+
 ## v2026.11.09
 
 ### Changed
