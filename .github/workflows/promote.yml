@@ -165,7 +165,8 @@ jobs:
               --repo "${GITHUB_REPOSITORY}" \
               --workflow validate.yml \
               --branch dev-trilium \
-              --commit "${sha}" \              --status completed \
+              --commit "${sha}" \
+              --status completed \
               --limit 20 \
               --json conclusion,event \
               --jq '[.[] | select(.event == "push" or .event == "workflow_dispatch")][0].conclusion // empty'
@@ -257,7 +258,8 @@ jobs:
               --repo "${GITHUB_REPOSITORY}" \
               --workflow validate-mcphub.yml \
               --branch dev-mcphub \
-              --commit "${sha}" \              --status completed \
+              --commit "${sha}" \
+              --status completed \
               --limit 20 \
               --json conclusion,event \
               --jq '[.[] | select(.event == "push" or .event == "workflow_dispatch")][0].conclusion // empty'
