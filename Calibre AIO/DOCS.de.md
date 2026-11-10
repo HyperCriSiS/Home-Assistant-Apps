@@ -1,6 +1,6 @@
 # Calibre AIO Dokumentation
 
-Deutsch | [English](DOCS.md)
+[English](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/DOCS.md) | Deutsch
 
 ## Erste Schritte
 
@@ -37,6 +37,7 @@ library_theme: modern
 start_page: library
 library_dir: calibre-aio/library
 ingest_dir: calibre-aio/ingest
+processed_dir: calibre-aio/processed
 network_share_mode: false
 shelfmark:
   external_bypass_url: ""
@@ -71,7 +72,7 @@ Die Bibliothek ist nie Teil der Sicherung dieser App, und keine Option der App
 kann das ändern: Home Assistant sichert `/share` nur über den Ordner **Share**
 einer Sicherung, und der gilt für den gemeinsamen Ordner aller Apps zusammen.
 Wähle **Share** an, um die Bibliothek einzuschließen, oder sichere sie
-anderweitig. Siehe [Persistenz und Sicherungen](#persistenz-und-sicherungen).
+anderweitig. Siehe [Persistenz und Sicherungen](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/DOCS.de.md#persistenz-und-sicherungen).
 
 ### `ingest_dir`
 
@@ -79,6 +80,20 @@ anderweitig. Siehe [Persistenz und Sicherungen](#persistenz-und-sicherungen).
 denselben Regeln. Er darf weder der Bibliotheksordner sein noch darin liegen
 oder ihn enthalten, und sollte nicht der aktive Downloadordner einer anderen
 App sein.
+
+### `processed_dir`
+
+Pfad relativ zu `/share` für CWAs Sicherheitskopien verarbeiteter Bücher, mit
+denselben Regeln. CWA legt dort das Original jedes importierten, konvertierten
+oder EPUB-reparierten Buchs ab, dazu gescheiterte Importe und beim Auflösen von
+Duplikaten entfernte Bücher. Er darf weder der Bibliotheks- noch der
+Übergabeordner sein, nicht darin liegen und keinen davon enthalten; sonst
+meldet die App eine Warnung und lässt die Kopien ungesichert in ihrem privaten
+Ordner. Die App
+verknüpft CWAs `/config/processed_books` mit diesem Ordner; Kopien, die frühere
+Versionen im privaten App-Ordner abgelegt haben, ziehen beim nächsten Start
+dorthin um. Wer diese Kopien nicht möchte, schaltet in den CWA Settings die
+automatischen Sicherungen von Importen und Konvertierungen ab.
 
 ### `network_share_mode`
 
@@ -174,7 +189,6 @@ Hörbuchserver. Audiobookshelf ist nicht enthalten.
 | Daten | Containerpfad |
 | --- | --- |
 | CWA-Zustand und Kontobindungen | `/data/config` (über `/config`) |
-| CWA-Sicherheitskopien verarbeiteter Bücher | `/data/config/processed_books` |
 | CWA-Cover-Vorschaubilder (nicht gesichert) | `/data/config/thumbnails` |
 | Shelfmark-Einstellungen, Konten und Geheimnisse | `/data/shelfmark` |
 | Shelfmark-Cover-Cache der Suchergebnisse (nicht gesichert) | `/data/shelfmark/covers` |
@@ -182,29 +196,22 @@ Hörbuchserver. Audiobookshelf ist nicht enthalten.
 | Shelfmark-Hörbücher | `/data/shelfmark-audiobooks` |
 | E-Book-Bibliothek | `/share/<library_dir>` |
 | Übergabe fertiger Bücher | `/share/<ingest_dir>` |
+| CWA-Sicherheitskopien verarbeiteter Bücher | `/share/<processed_dir>` (über `/config/processed_books`) |
 
 > [!WARNING]
 > Eine HA-Sicherung dieser App enthält nur den privaten Ordner `/data`:
-> CWA-Zustand, Shelfmark-Einstellungen und Hörbücher. Die E-Book-Bibliothek und
-> der Übergabeordner liegen unter `/share` und sind **nie Teil der
-> App-Sicherung**. Sie gehören zum Ordner **Share** einer HA-Sicherung: Wähle
-> **Share** an, um die Bibliothek einzuschließen, oder nimm ihn heraus, wenn Du
-> sie anderweitig sicherst.
+> CWA-Zustand, Shelfmark-Einstellungen und Hörbücher. Alle Buchdateien liegen
+> unter `/share`: die Bibliothek, der Übergabeordner und CWAs
+> Sicherheitskopien. Sie sind **nie Teil der App-Sicherung** und gehören zum
+> Ordner **Share** einer HA-Sicherung: Wähle **Share** an, um sie
+> einzuschließen, oder nimm ihn heraus, wenn Du sie anderweitig sicherst.
 
-Die App-Sicherung lässt alles aus, was nach einer Wiederherstellung neu
+Die App-Sicherung lässt außerdem aus, was nach einer Wiederherstellung neu
 entsteht oder nicht gebraucht wird: CWAs Cover-Vorschaubilder (beim ersten
 Aufruf und durch die nächtliche Aufgabe aus den Bibliothekscovern neu erzeugt),
 Shelfmarks Cover-Cache der Suchergebnisse (standardmäßig bis 500 MB, bei der
 nächsten Suche neu geladen), Caches, Logs, temporäre Konvertierungsdateien,
-Laufzeitmarkierungen, Shelfmarks Download-Zwischenspeicher und CWAs Kopien in
-`processed_books/imported`, die Dateien der Bibliothek doppeln.
-
-Der Rest von `processed_books` bleibt in der Sicherung, weil es ihn sonst
-nirgends gibt: Originale vor einer automatischen Konvertierung (`converted`)
-oder EPUB-Reparatur (`fixed_originals`), gescheiterte Importe (`failed`) und
-beim Auflösen von Duplikaten entfernte Bücher (`duplicate_resolutions`). Wer
-diese Kopien nicht möchte, schaltet in den CWA Settings die automatischen
-Sicherungen von Importen und Konvertierungen ab. Diese App hat
+Laufzeitmarkierungen und Shelfmarks Download-Zwischenspeicher. Diese App hat
 einen eigenen Slug und übernimmt nicht die privaten Datenbanken der früheren
 CWA-Testinstallation. Teste mit den getrennten Standardordnern, bevor Du
 vorhandene Bibliotheksdaten kopierst.
@@ -251,7 +258,7 @@ zugehörige Warnung im Protokoll ist harmlos. Diese App aktualisiert CWA nur
 über ihre eigenen Releases.
 
 Die Upstream-Versionen stehen in `upstream.json`. Alle Aktualisierungen sollen
-über den in [UPDATING.md](UPDATING.md) beschriebenen Manifest- und
+über den in [UPDATING.md](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/UPDATING.md) beschriebenen Manifest- und
 Update-Ablauf laufen, mit einer Sicherung, bevor eine echte Installation
 aktualisiert wird.
 

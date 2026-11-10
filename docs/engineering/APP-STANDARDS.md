@@ -68,6 +68,12 @@ Localized documentation (`DOCS.de.md`) is optional; when it exists, the English
    MCPHub adds `## Versioning` and `## Updating`; add them when the App's
    scheme or update path needs explanation.
 
+Links in the README and in DOCS files are absolute GitHub URLs, in-page anchors included
+(`https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/<folder>/<file>`).
+Home Assistant renders the README on the App page and `DOCS.md` in the
+Documentation tab and resolves relative links against its own address, so
+`DOCS.md` would only reopen the same page.
+
 ## DOCS.md structure
 
 - `# <App name> documentation`.

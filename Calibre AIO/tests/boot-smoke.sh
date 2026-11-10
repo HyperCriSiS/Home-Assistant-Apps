@@ -40,6 +40,8 @@ else:
     raise AssertionError("Non-Supervisor peer was accepted")'
     docker exec calibre-aio-boot test -L /config
     docker exec calibre-aio-boot test -f /data/config/app.db
+    docker exec calibre-aio-boot sh -c \
+        'test "$(readlink /data/config/processed_books)" = /share/calibre-aio/processed'
     docker exec calibre-aio-boot test -f /calibre-library/metadata.db
     docker exec calibre-aio-boot /command/s6-setuidgid abc \
         python3 /opt/ha-cwa/library_permissions.py check

@@ -193,7 +193,8 @@ class WorkflowTests(unittest.TestCase):
                     Path(app).mkdir()
                     Path(app, "config.yaml").write_text(
                         'name: "test"\nversion: "v2026.11.02"\npanel_title: "test"\nurl: "test"\ninit: false\n'
-                        '  library_dir: "calibre-aio/library"\n  ingest_dir: "calibre-aio/ingest"\n',
+                        '  library_dir: "calibre-aio/library"\n  ingest_dir: "calibre-aio/ingest"\n'
+                        '  processed_dir: "calibre-aio/processed"\n',
                     )
                 def generate(run_number, source):
                     with patch.dict(os.environ, {"DEV_BUILD": str(run_number)}), \

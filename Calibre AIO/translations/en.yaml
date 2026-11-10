@@ -16,6 +16,11 @@ configuration:
   ingest_dir:
     name: Import folder
     description: Path relative to /share for completed book downloads.
+  processed_dir:
+    name: Processed books folder
+    description: >-
+      Path relative to /share for CWA's safety copies of imported, converted and
+      repaired books. Like the library, it is backed up through the Share folder.
   network_share_mode:
     name: Network share mode
     description: Use polling instead of filesystem events for SMB/NFS.

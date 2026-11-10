@@ -1,6 +1,6 @@
 # Calibre AIO documentation
 
-[Deutsch](DOCS.de.md) | English
+English | [Deutsch](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/DOCS.de.md)
 
 ## Getting started
 
@@ -35,6 +35,7 @@ library_theme: modern
 start_page: library
 library_dir: calibre-aio/library
 ingest_dir: calibre-aio/ingest
+processed_dir: calibre-aio/processed
 network_share_mode: false
 shelfmark:
   external_bypass_url: ""
@@ -68,13 +69,26 @@ The library is never part of this App's backup, and no App option can change
 that: Home Assistant backs up `/share` only through the **Share** folder of a
 backup, which covers the shared folder of all Apps together. Tick **Share** to
 include the library, or back it up by other means. See
-[Persistence and backups](#persistence-and-backups).
+[Persistence and backups](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/DOCS.md#persistence-and-backups).
 
 ### `ingest_dir`
 
 Completed-book handoff path relative to `/share`, with the
 same rules. It must not be the library folder, lie inside it or contain it,
 and should not be another app's active download directory.
+
+### `processed_dir`
+
+Path relative to `/share` for CWA's safety copies of processed books, with the
+same rules. CWA keeps the original of every imported, converted or EPUB-fixed
+book there, plus failed imports and books removed while resolving duplicates.
+It must not be the library or ingest folder, lie inside one or contain one;
+otherwise the App logs a warning and keeps the copies in its private folder,
+where they are not backed up.
+The App links CWA's `/config/processed_books` to this folder; copies kept in
+the private App folder by earlier versions move there on the next start.
+Disable CWA's automatic import and conversion backups in CWA Settings if you
+do not want these copies.
 
 ### `network_share_mode`
 
@@ -157,7 +171,6 @@ audiobook library server. No Audiobookshelf integration is bundled.
 | Data | Container path |
 | --- | --- |
 | CWA state and account bindings | `/data/config` (via `/config`) |
-| CWA safety copies of processed books | `/data/config/processed_books` |
 | CWA cover thumbnails (not backed up) | `/data/config/thumbnails` |
 | Shelfmark settings, accounts and secrets | `/data/shelfmark` |
 | Shelfmark cover cache of search results (not backed up) | `/data/shelfmark/covers` |
@@ -165,27 +178,21 @@ audiobook library server. No Audiobookshelf integration is bundled.
 | Shelfmark audiobooks | `/data/shelfmark-audiobooks` |
 | Ebook library | `/share/<library_dir>` |
 | Completed-book handoff | `/share/<ingest_dir>` |
+| CWA safety copies of processed books | `/share/<processed_dir>` (via `/config/processed_books`) |
 
 > [!WARNING]
 > An HA backup of this App contains only the private `/data` folder: CWA state,
-> Shelfmark settings and audiobooks. The ebook library and the ingest folder
-> live under `/share` and are **never part of the App backup**. They are covered
-> by the **Share** folder of an HA backup: tick **Share** to include the
-> library, untick it when you back up the library by other means.
+> Shelfmark settings and audiobooks. Every book file lives under `/share`: the
+> library, the ingest folder and CWA's safety copies. They are **never part of
+> the App backup** and are covered by the **Share** folder of an HA backup:
+> tick **Share** to include them, untick it when you back them up by other means.
 
-The App backup skips everything that is rebuilt or not needed after a
-restore: CWA's cover thumbnails (regenerated from the library covers on first
-view and by the nightly thumbnail task), Shelfmark's cover cache of search
-results (up to 500 MB by default, downloaded again on the next search), caches,
-logs, temporary conversion files, runtime markers, Shelfmark's download
-staging and CWA's `processed_books/imported` copies, which duplicate files in
-the library.
-
-The rest of `processed_books` stays in the backup because it exists nowhere
-else: originals before an automatic conversion (`converted`) or EPUB fix
-(`fixed_originals`), failed imports (`failed`) and books removed while
-resolving duplicates (`duplicate_resolutions`). Disable CWA's automatic import
-and conversion backups in CWA Settings if you do not want these copies. This app has a distinct slug
+The App backup also skips what is rebuilt or not needed after a restore: CWA's
+cover thumbnails (regenerated from the library covers on first view and by the
+nightly thumbnail task), Shelfmark's cover cache of search results (up to
+500 MB by default, downloaded again on the next search), caches, logs,
+temporary conversion files, runtime markers and Shelfmark's download staging.
+This app has a distinct slug
 and does not adopt the private databases of the previous CWA test installation.
 Test with the default separate folders before copying existing library data.
 
@@ -224,7 +231,7 @@ start continues without internet access; a related warning in the log is
 harmless. This App updates CWA only through its own releases.
 
 Upstream versions are listed in `upstream.json`. All upgrades should use the
-manifest/update workflow described in [UPDATING.md](UPDATING.md), with a backup
+manifest/update workflow described in [UPDATING.md](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/UPDATING.md), with a backup
 before a real installation is upgraded.
 
 ## Languages and development builds
