@@ -337,6 +337,9 @@ class OpenAITunnel(TunnelProcess):
             raise ValueError('MCPHub tunnel authorization file is missing')
         save_secret(OPENAI_KEY_FILE, key)
         env = os.environ.copy()
+        # The tunnel client needs neither Home Assistant nor MCPHub secrets.
+        for name in ('SUPERVISOR_TOKEN', 'JWT_SECRET', 'HA_INGRESS_PROXY_SECRET'):
+            env.pop(name, None)
         env.update({
             'CONTROL_PLANE_TUNNEL_ID': tunnel_id,
             'MCP_SERVER_URL': f'http://127.0.0.1:3000{self.route}',
