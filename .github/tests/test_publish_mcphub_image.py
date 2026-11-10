@@ -173,7 +173,7 @@ class WorkflowTests(unittest.TestCase):
         workflow = yaml.safe_load((ROOT / ".github/workflows/sync-dev-store.yml").read_text())
         self.assertIs(workflow["concurrency"]["cancel-in-progress"], False)
         jobs = workflow["jobs"]
-        self.assertEqual(set(jobs["publish"]["needs"]), {"images", "mcphub-images", "trilium-images"})
+        self.assertEqual(set(jobs["publish"]["needs"]), {"images", "mcphub-images", "trilium-images", "inbox-zero-images"})
         self.assertEqual(jobs["mcphub-images"]["needs"], "sync")
         self.assertEqual(jobs["mcphub-images"]["with"]["bundle"], jobs["images"]["with"]["bundle"])
         self.assertNotIn("continue-on-error", jobs["mcphub-images"])
@@ -189,7 +189,7 @@ class WorkflowTests(unittest.TestCase):
             os.chdir(temporary)
             try:
                 Path("repository.json").write_text('{"name": "test"}')
-                for app in ("MCPHub", "TriliumNext Notes", "Calibre AIO"):
+                for app in ("MCPHub", "TriliumNext Notes", "Calibre AIO", "Inbox Zero"):
                     Path(app).mkdir()
                     Path(app, "config.yaml").write_text(
                         'name: "test"\nversion: "v2026.11.02"\npanel_title: "test"\nurl: "test"\ninit: false\n'
@@ -212,6 +212,7 @@ class WorkflowTests(unittest.TestCase):
                 self.assertEqual(changed["mcphub"]["revision"], 103)
                 # Trilium publishes images too, so it reserves the run tag as well.
                 self.assertEqual(changed["trilium"]["revision"], 103)
+                self.assertEqual(changed["inbox-zero"]["revision"], 103)
                 self.assertEqual(changed["calibre"]["revision"], 101)
                 self.assertIn("-dev.103", Path("MCPHub/config.yaml").read_text())
             finally:

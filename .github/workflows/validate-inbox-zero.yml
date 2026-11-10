@@ -1,0 +1,202 @@
+---
+name: Validate Inbox Zero
+
+on:
+  pull_request:
+    paths:
+      - "Inbox Zero/**"
+      - ".yamllint"
+      - ".github/scripts/update_inbox_zero.py"
+      - ".github/workflows/validate-inbox-zero.yml"
+      - ".github/workflows/build-inbox-zero-base.yml"
+      - ".github/workflows/update-inbox-zero.yml"
+  push:
+    branches:
+      - main
+      - dev-inbox-zero
+    paths:
+      - "Inbox Zero/**"
+      - ".yamllint"
+      - ".github/scripts/update_inbox_zero.py"
+      - ".github/workflows/validate-inbox-zero.yml"
+      - ".github/workflows/build-inbox-zero-base.yml"
+      - ".github/workflows/update-inbox-zero.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pin:
+    name: Read the pinned Inbox Zero commit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      commit: ${{ steps.pin.outputs.commit }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      # main carries this workflow before the first release adds the App folder;
+      # an empty output skips the other jobs there.
+      - id: pin
+        run: |
+          set -euo pipefail
+          commit=""
+          if [[ -f "Inbox Zero/Dockerfile" ]]; then
+            commit="$(sed -nE 's|^FROM ghcr\.io/hypercrisis/inbox-zero-base:([0-9a-f]{40})$|\1|p' \
+              "Inbox Zero/Dockerfile")"
+            [[ -n "$commit" ]] || { echo 'Dockerfile must pin the base image to a full commit SHA' >&2; exit 1; }
+          fi
+          echo "commit=${commit}" >> "$GITHUB_OUTPUT"
+
+  base:
+    name: Base image
+    needs: pin
+    if: needs.pin.outputs.commit != ''
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/build-inbox-zero-base.yml
+    with:
+      commit: ${{ needs.pin.outputs.commit }}
+
+  lint:
+    name: Lint and test metadata
+    needs: pin
+    if: needs.pin.outputs.commit != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install validation tools
+        run: |
+          python3 -m pip install \
+            --disable-pip-version-check \
+            --no-cache-dir \
+            'pyyaml==6.0.2' \
+            'yamllint==1.37.1'
+
+      # Repository-wide YAML and workflow linting runs in lint-workflows.yml.
+      - name: Lint Inbox Zero YAML
+        run: |
+          find "Inbox Zero" -type f \( -name '*.yml' -o -name '*.yaml' \) -print0 \
+            | xargs -0 yamllint
+
+      - name: Lint shell scripts
+        run: shellcheck "Inbox Zero/run.sh" "Inbox Zero/cron.sh"
+
+      - name: Lint Dockerfile
+        run: |
+          image="ghcr.io/hadolint/hadolint:v2.15.0-debian"
+          digest="sha256:cc00266a16707bbbdfd29517cccd76164ac46a956e2ba8222515df5691fa54b5"
+          docker run --rm -i "${image}@${digest}" < "Inbox Zero/Dockerfile"
+
+      - name: Test manifest, documentation and scheduler table
+        run: python3 -m unittest discover -s "Inbox Zero/tests" -v
+
+      - name: Dry-run Inbox Zero update automation
+        run: |
+          # The scheduled updater must keep producing metadata that passes the tests.
+          scratch="$(mktemp -d)"
+          cp -r "Inbox Zero" "${scratch}/"
+          python3 .github/scripts/update_inbox_zero.py --root "${scratch}" \
+            --base v999.0.0 --commit ffffffffffffffffffffffffffffffffffffffff
+          grep -q 'badge/Inbox%20Zero-v999.0.0%20(fffffff)-' "${scratch}/Inbox Zero/README.md"
+          # The scheduler test reads the fork at the pinned commit, which this one is not.
+          python3 -m unittest discover -s "${scratch}/Inbox Zero/tests" -k Manifest -k Documentation
+          rm -rf "${scratch}"
+
+  build:
+    name: Build and boot (${{ matrix.arch }})
+    needs: [pin, base]
+    if: needs.pin.outputs.commit != ''
+    permissions:
+      contents: read
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build the App image
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARCH: ${{ matrix.arch }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker build --pull \
+            --build-arg BUILD_VERSION=test \
+            --build-arg "BUILD_ARCH=${ARCH}" \
+            --tag inbox-zero:test \
+            "Inbox Zero"
+
+      - name: Refuse to start without a way to sign in
+        run: |
+          set -euo pipefail
+          data="$(mktemp -d)"
+          chmod 0755 "$data"
+          echo '{"llm": {"default_models": "openai:smoke"}}' > "${data}/options.json"
+          if output="$(docker run --rm --volume "${data}:/data" inbox-zero:test 2>&1)"; then
+            echo 'The App started without any sign-in method' >&2
+            exit 1
+          fi
+          grep -F '[ERROR] Nobody could sign in' <<<"$output"
+
+      - name: Boot, restart on the same data and stop cleanly
+        run: |
+          set -euo pipefail
+          trap 'docker rm -f inbox-zero-smoke >/dev/null 2>&1 || true' EXIT
+          data="$(mktemp -d)"
+          chmod 0755 "$data"
+          printf '%s\n' '{"base_url": "http://127.0.0.1:13000", "llm": {"default_models": "openai:smoke"},' \
+            '"auth": {"allowed_emails": "smoke@example.com"}}' > "${data}/options.json"
+          for round in first second; do
+            docker run --detach --name inbox-zero-smoke --publish 13000:3000 \
+              --volume "${data}:/data" inbox-zero:test >/dev/null
+            healthy=false
+            for _ in $(seq 1 150); do
+              if curl --fail --silent http://127.0.0.1:13000/api/health >/dev/null; then
+                healthy=true
+                break
+              fi
+              sleep 2
+            done
+            if [[ "$healthy" != true ]]; then
+              docker logs inbox-zero-smoke >&2 || true
+              echo "Inbox Zero did not become healthy on the ${round} start" >&2
+              exit 1
+            fi
+            # The sign-in page is rendered with the configured address, not a placeholder.
+            page="$(curl --fail --silent --location http://127.0.0.1:13000/login)"
+            if grep -q 'NEXT_PUBLIC_[A-Z0-9_]*_PLACEHOLDER' <<<"$page"; then
+              echo 'Build placeholders were not replaced' >&2
+              exit 1
+            fi
+            docker stop --time 60 inbox-zero-smoke >/dev/null
+            status="$(docker inspect --format '{{.State.ExitCode}}' inbox-zero-smoke)"
+            [[ "$status" == 0 ]] || { docker logs inbox-zero-smoke >&2; echo "Exit code ${status}" >&2; exit 1; }
+            docker rm inbox-zero-smoke >/dev/null
+          done
+
+      - name: Show Docker state on failure
+        if: failure()
+        run: docker ps -a || true

@@ -7,6 +7,7 @@ on:
       - dev-trilium
       - dev-mcphub
       - dev-calibre
+      - dev-inbox-zero
   workflow_dispatch:
 
 permissions:
@@ -40,6 +41,7 @@ jobs:
             dev-trilium \
             dev-mcphub \
             dev-calibre \
+            dev-inbox-zero \
             dev-store
 
           git checkout -B dev-store origin/dev-store
@@ -47,10 +49,11 @@ jobs:
 
           # Remove the App directories first so files deleted on a development
           # branch disappear from the store as well.
-          git rm -r -q --ignore-unmatch -- "TriliumNext Notes" "MCPHub" "Calibre AIO"
+          git rm -r -q --ignore-unmatch -- "TriliumNext Notes" "MCPHub" "Calibre AIO" "Inbox Zero"
           git checkout origin/dev-trilium -- "TriliumNext Notes"
           git checkout origin/dev-mcphub -- "MCPHub"
           git checkout origin/dev-calibre -- "Calibre AIO"
+          git checkout origin/dev-inbox-zero -- "Inbox Zero"
           git checkout origin/main -- repository.json
 
       - name: Generate development metadata
@@ -118,7 +121,7 @@ jobs:
                   and str(previous.get("revision", "")).isdigit()
               ):
                   revision = int(previous["revision"]) + 1
-                  if key in ("mcphub", "trilium"):
+                  if key in ("mcphub", "trilium", "inbox-zero"):
                       # Failed publication may already have reserved a version
                       # tag without updating the generated store's state file.
                       revision = max(revision, int(os.environ["DEV_BUILD"]))
@@ -228,6 +231,13 @@ jobs:
                   "TriliumNext Notes",
               ),
           )
+          patch_config(
+              "Inbox Zero/config.yaml",
+              "Inbox Zero (Dev)",
+              "Inbox Zero (Dev)",
+              "https://github.com/HyperCriSiS/Home-Assistant-Apps/tree/dev-inbox-zero/Inbox%20Zero",
+              app_revision("inbox-zero", "origin/dev-inbox-zero", "Inbox Zero"),
+          )
 
           state_path.write_text(
               json.dumps(state, indent=2, sort_keys=True) + "\n",
@@ -249,7 +259,7 @@ jobs:
           # rather than an older copy inherited from main.
           git checkout origin/dev-mcphub -- .github/scripts/integration-test-mcphub.sh
           git add .dev-store-revisions.json .dev-store-mcphub-changes.json repository.json \
-            "MCPHub" "Calibre AIO" "TriliumNext Notes"
+            "MCPHub" "Calibre AIO" "TriliumNext Notes" "Inbox Zero"
           git diff --cached --quiet || git commit -m "chore(dev-store): compose current app candidates"
           git bundle create /tmp/store.bundle HEAD
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
@@ -276,8 +286,17 @@ jobs:
       contents: read
       packages: write
 
+  inbox-zero-images:
+    needs: sync
+    uses: ./.github/workflows/publish-inbox-zero-images.yml
+    with:
+      bundle: calibre-store-candidate
+    permissions:
+      contents: read
+      packages: write
+
   publish:
-    needs: [images, mcphub-images, trilium-images]
+    needs: [images, mcphub-images, trilium-images, inbox-zero-images]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333

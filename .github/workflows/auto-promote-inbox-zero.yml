@@ -1,0 +1,134 @@
+---
+name: Auto-promote Inbox Zero updates
+
+# Promotes dev-inbox-zero to main only when it contains nothing but automated
+# Inbox Zero commit bumps that passed every gate in
+# .github/scripts/auto_promote_inbox_zero.py, 36 hours after the newest one
+# reached dev-inbox-zero. Everything else stays manual.
+# main installs prebuilt images, so both release tags are built, tested and
+# published from the gated commit before the merge; a missing tag stops it.
+# Pause at any time: set the repository variable INBOX_ZERO_AUTO_PROMOTE=false
+# or label the Inbox Zero release pull request "hold".
+
+on:
+  schedule:
+    - cron: "37 */3 * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+  issues: write
+  packages: write
+  pull-requests: write
+
+concurrency:
+  group: promote-app-development-main
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    name: Gate bot-only Inbox Zero release
+    if: vars.INBOX_ZERO_AUTO_PROMOTE == 'true' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ secrets.AUTOMATION_TOKEN || github.token }}
+    outputs:
+      action: ${{ steps.gate.outputs.action }}
+      main_sha: ${{ steps.gate.outputs.main_sha }}
+      dev_sha: ${{ steps.gate.outputs.dev_sha }}
+      commit: ${{ steps.gate.outputs.commit }}
+
+    steps:
+      - name: Check out trusted gates from main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Test promotion gates
+        run: python3 -m unittest discover -s .github/tests -p 'test_auto_promote_inbox_zero.py' -v
+
+      - name: Check release gates
+        id: gate
+        run: python3 .github/scripts/auto_promote_inbox_zero.py gate
+
+      - name: Request validation of the current dev-inbox-zero commit
+        if: steps.gate.outputs.action == 'validate'
+        run: gh workflow run validate-inbox-zero.yml --repo "$GITHUB_REPOSITORY" --ref dev-inbox-zero
+
+  images:
+    name: Publish tested release images from dev-inbox-zero
+    needs: gate
+    if: needs.gate.outputs.action == 'promote'
+    uses: ./.github/workflows/publish-inbox-zero-images.yml
+    with:
+      source_ref: dev-inbox-zero
+    permissions:
+      contents: read
+      packages: write
+
+  promote:
+    name: Merge the exact gated Inbox Zero commit
+    needs: [gate, images]
+    if: needs.gate.outputs.action == 'promote'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    env:
+      GH_TOKEN: ${{ secrets.AUTOMATION_TOKEN || github.token }}
+
+    steps:
+      - name: Check out trusted gates from main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      # The Supervisor pulls these tags anonymously as soon as main changes.
+      - name: Require both published install images for the gated version
+        env:
+          DEV_SHA: ${{ needs.gate.outputs.dev_sha }}
+        run: |
+          set -euo pipefail
+          version="$(gh api "repos/${GITHUB_REPOSITORY}/contents/Inbox%20Zero/config.yaml?ref=${DEV_SHA}" \
+            --jq '.content' | base64 -d | sed -n 's/^version: *"\{0,1\}\([^"]*\)"\{0,1\}$/\1/p')"
+          [[ -n "$version" ]] || { echo 'Could not read the Inbox Zero App version' >&2; exit 1; }
+          public_config="$(mktemp -d)"
+          for arch in amd64 aarch64; do
+            image="ghcr.io/hypercrisis/${arch}-inbox-zero:${version}"
+            DOCKER_CONFIG="$public_config" docker manifest inspect "$image" >/dev/null \
+              || { echo "Install image is not public: ${image}" >&2; exit 1; }
+          done
+
+      - name: Re-check and merge the exact validated commit
+        id: merge
+        env:
+          MAIN_SHA: ${{ needs.gate.outputs.main_sha }}
+          DEV_SHA: ${{ needs.gate.outputs.dev_sha }}
+          COMMIT: ${{ needs.gate.outputs.commit }}
+        run: |
+          python3 .github/scripts/auto_promote_inbox_zero.py merge \
+            --main-sha "$MAIN_SHA" --dev-sha "$DEV_SHA" --commit "$COMMIT"
+
+      # GITHUB_TOKEN merges do not start push workflows; request them explicitly.
+      - name: Start post-release workflows
+        if: steps.merge.outputs.merge_sha != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run validate-inbox-zero.yml --repo "$GITHUB_REPOSITORY" --ref main
+          gh workflow run sync-dev-bases.yml --repo "$GITHUB_REPOSITORY" --ref main
+          gh workflow run sync-dev-store.yml --repo "$GITHUB_REPOSITORY" --ref main
+
+      - name: Watch stable validation and prepare a revert on failure
+        if: steps.merge.outputs.merge_sha != ''
+        env:
+          MERGE_SHA: ${{ steps.merge.outputs.merge_sha }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --no-tags origin main
+          python3 .github/scripts/auto_promote_inbox_zero.py watch --merge-sha "$MERGE_SHA"

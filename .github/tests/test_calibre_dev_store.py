@@ -30,6 +30,11 @@ class DevelopmentStoreTest(unittest.TestCase):
             for folder in ('Calibre AIO', 'MCPHub', 'TriliumNext Notes'):
                 (temp / folder).mkdir()
                 shutil.copyfile(ROOT / folder / 'config.yaml', temp / folder / 'config.yaml')
+            # main carries the automation before the first release adds the folder.
+            (temp / 'Inbox Zero').mkdir()
+            (temp / 'Inbox Zero/config.yaml').write_text(
+                'name: "Inbox Zero"\nversion: "v2026.11.09"\npanel_title: Inbox Zero\n'
+                'url: "https://example.invalid"\ninit: false\n')
             shutil.copyfile(ROOT / 'repository.json', temp / 'repository.json')
             original = Path.cwd()
             try:
@@ -38,7 +43,10 @@ class DevelopmentStoreTest(unittest.TestCase):
                     exec(code, {})
                     first = json.loads(Path('.dev-store-revisions.json').read_text())
                     calibre = yaml.safe_load(Path('Calibre AIO/config.yaml').read_text())
-                    self.assertEqual(set(first), {'calibre', 'mcphub', 'trilium'})
+                    self.assertEqual(set(first), {'calibre', 'mcphub', 'trilium', 'inbox-zero'})
+                    inbox_zero = yaml.safe_load(Path('Inbox Zero/config.yaml').read_text())
+                    self.assertEqual(inbox_zero['name'], 'Inbox Zero (Dev)')
+                    self.assertEqual(inbox_zero['version'], 'v2026.11.09-dev.100')
                     self.assertEqual(calibre['name'], 'Calibre AIO (Dev)')
                     self.assertTrue(calibre['version'].endswith('-dev.100'))
                     self.assertEqual(calibre['options']['library_dir'], 'calibre-aio-dev/library')
@@ -53,6 +61,7 @@ class DevelopmentStoreTest(unittest.TestCase):
                     self.assertEqual(updated['calibre']['revision'], 101)
                     self.assertEqual(updated['mcphub'], first['mcphub'])
                     self.assertEqual(updated['trilium'], first['trilium'])
+                    self.assertEqual(updated['inbox-zero'], first['inbox-zero'])
             finally:
                 os.chdir(original)
 
