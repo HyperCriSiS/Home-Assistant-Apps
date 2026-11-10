@@ -10,7 +10,9 @@ configuration:
     description: Zuerst Bibliothek (library) oder Shelfmark (shelfmark) öffnen.
   library_dir:
     name: Bibliotheksordner
-    description: Pfad relativ zu /share.
+    description: >-
+      Pfad relativ zu /share. Die Bibliothek ist nicht Teil der Sicherung dieser
+      App; wähle in einer Home-Assistant-Sicherung den Ordner Share, um sie einzuschließen.
   ingest_dir:
     name: Importordner
     description: Pfad relativ zu /share für abgeschlossene Buchdownloads.

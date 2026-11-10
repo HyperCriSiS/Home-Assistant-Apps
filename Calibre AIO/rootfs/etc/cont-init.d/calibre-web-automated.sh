@@ -56,6 +56,22 @@ if ! bashio::var.true "${network_share_mode}"; then
     chown abc:abc "${LIBRARY_TARGET}" "${INGEST_TARGET}"
 fi
 mkdir -p /data/shelfmark /data/shelfmark-staging /data/shelfmark-logs /data/shelfmark-audiobooks
+
+# CWA marks a running post-import follow-up with cwa_ingest_batch_dirty.running
+# and removes the marker when it finishes. A stop in between (cold backup,
+# restart) leaves it behind, and CWA then reports an import in progress forever.
+# Hand it back to the queue so CWA reruns the follow-up once, as after a failure.
+requeue_interrupted_follow_up() {
+    local dirty="$1/cwa_ingest_batch_dirty"
+    [ -e "${dirty}.running" ] || return 0
+    if [ -e "${dirty}" ]; then
+        rm -f "${dirty}.running"
+    else
+        mv "${dirty}.running" "${dirty}"
+    fi
+    bashio::log.info "Requeued an interrupted CWA post-import follow-up"
+}
+requeue_interrupted_follow_up "${CONFIG_TARGET}"
 chown abc:abc /data/shelfmark /data/shelfmark-staging /data/shelfmark-logs /data/shelfmark-audiobooks
 
 link_dir() {
