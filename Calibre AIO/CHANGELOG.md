@@ -6,6 +6,8 @@
 
 - Backups skip CWA cover thumbnails, the Shelfmark cover cache, caches, logs, temporary files, runtime markers and the `processed_books/imported` copies; originals before conversion or EPUB fixing, failed imports and resolved duplicates are backed up again.
 
+- The library folder option and its documentation state that the library is backed up only through the Share folder of a Home Assistant backup.
+
 ### Fixed
 
 - A CWA post-import follow-up interrupted by a stop (cold backup, restart) no longer leaves the duplicates page reporting an import in progress; the App requeues it at start.

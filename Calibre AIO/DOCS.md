@@ -64,6 +64,12 @@ Library path relative to `/share`. The value must be a
 relative path without `.` or `..` segments; an empty or absolute value stops
 the app from starting.
 
+The library is never part of this App's backup, and no App option can change
+that: Home Assistant backs up `/share` only through the **Share** folder of a
+backup, which covers the shared folder of all Apps together. Tick **Share** to
+include the library, or back it up by other means. See
+[Persistence and backups](#persistence-and-backups).
+
 ### `ingest_dir`
 
 Completed-book handoff path relative to `/share`, with the

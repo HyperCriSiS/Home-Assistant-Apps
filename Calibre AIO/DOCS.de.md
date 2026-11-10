@@ -67,6 +67,12 @@ Bibliothekspfad relativ zu `/share`. Der Wert muss ein
 relativer Pfad ohne `.`- oder `..`-Segmente sein; ein leerer oder absoluter
 Wert verhindert den Start.
 
+Die Bibliothek ist nie Teil der Sicherung dieser App, und keine Option der App
+kann das ändern: Home Assistant sichert `/share` nur über den Ordner **Share**
+einer Sicherung, und der gilt für den gemeinsamen Ordner aller Apps zusammen.
+Wähle **Share** an, um die Bibliothek einzuschließen, oder sichere sie
+anderweitig. Siehe [Persistenz und Sicherungen](#persistenz-und-sicherungen).
+
 ### `ingest_dir`
 
 Übergabepfad für fertige Bücher relativ zu `/share`, mit
