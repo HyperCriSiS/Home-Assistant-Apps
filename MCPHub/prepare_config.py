@@ -358,7 +358,7 @@ def apply_ha_mcp_server(mcp_servers: dict, options: dict) -> None:
         "url": HA_MCP_SERVER_URL,
         "enabled": True,
         "enableKeepAlive": True,
-        "keepAliveInterval": 5000,
+        "keepAliveInterval": 60000,
         "owner": "admin",
         "description": HA_MCP_DESCRIPTION,
     }
@@ -415,7 +415,7 @@ def sync_managed_home_assistant_server(
             "url": "http://127.0.0.1:8097/mcp",
             "enabled": True,
             "enableKeepAlive": True,
-            "keepAliveInterval": 5000,
+            "keepAliveInterval": 60000,
             "owner": "admin",
             "description": HOME_ASSISTANT_MCP_DESCRIPTION,
         }
