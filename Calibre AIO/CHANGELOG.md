@@ -4,12 +4,14 @@
 
 ### Changed
 
-- Backups skip CWA cover thumbnails, the Shelfmark cover cache, caches, logs, temporary files, runtime markers and the `processed_books/imported` copies; originals before conversion or EPUB fixing, failed imports and resolved duplicates are backed up again.
+- New option `processed_dir` (default `calibre-aio/processed`): CWA's safety copies of processed books live under `/share` next to the library instead of in the private App folder; existing copies move there on the next start. All book files now follow the Share folder of a Home Assistant backup.
+- Backups skip CWA cover thumbnails, the Shelfmark cover cache, caches, logs, temporary files and runtime markers.
 
 - The library folder option and its documentation state that the library is backed up only through the Share folder of a Home Assistant backup.
 
 ### Fixed
 
+- Documentation links on the App page in Home Assistant open the GitHub documents instead of reloading the same page.
 - A CWA post-import follow-up interrupted by a stop (cold backup, restart) no longer leaves the duplicates page reporting an import in progress; the App requeues it at start.
 
 ## v2026.11.09

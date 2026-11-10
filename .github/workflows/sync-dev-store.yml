@@ -200,7 +200,8 @@ jobs:
           # library/import defaults between these independent installations.
           calibre_config = Path("Calibre AIO/config.yaml")
           calibre_text = calibre_config.read_text(encoding="utf-8")
-          for key, folder in (("library_dir", "library"), ("ingest_dir", "ingest")):
+          for key, folder in (("library_dir", "library"), ("ingest_dir", "ingest"),
+                              ("processed_dir", "processed")):
               calibre_text, count = re.subn(
                   rf"^  {key}:.*$",
                   f'  {key}: "calibre-aio-dev/{folder}"',

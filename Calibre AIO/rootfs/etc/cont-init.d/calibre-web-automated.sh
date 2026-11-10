@@ -10,15 +10,19 @@ set -euo pipefail
 # books to auto-import). None of those are HA's own "config" share, so they
 # are pointed at the add-on's private /data volume and at user-configurable
 # subdirectories of /share instead, before CWA's own s6 services
-# (cwa-init and friends, copied from the upstream project) start.
+# (cwa-init and friends, copied from the upstream project) start. CWA's
+# safety copies of processed books (/config/processed_books) are book files
+# too and live in a third /share folder next to the library.
 # ==============================================================================
 
 declare library_dir
 declare ingest_dir
+declare processed_dir
 declare network_share_mode
 
 library_dir=$(bashio::config 'library_dir')
 ingest_dir=$(bashio::config 'ingest_dir')
+processed_dir=$(bashio::config 'processed_dir')
 network_share_mode=$(bashio::config 'network_share_mode')
 
 # Both paths must stay inside /share: an empty value would make /share itself
@@ -39,21 +43,51 @@ check_share_dir() {
 }
 check_share_dir library_dir "${library_dir}"
 check_share_dir ingest_dir "${ingest_dir}"
+check_share_dir processed_dir "${processed_dir}"
+nested() {
+    [[ "${1%/}/" == "${2%/}/"* || "${2%/}/" == "${1%/}/"* ]]
+}
 # The ingest watcher scans its folder recursively, so a library inside the
 # ingest folder (or the reverse) would re-import the library's own books.
-if [[ "${library_dir%/}/" == "${ingest_dir%/}/"* || "${ingest_dir%/}/" == "${library_dir%/}/"* ]]; then
+if nested "${library_dir}" "${ingest_dir}"; then
     bashio::log.fatal "library_dir and ingest_dir must be different folders and must not be nested"
+    exit 1
+fi
+# The same holds for the safety copies, and inside the library they would sit
+# among Calibre's own book folders.
+if nested "${processed_dir}" "${library_dir}" || nested "${processed_dir}" "${ingest_dir}"; then
+    bashio::log.fatal "processed_dir must be its own folder, not inside or around library_dir or ingest_dir"
     exit 1
 fi
 
 CONFIG_TARGET="/data/config"
 LIBRARY_TARGET="/share/${library_dir}"
 INGEST_TARGET="/share/${ingest_dir}"
+PROCESSED_TARGET="/share/${processed_dir}"
 
-mkdir -p "${CONFIG_TARGET}" "${LIBRARY_TARGET}" "${INGEST_TARGET}"
+mkdir -p "${CONFIG_TARGET}" "${LIBRARY_TARGET}" "${INGEST_TARGET}" "${PROCESSED_TARGET}"
 chown abc:abc "${CONFIG_TARGET}"
 if ! bashio::var.true "${network_share_mode}"; then
-    chown abc:abc "${LIBRARY_TARGET}" "${INGEST_TARGET}"
+    chown abc:abc "${LIBRARY_TARGET}" "${INGEST_TARGET}" "${PROCESSED_TARGET}"
+fi
+
+# Point CWA's processed_books at the /share folder. Copies kept in the private
+# App folder by earlier versions move there once; a changed option relinks.
+link_processed_books() {
+    local link="$1/processed_books" target="$2"
+    if [ -L "${link}" ]; then
+        [[ "$(readlink "${link}")" == "${target}" ]] && return 0
+        rm "${link}"
+    elif [ -d "${link}" ]; then
+        cp -r --preserve=timestamps "${link}/." "${target}/"
+        rm -rf "${link}"
+        bashio::log.info "Moved CWA's processed books to ${target}"
+    fi
+    ln -s "${target}" "${link}"
+}
+link_processed_books "${CONFIG_TARGET}" "${PROCESSED_TARGET}"
+if ! bashio::var.true "${network_share_mode}"; then
+    chown -R abc:abc "${PROCESSED_TARGET}"
 fi
 mkdir -p /data/shelfmark /data/shelfmark-staging /data/shelfmark-logs /data/shelfmark-audiobooks
 
@@ -107,5 +141,6 @@ fi
 bashio::log.info "Calibre library: ${LIBRARY_TARGET} (/calibre-library)"
 bashio::log.warning "The library under /share is not part of App backups; include the Share folder in HA backups or back it up separately"
 bashio::log.info "Book ingest folder: ${INGEST_TARGET} (/cwa-book-ingest)"
+bashio::log.info "Processed book copies: ${PROCESSED_TARGET} (/config/processed_books)"
 bashio::log.info "App config/state: ${CONFIG_TARGET} (/config)"
 bashio::log.info "Network share mode: ${network_share_mode}"

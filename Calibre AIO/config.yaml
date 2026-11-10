@@ -16,9 +16,9 @@ boot: auto
 watchdog: "http://[HOST]:[PORT:8084]/health"
 # Stop the app during backups so its SQLite databases are captured consistently.
 # The library and the ingest folder live under /share and are governed by the
-# "Share" folder of an HA backup, not by this App's backup. Caches, logs,
-# temporary files, runtime markers and CWA's copies of imported books (which
-# already sit in the library) are rebuilt or not needed after a restore.
+# "Share" folder of an HA backup, not by this App's backup; so does
+# processed_dir, where CWA keeps its safety copies of processed books. Caches,
+# logs, temporary files and runtime markers are not needed after a restore.
 backup: cold
 backup_exclude:
   - "shelfmark-staging/*"
@@ -31,7 +31,6 @@ backup_exclude:
   - "config/.cwa_conversion_tmp/*"
   - "config/log_archive/*"
   - "config/*.log"
-  - "config/processed_books/imported/*"
   - "config/cwa_ingest_status"
   - "config/cwa_ingest_batch_dirty.running"
 ingress: true
@@ -45,6 +44,7 @@ options:
   start_page: "library"
   library_dir: "calibre-aio/library"
   ingest_dir: "calibre-aio/ingest"
+  processed_dir: "calibre-aio/processed"
   network_share_mode: false
   shelfmark:
     external_bypass_url: ""
@@ -58,6 +58,7 @@ schema:
   start_page: "list(library|shelfmark)"
   library_dir: "str"
   ingest_dir: "str"
+  processed_dir: "str"
   network_share_mode: "bool"
   shelfmark:
     external_bypass_url: "str?"

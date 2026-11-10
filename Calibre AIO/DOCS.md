@@ -35,6 +35,7 @@ library_theme: modern
 start_page: library
 library_dir: calibre-aio/library
 ingest_dir: calibre-aio/ingest
+processed_dir: calibre-aio/processed
 network_share_mode: false
 shelfmark:
   external_bypass_url: ""
@@ -75,6 +76,17 @@ include the library, or back it up by other means. See
 Completed-book handoff path relative to `/share`, with the
 same rules. It must not be the library folder, lie inside it or contain it,
 and should not be another app's active download directory.
+
+### `processed_dir`
+
+Path relative to `/share` for CWA's safety copies of processed books, with the
+same rules. CWA keeps the original of every imported, converted or EPUB-fixed
+book there, plus failed imports and books removed while resolving duplicates.
+It must not be the library or ingest folder, lie inside one or contain one.
+The App links CWA's `/config/processed_books` to this folder; copies kept in
+the private App folder by earlier versions move there on the next start.
+Disable CWA's automatic import and conversion backups in CWA Settings if you
+do not want these copies.
 
 ### `network_share_mode`
 
@@ -157,7 +169,6 @@ audiobook library server. No Audiobookshelf integration is bundled.
 | Data | Container path |
 | --- | --- |
 | CWA state and account bindings | `/data/config` (via `/config`) |
-| CWA safety copies of processed books | `/data/config/processed_books` |
 | CWA cover thumbnails (not backed up) | `/data/config/thumbnails` |
 | Shelfmark settings, accounts and secrets | `/data/shelfmark` |
 | Shelfmark cover cache of search results (not backed up) | `/data/shelfmark/covers` |
@@ -165,27 +176,21 @@ audiobook library server. No Audiobookshelf integration is bundled.
 | Shelfmark audiobooks | `/data/shelfmark-audiobooks` |
 | Ebook library | `/share/<library_dir>` |
 | Completed-book handoff | `/share/<ingest_dir>` |
+| CWA safety copies of processed books | `/share/<processed_dir>` (via `/config/processed_books`) |
 
 > [!WARNING]
 > An HA backup of this App contains only the private `/data` folder: CWA state,
-> Shelfmark settings and audiobooks. The ebook library and the ingest folder
-> live under `/share` and are **never part of the App backup**. They are covered
-> by the **Share** folder of an HA backup: tick **Share** to include the
-> library, untick it when you back up the library by other means.
+> Shelfmark settings and audiobooks. Every book file lives under `/share`: the
+> library, the ingest folder and CWA's safety copies. They are **never part of
+> the App backup** and are covered by the **Share** folder of an HA backup:
+> tick **Share** to include them, untick it when you back them up by other means.
 
-The App backup skips everything that is rebuilt or not needed after a
-restore: CWA's cover thumbnails (regenerated from the library covers on first
-view and by the nightly thumbnail task), Shelfmark's cover cache of search
-results (up to 500 MB by default, downloaded again on the next search), caches,
-logs, temporary conversion files, runtime markers, Shelfmark's download
-staging and CWA's `processed_books/imported` copies, which duplicate files in
-the library.
-
-The rest of `processed_books` stays in the backup because it exists nowhere
-else: originals before an automatic conversion (`converted`) or EPUB fix
-(`fixed_originals`), failed imports (`failed`) and books removed while
-resolving duplicates (`duplicate_resolutions`). Disable CWA's automatic import
-and conversion backups in CWA Settings if you do not want these copies. This app has a distinct slug
+The App backup also skips what is rebuilt or not needed after a restore: CWA's
+cover thumbnails (regenerated from the library covers on first view and by the
+nightly thumbnail task), Shelfmark's cover cache of search results (up to
+500 MB by default, downloaded again on the next search), caches, logs,
+temporary conversion files, runtime markers and Shelfmark's download staging.
+This app has a distinct slug
 and does not adopt the private databases of the previous CWA test installation.
 Test with the default separate folders before copying existing library data.
 
