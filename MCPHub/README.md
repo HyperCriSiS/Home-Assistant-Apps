@@ -211,6 +211,8 @@ MCP transport authentication remains independent from Home Assistant Ingress. Th
 
 Secrets and MCPHub configuration are stored in the persistent App data directory and are included in Home Assistant hot backups. Re-downloadable package caches are excluded.
 
+MCP servers you add as a command (`npx`, `uvx` or your own executable) run as root inside the App container, as they do in upstream MCPHub. They are not handed the Supervisor token or the MCPHub secrets in their environment, which protects against servers that log or forward it. A server that is malicious on purpose can still read them as root, together with everything stored in the App data directory and under `/ssl`, including saved tokens. Only add servers you trust as much as the App itself.
+
 > [!WARNING]
 > Backups can contain MCP server credentials and generated secrets. Treat Home Assistant backups as sensitive data.
 
