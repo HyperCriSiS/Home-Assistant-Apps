@@ -1,0 +1,75 @@
+---
+name: "Inbox Zero (Dev)"
+description: >-
+  Inbox Zero v2.30.0 (fork a08ec63) - AI email assistant for IMAP, Gmail and
+  Outlook with bundled PostgreSQL and Redis
+version: "v2026.11.09-dev.251"
+slug: inbox_zero
+url: "https://github.com/HyperCriSiS/Home-Assistant-Apps/tree/dev-inbox-zero/Inbox%20Zero"
+# Prebuilt on GitHub Actions; the Supervisor pulls instead of building locally.
+image: "ghcr.io/hypercrisis/{arch}-inbox-zero"
+init: false
+stage: experimental
+arch:
+  - amd64
+  - aarch64
+panel_icon: mdi:email-fast
+panel_title: "Inbox Zero (Dev)"
+startup: application
+boot: auto
+# Inbox Zero forbids framing and has no path prefix support, so it cannot run
+# behind Home Assistant Ingress and is opened on its own port.
+webui: "http://[HOST]:[PORT:3000]/"
+watchdog: "http://[HOST]:[PORT:3000]/api/health"
+# Stop the App during backups so the PostgreSQL files are captured consistently.
+backup: cold
+# PostgreSQL needs time for a clean shutdown; the default is 10 seconds.
+timeout: 60
+ports:
+  3000/tcp: 3000
+ports_description:
+  3000/tcp: "Inbox Zero web interface. The host port must match the port in base_url."
+options:
+  base_url: "http://homeassistant.local:3000"
+  llm:
+    default_models: ""
+    api_key: ""
+  auth:
+    allowed_emails: ""
+  google:
+    client_id: ""
+    client_secret: ""
+    pubsub_topic_name: ""
+    pubsub_verification_token: ""
+  microsoft:
+    client_id: ""
+    client_secret: ""
+    tenant_id: "common"
+  imap:
+    allow_private_hosts: false
+    allow_plaintext: false
+    idle_enabled: true
+  env_vars: []
+schema:
+  base_url: url
+  llm:
+    default_models: str?
+    api_key: password?
+  auth:
+    allowed_emails: str?
+  google:
+    client_id: str?
+    client_secret: password?
+    pubsub_topic_name: str?
+    pubsub_verification_token: password?
+  microsoft:
+    client_id: str?
+    client_secret: password?
+    tenant_id: str?
+  imap:
+    allow_private_hosts: bool
+    allow_plaintext: bool
+    idle_enabled: bool
+  env_vars:
+    - name: "match(^[A-Za-z_][A-Za-z0-9_]*$)"
+      value: str

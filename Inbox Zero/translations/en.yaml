@@ -1,0 +1,85 @@
+---
+# Home Assistant shows these texts as plain text: no Markdown, no clickable
+# links, and line breaks are collapsed into spaces. Keep them short.
+configuration:
+  base_url:
+    name: "Address of Inbox Zero"
+    description: >-
+      The address you open in the browser, without a trailing slash, for example
+      http://homeassistant.local:3000 or https://mail.example.com. Sign-in fails
+      when it does not match.
+  llm:
+    name: "AI model"
+    description: "The language model Inbox Zero uses. Required."
+    fields:
+      default_models:
+        name: "Models"
+        description: >-
+          Provider and model, for example openai:gpt-6-luna, anthropic:claude-sonnet-5
+          or ollama:qwen3.5:4b. Separate fallbacks with commas.
+      api_key:
+        name: "API key"
+        description: "Key for the provider above. Leave empty for a local model without a key."
+  auth:
+    name: "Sign-in"
+    description: "Who may create an account with email and password."
+    fields:
+      allowed_emails:
+        name: "Allowed email addresses"
+        description: >-
+          Comma-separated addresses that may sign up with a password. Required
+          unless Google or Microsoft sign-in is configured below.
+  google:
+    name: "Google (optional)"
+    description: "OAuth client for Gmail accounts and Google sign-in. Leave empty for IMAP only."
+    fields:
+      client_id:
+        name: "Client ID"
+        description: "OAuth client ID from the Google Cloud console."
+      client_secret:
+        name: "Client secret"
+        description: "OAuth client secret from the Google Cloud console."
+      pubsub_topic_name:
+        name: "Pub/Sub topic"
+        description: "For example projects/my-project/topics/inbox-zero. Needed for Gmail push."
+      pubsub_verification_token:
+        name: "Pub/Sub verification token"
+        description: "The token appended to the Pub/Sub push URL."
+  microsoft:
+    name: "Microsoft (optional)"
+    description: "App registration for Outlook accounts and Microsoft sign-in."
+    fields:
+      client_id:
+        name: "Application (client) ID"
+        description: "From the app registration in Microsoft Entra."
+      client_secret:
+        name: "Client secret"
+        description: "Secret value of the app registration."
+      tenant_id:
+        name: "Tenant ID"
+        description: "Keep common for personal and multi-tenant accounts."
+  imap:
+    name: "IMAP mailboxes"
+    description: "Settings for mailboxes connected over IMAP and SMTP."
+    fields:
+      allow_private_hosts:
+        name: "Allow servers in the local network"
+        description: >-
+          Allows IMAP, SMTP and CalDAV servers on private addresses, such as
+          Proton Mail Bridge. Turns off the protection against requests into
+          your network.
+      allow_plaintext:
+        name: "Allow unencrypted connections"
+        description: "Allows the security option None, which sends the password unencrypted."
+      idle_enabled:
+        name: "Push for new mail (IMAP IDLE)"
+        description: "Keeps one connection per mailbox open so new mail is processed within seconds."
+  env_vars:
+    name: "Additional environment variables"
+    description: >-
+      Further Inbox Zero settings as name and value, for example
+      OLLAMA_BASE_URL. They override the options above.
+network:
+  3000/tcp: >-
+    Inbox Zero web interface. When you change the port, change it in the
+    address of Inbox Zero as well.
