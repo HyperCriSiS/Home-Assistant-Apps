@@ -65,8 +65,9 @@ class StartupOrderTest(unittest.TestCase):
         excluded = yaml.safe_load((ROOT / 'config.yaml').read_text())['backup_exclude']
         for pattern in ('config/thumbnails/*', 'shelfmark/covers/*', 'config/cwa_ingest_batch_dirty.running'):
             self.assertIn(pattern, excluded)
-        # processed_books is a link into /share; its copies follow the Share folder.
-        self.assertFalse(any('processed_books' in pattern for pattern in excluded))
+        # processed_books is a link into /share: only the link is skipped, the
+        # copies follow the Share folder and the init script recreates the link.
+        self.assertEqual([pattern for pattern in excluded if 'processed_books' in pattern], ['config/processed_books'])
         for kept in ('app.db', 'cwa.db', '.key', 'ha_admin_bindings.db'):
             self.assertFalse(any(Path('config', kept).match(pattern) for pattern in excluded), kept)
 
@@ -76,10 +77,10 @@ class StartupOrderTest(unittest.TestCase):
         script = (ROOT / 'rootfs/etc/cont-init.d/calibre-web-automated.sh').read_text()
         start = script.index('link_processed_books() {')
         function = script[start:script.index(chr(10) + '}' + chr(10), start) + 3]
-        stub = 'bashio::log.info() { :; }' + chr(10)
+        stub = 'bashio::log.info() { :; }' + chr(10) + 'bashio::log.warning() { :; }' + chr(10)
 
         def run(config, target):
-            subprocess.run([shutil.which('bash'), '-c', stub + function + 'link_processed_books "$1" "$2"',
+            subprocess.run([shutil.which('bash'), '-c', stub + function + 'link_processed_books "$1" "$2" ""',
                             'test', str(config), str(target)], check=True, capture_output=True)
 
         with tempfile.TemporaryDirectory() as directory:
@@ -87,7 +88,11 @@ class StartupOrderTest(unittest.TestCase):
             for folder in (config / 'processed_books/fixed_originals', first, second):
                 folder.mkdir(parents=True)
             (config / 'processed_books/fixed_originals/book.zip').write_text('copy')
+            (config / 'processed_books/fixed_originals/kept.zip').write_text('old')
+            (first / 'fixed_originals').mkdir()
+            (first / 'fixed_originals/kept.zip').write_text('newer')
             run(config, first)
+            self.assertEqual((first / 'fixed_originals/kept.zip').read_text(), 'newer')
             link = config / 'processed_books'
             self.assertTrue(link.is_symlink())
             self.assertEqual(os.readlink(link), str(first))
@@ -102,16 +107,24 @@ class StartupOrderTest(unittest.TestCase):
     def test_nested_library_and_ingest_folders_are_refused(self):
         script = (ROOT / 'rootfs/etc/cont-init.d/calibre-web-automated.sh').read_text()
         checks = script[script.index('check_share_dir() {'):script.index('CONFIG_TARGET=')]
-        stub = 'bashio::log.fatal() { echo "$@" >&2; }' + chr(10)
+        stub = ('bashio::log.fatal() { echo "$@" >&2; }' + chr(10)
+                + 'bashio::log.warning() { echo "warning $*" >&2; }' + chr(10))
         def run(library_dir, ingest_dir, processed_dir='calibre-aio/processed'):
             assignments = f'library_dir={library_dir!r}; ingest_dir={ingest_dir!r}; processed_dir={processed_dir!r}'
             return subprocess.run([shutil.which('bash'), '-c', stub + assignments + chr(10) + checks],
                                   capture_output=True, text=True)
         self.assertEqual(run('calibre-aio/library', 'calibre-aio/ingest').returncode, 0)
-        for processed_dir in ('calibre-aio/library', 'calibre-aio/library/processed', 'calibre-aio/ingest/processed',
-                              'calibre-aio', '', '../processed'):
+        for processed_dir in ('', '../processed', '/share/processed'):
             with self.subTest(processed_dir=processed_dir):
                 self.assertEqual(run('calibre-aio/library', 'calibre-aio/ingest', processed_dir).returncode, 1)
+        # A nested processed_dir (for example the default after an update next to a
+        # custom library_dir) only warns, so the App still starts.
+        for processed_dir in ('calibre-aio/library', 'calibre-aio/library/processed', 'calibre-aio/ingest/processed',
+                              'calibre-aio'):
+            with self.subTest(processed_dir=processed_dir):
+                result = run('calibre-aio/library', 'calibre-aio/ingest', processed_dir)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn('warning processed_dir must be its own folder', result.stderr)
         for library_dir, ingest_dir in (('calibre-aio', 'calibre-aio/ingest'), ('calibre-aio/library', 'calibre-aio'),
                                         ('calibre-aio/library', 'calibre-aio/library/'), ('', 'calibre-aio/ingest'),
                                         ('/share/library', 'calibre-aio/ingest'), ('a/../b', 'calibre-aio/ingest')):

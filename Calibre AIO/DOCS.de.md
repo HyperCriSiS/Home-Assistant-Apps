@@ -1,6 +1,6 @@
 # Calibre AIO Dokumentation
 
-Deutsch | [English](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/DOCS.md)
+[English](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/DOCS.md) | Deutsch
 
 ## Erste Schritte
 
@@ -87,7 +87,9 @@ Pfad relativ zu `/share` für CWAs Sicherheitskopien verarbeiteter Bücher, mit
 denselben Regeln. CWA legt dort das Original jedes importierten, konvertierten
 oder EPUB-reparierten Buchs ab, dazu gescheiterte Importe und beim Auflösen von
 Duplikaten entfernte Bücher. Er darf weder der Bibliotheks- noch der
-Übergabeordner sein, nicht darin liegen und keinen davon enthalten. Die App
+Übergabeordner sein, nicht darin liegen und keinen davon enthalten; sonst
+meldet die App eine Warnung und lässt die Kopien ungesichert in ihrem privaten
+Ordner. Die App
 verknüpft CWAs `/config/processed_books` mit diesem Ordner; Kopien, die frühere
 Versionen im privaten App-Ordner abgelegt haben, ziehen beim nächsten Start
 dorthin um. Wer diese Kopien nicht möchte, schaltet in den CWA Settings die

@@ -1,6 +1,6 @@
 # Calibre AIO documentation
 
-[Deutsch](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/DOCS.de.md) | English
+English | [Deutsch](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/DOCS.de.md)
 
 ## Getting started
 
@@ -82,7 +82,9 @@ and should not be another app's active download directory.
 Path relative to `/share` for CWA's safety copies of processed books, with the
 same rules. CWA keeps the original of every imported, converted or EPUB-fixed
 book there, plus failed imports and books removed while resolving duplicates.
-It must not be the library or ingest folder, lie inside one or contain one.
+It must not be the library or ingest folder, lie inside one or contain one;
+otherwise the App logs a warning and keeps the copies in its private folder,
+where they are not backed up.
 The App links CWA's `/config/processed_books` to this folder; copies kept in
 the private App folder by earlier versions move there on the next start.
 Disable CWA's automatic import and conversion backups in CWA Settings if you
