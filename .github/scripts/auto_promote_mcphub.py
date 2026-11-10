@@ -250,12 +250,13 @@ def ci_state(repository: str, workflow: str, predicate) -> str:
 
 
 def validated(sha: str, branch: str):
-    # Only the run triggered by the push to the development branch counts. The
-    # release pull request starts a second run for the same commit that waits
-    # for manual approval and would otherwise shadow the green push run.
+    # Only runs started by a push to the development branch or by an explicit
+    # dispatch on it count (the base sync dispatches one after merging main).
+    # The release pull request starts a second run for the same commit that
+    # waits for manual approval and would otherwise shadow the green run.
     return lambda r: (
         r.get("head_sha") == sha and r.get("head_branch") == branch
-        and r.get("event") == "push"
+        and r.get("event") in ("push", "workflow_dispatch")
         and r.get("head_repository", {}).get("full_name") == os.environ.get("GITHUB_REPOSITORY")
     )
 
