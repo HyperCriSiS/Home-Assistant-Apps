@@ -42,7 +42,7 @@ class TriliumImagesTest(unittest.TestCase):
         self.assertIn('trilium-images', store['jobs']['publish']['needs'])
         self.assertEqual(store['jobs']['trilium-images']['uses'], './.github/workflows/publish-trilium-images.yml')
         self.assertEqual(store['jobs']['trilium-images']['with'], {'bundle': 'calibre-store-candidate'})
-        self.assertIn('if key in ("mcphub", "trilium"):', text)
+        self.assertIn('if key in ("mcphub", "trilium", "inbox-zero"):', text)
 
     def test_release_paths_publish_before_main_advertises_the_tag(self):
         _, promote = workflow('promote.yml')

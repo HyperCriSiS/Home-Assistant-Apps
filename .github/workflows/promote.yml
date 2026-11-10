@@ -22,6 +22,7 @@ on:
           - trilium
           - both
           - calibre
+          - inbox-zero
 
 permissions:
   actions: read
@@ -76,6 +77,45 @@ jobs:
           gh pr create --repo "${GITHUB_REPOSITORY}" --base main --head dev-calibre \
             --title "release(calibre): validated development candidate" \
             --body-file /tmp/calibre-release.md
+
+  inbox-zero-images:
+    if: github.event_name == 'workflow_dispatch' && inputs.app == 'inbox-zero'
+    uses: ./.github/workflows/publish-inbox-zero-images.yml
+    with:
+      source_ref: dev-inbox-zero
+    permissions:
+      contents: read
+      packages: write
+
+  promote-inbox-zero:
+    needs: inbox-zero-images
+    name: Prepare manual Inbox Zero release pull request
+    if: github.event_name == 'workflow_dispatch' && inputs.app == 'inbox-zero'
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ secrets.AUTOMATION_TOKEN || github.token }}
+    steps:
+      - name: Verify exact development commit and prepare release PR
+        run: |
+          sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/dev-inbox-zero" --jq '.object.sha')"
+          conclusion="$(gh run list --repo "${GITHUB_REPOSITORY}" \
+            --workflow validate-inbox-zero.yml --branch dev-inbox-zero --commit "${sha}" \
+            --event push --status completed --limit 1 --json conclusion \
+            --jq '.[0].conclusion // empty')"
+          [[ "${conclusion}" == "success" ]] || {
+            echo "Inbox Zero validation is not successful for ${sha}" >&2
+            exit 1
+          }
+          changed="$(gh api "repos/${GITHUB_REPOSITORY}/compare/main...dev-inbox-zero" --jq '.files | length')"
+          [[ "${changed}" != "0" ]] || exit 0
+          existing="$(gh pr list --repo "${GITHUB_REPOSITORY}" --base main \
+            --head dev-inbox-zero --state open --json number --jq '.[0].number // empty')"
+          [[ -z "${existing}" ]] || exit 0
+          body="Promotes Inbox Zero from dev-inbox-zero after operator testing. Both install images"
+          body+=" for this version were published from ${sha} before this pull request. Manual merge only."
+          gh pr create --repo "${GITHUB_REPOSITORY}" --base main --head dev-inbox-zero \
+            --title "release(inbox-zero): validated development candidate" \
+            --body "${body}"
 
   # main advertises the prebuilt tags. A manual release publishes both from the
   # exact candidate before the pull request exists; the tag is immutable, so

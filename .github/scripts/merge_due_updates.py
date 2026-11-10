@@ -2,8 +2,8 @@
 """Merge automated App update pull requests into their development branch.
 
 Bot update PRs (MCPHub upstream, MCPHub OpenAI tunnel-client, Trilium, Calibre
-AIO upstreams) are merged into dev-mcphub / dev-trilium / dev-calibre only when
-all of the following hold:
+AIO upstreams, Inbox Zero) are merged into dev-mcphub / dev-trilium /
+dev-calibre / dev-inbox-zero only when all of the following hold:
 
 * the PR was opened by github-actions[bot] from this repository for a known
   automation branch, carries the expected title and is not labelled "hold";
@@ -52,6 +52,7 @@ def load(name: str, filename: str):
 
 tunnel = load("update_mcphub_tunnel_clients", "update-mcphub-tunnel-clients.py")
 trilium = load("update_trilium", "update_trilium.py")
+inbox_zero = load("update_inbox_zero", "update_inbox_zero.py")
 
 
 class Kind(NamedTuple):
@@ -65,6 +66,9 @@ class Kind(NamedTuple):
         if self.name == "calibre":
             cwa, shelfmark = version.split(" ")
             return f"chore(calibre-aio): update CWA to {cwa} and Shelfmark to {shelfmark}"
+        if self.name == "inbox-zero":
+            base, commit = version.split(" ")
+            return f"chore(inbox-zero): update to {commit[:7]} ({base})"
         return {
             "mcphub-upstream": f"chore(mcphub): update upstream to {version}",
             "mcphub-tunnel": tunnel.TITLE,
@@ -75,8 +79,9 @@ class Kind(NamedTuple):
         match = self.branch.fullmatch(branch)
         if not match:
             return None
-        if self.name == "calibre":
-            return " ".join(match.groups())  # "<CWA version> <Shelfmark version>"
+        if self.name in ("calibre", "inbox-zero"):
+            # "<CWA version> <Shelfmark version>" or "<base version> <fork commit>"
+            return " ".join(match.groups())
         return match.group(1).replace("_", ".") if self.name == "mcphub-tunnel" else match.group(1)
 
 
@@ -109,6 +114,9 @@ KINDS = (
     Kind("calibre", "dev-calibre",
          re.compile(rf"automation/calibre-aio-cwa-{CALIBRE_VERSION}-shelfmark-{CALIBRE_VERSION}"),
          "validate-calibre-aio.yml", CALIBRE_FILES),
+    Kind("inbox-zero", "dev-inbox-zero",
+         re.compile(r"automation/inbox-zero-(v[0-9]+\.[0-9]+\.[0-9]+)-([0-9a-f]{40})"),
+         "validate-inbox-zero.yml", inbox_zero.UPDATE_FILES),
 )
 
 
@@ -215,6 +223,8 @@ def write_update(kind: Kind, version: str, today: date, worktree: str) -> None:
         if kind.name == "mcphub-tunnel":
             updated, changed = tunnel.prepare(current, version, today)
             updated = updated if changed else None
+        elif kind.name == "inbox-zero":
+            updated = inbox_zero.render(current, *version.split(" "), today)
         else:
             updated = trilium.render(current, version, today)
         if updated is None:

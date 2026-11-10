@@ -26,13 +26,13 @@ only on a development branch never runs on its schedule.
 
 | Setting | Value | Where it lives |
 | --- | --- | --- |
-| Update check | daily, `17 4 * * *` (Trilium, MCPHub), `23 7 * * *` (Calibre) | `update-*.yml` |
+| Update check | daily, `17 4 * * *` (Trilium, MCPHub), `23 7 * * *` (Calibre), `47 4 * * *` (Inbox Zero) | `update-*.yml` |
 | Bot PR merge delay into `dev-<app>` | 12 hours after the PR was opened | `merge_due_updates.py` `DELAY` |
 | Due-update merge check | hourly, `23 * * * *` | `merge-due-updates.yml` |
-| Minimum upstream release age | 48 hours | `auto_promote_*.py` `RELEASE_AGE` |
+| Minimum upstream release age | 48 hours | `auto_promote_*.py` `RELEASE_AGE` (`COMMIT_AGE` for Inbox Zero, which follows fork commits) |
 | Soak time on `dev-<app>` before release | 36 hours after the newest update reached the branch | `auto_promote_*.py` `SOAK` |
 | Distance to the previous stable release | 24 hours (MCPHub only) | `auto_promote_mcphub.py` `COOLDOWN` |
-| Promotion check | every 3 hours, offset per App (`13`, `43`) | `auto-promote-*.yml` |
+| Promotion check | every 3 hours, offset per App (`13`, `37`, `43`) | `auto-promote-*.yml` |
 | Promotion switch | repository variable `<APP>_AUTO_PROMOTE=true` | repository settings, variables |
 | Pause one PR | label `hold` on the update or release PR | GitHub labels |
 | Bot identity | `github-actions[bot]`, `github.token` | every workflow |
@@ -50,6 +50,7 @@ then skips silently every three hours until a manual release has been made.
 | Trilium Notes | `update-trilium.yml` | yes | `auto-promote-trilium.yml`, `TRILIUM_AUTO_PROMOTE` | published to GHCR before the merge |
 | MCPHub | `update-mcphub.yml`, `update-mcphub-tunnel-clients.yml` | yes | `auto-promote-mcphub.yml`, `MCPHUB_AUTO_PROMOTE` | published to GHCR before the merge |
 | Calibre AIO | `update-calibre-aio.yml` | on `dev-calibre` only | `auto-promote-calibre.yml`, `CALIBRE_AUTO_PROMOTE`, on `dev-calibre` only | published to GHCR before the merge |
+| Inbox Zero | `update-inbox-zero.yml` | yes | `auto-promote-inbox-zero.yml`, `INBOX_ZERO_AUTO_PROMOTE` | published to GHCR before the merge, on top of `inbox-zero-base:<commit>` built by `build-inbox-zero-base.yml` |
 
 "On `dev-calibre` only" means the files exist on the development branch but not
 yet on `main`. They become active with the next manual Calibre release and the

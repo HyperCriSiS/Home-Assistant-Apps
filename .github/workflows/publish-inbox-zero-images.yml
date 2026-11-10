@@ -1,0 +1,163 @@
+---
+name: Publish tested Inbox Zero images
+
+# Builds the Inbox Zero App image for both architectures on native runners,
+# boots it once, and publishes immutable version tags to GHCR. main and the
+# generated Dev store advertise these tags, so the Supervisor pulls instead of
+# building. The base image named in the Dockerfile must already exist;
+# validate-inbox-zero.yml builds it.
+on:
+  workflow_call:
+    inputs:
+      bundle:
+        type: string
+        default: ''
+      source_ref:
+        type: string
+        default: main
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: Trusted app source to publish (main or dev-inbox-zero)
+        type: choice
+        options: [main, dev-inbox-zero]
+        default: main
+permissions:
+  contents: read
+  packages: write
+concurrency:
+  group: inbox-zero-publish-${{ inputs.bundle || inputs.source_ref }}
+  cancel-in-progress: false
+env:
+  APP_DIR: Inbox Zero
+  VERSION_PATTERN: '^version: "(v[0-9]{4}\.[0-9]{2}\.[0-9]{2}(\.[1-9][0-9]*)?(-dev\.[0-9]+)?)"$'
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        if: inputs.bundle == ''
+        with:
+          ref: ${{ inputs.source_ref }}
+          path: source
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        if: inputs.bundle != ''
+        with:
+          name: ${{ inputs.bundle }}
+          path: /tmp/candidate
+      - if: inputs.bundle != ''
+        run: git clone /tmp/candidate/store.bundle source
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
+      - name: Resolve exact version and source fingerprint
+        id: metadata
+        working-directory: source
+        run: |
+          set -euo pipefail
+          version="$(sed -nE "s/${VERSION_PATTERN}/\1/p" "${APP_DIR}/config.yaml")"
+          [[ -n "$version" ]] || { echo 'Invalid Inbox Zero App version' >&2; exit 1; }
+          grep -Fxq 'image: "ghcr.io/hypercrisis/{arch}-inbox-zero"' "${APP_DIR}/config.yaml" \
+            || { echo 'config.yaml must advertise the published image' >&2; exit 1; }
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tree=$(git rev-parse "HEAD:${APP_DIR}")" >> "$GITHUB_OUTPUT"
+      # The base image is pulled with the workflow token, so the build does not
+      # depend on the visibility of that package.
+      - name: Log in to GHCR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
+        with:
+          context: source/Inbox Zero
+          pull: true
+          load: true
+          tags: inbox-zero:test
+          build-args: |
+            BUILD_VERSION=${{ steps.metadata.outputs.version }}
+            BUILD_ARCH=${{ matrix.arch }}
+          labels: |
+            io.inbox-zero.source-tree=${{ steps.metadata.outputs.tree }}
+            org.opencontainers.image.source=https://github.com/HyperCriSiS/Home-Assistant-Apps
+      # validate-inbox-zero.yml already checked this commit; this proves the
+      # exact published artifact creates its database and answers on each runner.
+      - name: Boot the built image and wait for the health endpoint
+        run: |
+          set -euo pipefail
+          trap 'docker rm -f inbox-zero-smoke >/dev/null 2>&1 || true' EXIT
+          data="$(mktemp -d)"
+          chmod 0755 "$data"
+          printf '%s\n' '{"base_url": "http://127.0.0.1:13000", "llm": {"default_models": "openai:smoke"},' \
+            '"auth": {"allowed_emails": "smoke@example.com"}}' > "${data}/options.json"
+          docker run --detach --name inbox-zero-smoke --publish 13000:3000 \
+            --volume "${data}:/data" inbox-zero:test >/dev/null
+          for _ in $(seq 1 150); do
+            if curl --fail --silent http://127.0.0.1:13000/api/health >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs inbox-zero-smoke >&2 || true
+          echo 'Inbox Zero did not become healthy' >&2
+          exit 1
+      - name: Push tested staging image, never the install tag yet
+        env:
+          ARCH: ${{ matrix.arch }}
+        run: |
+          image="ghcr.io/hypercrisis/${ARCH}-inbox-zero:build-${GITHUB_RUN_ID}"
+          docker tag inbox-zero:test "$image"
+          docker push "$image"
+
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        if: inputs.bundle == ''
+        with:
+          ref: ${{ inputs.source_ref }}
+          path: source
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        if: inputs.bundle != ''
+        with:
+          name: ${{ inputs.bundle }}
+          path: /tmp/candidate
+      - if: inputs.bundle != ''
+        run: git clone /tmp/candidate/store.bundle source
+      - name: Publish both tested version tags and verify public access
+        working-directory: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version="$(sed -nE "s/${VERSION_PATTERN}/\1/p" "${APP_DIR}/config.yaml")"
+          tree="$(git rev-parse "HEAD:${APP_DIR}")"
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          format='{{index .Config.Labels "io.inbox-zero.source-tree"}}'
+          for arch in amd64 aarch64; do
+            repo="ghcr.io/hypercrisis/${arch}-inbox-zero"
+            candidate="${repo}:build-${GITHUB_RUN_ID}"
+            docker pull --platform "linux/${arch/aarch64/arm64}" "$candidate"
+            actual="$(docker inspect --format "$format" "$candidate")"
+            [[ "$actual" == "$tree" ]] || { echo 'Source changed during build' >&2; exit 1; }
+            if docker manifest inspect "${repo}:${version}" >/dev/null 2>&1; then
+              docker pull --platform "linux/${arch/aarch64/arm64}" "${repo}:${version}"
+              existing="$(docker inspect --format "$format" "${repo}:${version}")"
+              [[ "$existing" == "$tree" ]] || { echo 'Refusing to replace an existing release' >&2; exit 1; }
+            else
+              docker tag "$candidate" "${repo}:${version}"
+              docker push "${repo}:${version}"
+            fi
+            # Supervisor must be able to pull without a GitHub login.
+            public_config="$(mktemp -d)"
+            DOCKER_CONFIG="$public_config" docker manifest inspect "${repo}:${version}" >/dev/null
+          done
