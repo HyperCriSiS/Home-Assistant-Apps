@@ -184,6 +184,10 @@ class CiTests(unittest.TestCase):
         text = (Path(__file__).resolve().parents[2] / ".github/workflows/promote.yml").read_text()
         self.assertNotIn("--event push", text)
         self.assertEqual(text.count('select(.event == "push" or .event == "workflow_dispatch")'), 4)
+        # A shell line continuation must end its line; an option after it is
+        # passed to gh as a stray argument and the gate fails with usage text.
+        import re
+        self.assertIsNone(re.search(r"\\ +--", text))
 
     def test_latest_run_decides(self):
         runs = [
