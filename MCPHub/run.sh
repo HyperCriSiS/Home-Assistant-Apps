@@ -151,11 +151,14 @@ if [[ "${ha_mcp_enabled}" == "true" ]]; then
     fi
 fi
 
-log_info "Starting MCPHub 1.2.1 on internal loopback port 3000."
+log_info "Starting MCPHub 1.2.2 on internal loopback port 3000."
 if [[ -r /etc/mcphub-source-revision ]]; then
     log_info "Build source revision: $(cat /etc/mcphub-source-revision)"
 fi
 (
+    # MCPHub hands its environment to every stdio MCP server it starts, so the
+    # Supervisor token must not be part of it. MCPHub itself never uses it.
+    unset SUPERVISOR_TOKEN
     cd /app
     /usr/local/bin/entrypoint.sh node dist/index.js
 ) &
