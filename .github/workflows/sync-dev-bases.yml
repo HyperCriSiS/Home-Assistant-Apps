@@ -29,6 +29,8 @@ jobs:
           fetch-depth: 0
 
       - name: Sync app development branches
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -61,7 +63,19 @@ jobs:
             if ! merge_main || ! git push origin "HEAD:${branch}"; then
               git merge --abort 2>/dev/null || true
               failed+=" ${branch}"
+              continue
             fi
+
+            # Pushes made with the built-in token start no workflows, and the
+            # merge rarely touches the app's own paths. Validate the new head
+            # explicitly so the release gates find a run for it.
+            case "${branch}" in
+              dev-trilium) workflow=validate.yml ;;
+              dev-mcphub) workflow=validate-mcphub.yml ;;
+              dev-calibre) workflow=validate-calibre-aio.yml ;;
+              dev-inbox-zero) workflow=validate-inbox-zero.yml ;;
+            esac
+            gh workflow run "${workflow}" --ref "${branch}" || failed+=" ${branch}(validation)"
           done
 
           if [[ -n "${failed}" ]]; then
