@@ -87,7 +87,7 @@ are not reachable there; they are available exclusively through the Home Assista
 
 In Home Assistant, go to **MCPHub → Network** to change the **left-hand host port** if 3001 is occupied. Leave the host-port field empty to turn LAN MCP access off. The connection uses plain HTTP, so only use it on a trusted local network.
 
-See [LAN access instructions](LAN_ACCESS.md) for details and security notes.
+See [LAN access instructions](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/MCPHub/LAN_ACCESS.md) for details and security notes.
 
 ## Home Assistant MCP Server
 
@@ -170,7 +170,7 @@ Get the **Runtime API Key** from [OpenAI API keys](https://platform.openai.com/s
 Find the separate **Tunnel ID** in [OpenAI Tunnel settings](https://platform.openai.com/settings/organization/tunnels).
 It starts with `tunnel_`. Do not use the API key's Tracking ID.
 
-See [DOCS.md](DOCS.md) for the complete OpenAI tunnel configuration.
+See [DOCS.md](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/MCPHub/DOCS.md) for the complete OpenAI tunnel configuration.
 
 ### Claude, Cursor, VS Code and others through Cloudflare or Tailscale
 
@@ -192,7 +192,7 @@ For the smallest tool surface, create a focused MCPHub group and use only that g
 /mcp/web
 ```
 
-See [DOCS.md](DOCS.md) for the Cloudflare and Tailscale setup.
+See [DOCS.md](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/MCPHub/DOCS.md) for the Cloudflare and Tailscale setup.
 
 ## Security model
 
@@ -243,7 +243,7 @@ MCPHub groups or client routes that referred to its previous name.
 
 For detailed configuration, security notes, persistence paths, backups, and troubleshooting, see:
 
-**[Full MCPHub App documentation →](DOCS.md)**
+**[Full MCPHub App documentation →](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/MCPHub/DOCS.md)**
 
 ## Versioning
 
@@ -271,7 +271,7 @@ Home Assistant detects new App versions from this repository.
 
 Before updating:
 
-1. Review [CHANGELOG.md](CHANGELOG.md).
+1. Review [CHANGELOG.md](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/MCPHub/CHANGELOG.md).
 2. Create a Home Assistant backup if the update contains major changes.
 3. Update MCPHub from the App page.
 
@@ -291,6 +291,6 @@ For OpenAI Secure MCP Tunnel issues, use:
 
 ## Licenses
 
-The Home Assistant wrapper is released under the [MIT License](LICENSE).
+The Home Assistant wrapper is released under the [MIT License](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/MCPHub/LICENSE).
 
-Third-party components retain their own licenses. See [NOTICE.md](NOTICE.md) for details.
+Third-party components retain their own licenses. See [NOTICE.md](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/MCPHub/NOTICE.md) for details.

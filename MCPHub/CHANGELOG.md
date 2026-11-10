@@ -1,10 +1,10 @@
 # Changelog
 
-## v2026.11.10-dev.254
+## v2026.11.10-2-dev.259
 
 ### Commits in this Dev build
 
-- [`d5d57df`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/d5d57dff081ae2e9d617d564dd137ebf8306171d) Merge remote-tracking branch 'origin/main' into dev-mcphub
-- [`c0865ee`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/c0865ee9b74a4b0a7274008211b5934e867336a6) ci(inbox-zero): add image, update and release automation (#216)
-- [`4aa8a56`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/4aa8a5619d9b58c8a5e705c1fba8a01b624398e4) release(mcphub): validated candidate (#219)
-- [`1777caf`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/1777cafd4b7fc65f46bd790611a55658f59d31ea) release(mcphub): validated candidate (#214)
+- [`7807585`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/78075859d0306a8780c344652cf32cf5c2c3a97a) Merge remote-tracking branch 'origin/main' into dev-mcphub
+- [`3974d6b`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/3974d6b97dedbf8c7ade5884c315d6db0987a71f) fix(mcphub): ping the managed Home Assistant MCP servers once a minute (#226)
+- [`583ee8f`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/583ee8f1233fe4e49d6f0a9993639ff91c4e8d2d) fix(mcphub): keep other Apps' commits out of the dev changelog (#225)
+- [`67220dd`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/67220ddfea489f12ae2f591f2749407a56dff1c4) docs(mcphub): point README and DOCS links at GitHub (#224)
