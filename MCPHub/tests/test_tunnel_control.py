@@ -245,6 +245,14 @@ class OpenAITunnelTests(unittest.TestCase):
         self.assertEqual(self.popen.call_count, 1)
         self.assertEqual(self.manager.status(120)["state"], "stopped")
 
+    def test_tunnel_client_gets_no_supervisor_or_hub_secrets(self):
+        secrets = ("SUPERVISOR_TOKEN", "JWT_SECRET", "HA_INGRESS_PROXY_SECRET")
+        with patch.dict(self.mod.os.environ, dict.fromkeys(secrets, "secret")):
+            self.manager.tick(100)
+        env = self.popen.call_args.kwargs["env"]
+        for name in secrets:
+            self.assertNotIn(name, env)
+
     def test_crash_retries_exponential_backoff(self):
         self.manager.tick(100)
         self.process.poll.return_value = 12

@@ -21,6 +21,7 @@ from pathlib import Path
 AUTH_FILE = Path("/app/dist/middlewares/auth.js")
 BETTER_AUTH_CONTROLLER_FILE = Path("/app/dist/controllers/betterAuthController.js")
 SERVER_CONTROLLER_FILE = Path("/app/dist/controllers/serverController.js")
+JWT_FILE = Path("/app/dist/config/jwt.js")
 
 
 def replace_once(text: str, old: str, new: str, label: str) -> str:
@@ -42,8 +43,13 @@ const homeAssistantSecretMatches = (expected, provided) =>
         haCreateHash('sha256').update(String(provided)).digest(),
     );
 
+// Read once and removed: MCPHub hands process.env to the stdio MCP servers
+// it starts, and none of them may learn this secret.
+const homeAssistantProxySecret = process.env.HA_INGRESS_PROXY_SECRET;
+delete process.env.HA_INGRESS_PROXY_SECRET;
+
 export const resolveHomeAssistantIngressUser = (req) => {
-    const expectedSecret = process.env.HA_INGRESS_PROXY_SECRET;
+    const expectedSecret = homeAssistantProxySecret;
     const providedSecret = req.header('x-mcphub-ha-proxy-secret');
 
     if (!expectedSecret || !providedSecret) {
@@ -173,7 +179,18 @@ def patch_server_controller() -> None:
     SERVER_CONTROLLER_FILE.write_text(text, encoding="utf-8")
 
 
+def patch_jwt() -> None:
+    """Keep the signing secret out of the environment child processes inherit."""
+    text = JWT_FILE.read_text(encoding="utf-8")
+    marker = "let jwtSecret = process.env.JWT_SECRET;\n"
+    text = replace_once(
+        text, marker, marker + "delete process.env.JWT_SECRET;\n", "JWT secret"
+    )
+    JWT_FILE.write_text(text, encoding="utf-8")
+
+
 def main() -> None:
+    patch_jwt()
     patch_auth()
     patch_better_auth_controller()
     patch_server_controller()
