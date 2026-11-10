@@ -24,12 +24,17 @@ write_options() {
     alpine:3.22 \
     sh -c 'cat > /data/options.json <<EOF
 {"home_assistant_mcp_enabled":false,"home_assistant_mcp_auth_mode":"restricted_user","home_assistant_mcp_user_token":"","home_assistant_mcp_url":"http://homeassistant:8123/api/mcp","tunnel_enabled":false,"openai_runtime_api_key":"","tunnel_id":"","tunnel_mcp_path":"/mcp","tunnel_log_level":"info"}
+EOF
+mkdir -p /data/mcphub
+cat > /data/mcphub/mcp_settings.json <<EOF
+{"mcpServers":{"envprobe":{"command":"sh","args":["-c","env > /data/child-env; exec cat"]}},"users":[],"systemConfig":{},"bearerKeys":[],"prompts":[],"resources":[]}
 EOF'
 }
 
 start_addon() {
   docker run -d \
     --name "${CONTAINER}" \
+    --env SUPERVISOR_TOKEN="eyJtest_supervisor_token_0123456789" \
     --network "${NETWORK}" \
     --ip 172.30.32.3 \
     --publish "127.0.0.1::3001/tcp" \
@@ -80,6 +85,22 @@ ingress_curl_without_identity() {
 write_options
 start_addon
 wait_ready
+
+# MCPHub hands its environment to every stdio server it starts. The seeded
+# probe server must see neither the Supervisor token nor the hub secrets.
+for _ in $(seq 1 30); do
+  docker exec "${CONTAINER}" test -s /data/child-env && break
+  sleep 1
+done
+docker exec "${CONTAINER}" grep -q '^PORT=3000$' /data/child-env || {
+  echo "The stdio probe server did not start" >&2
+  exit 1
+}
+if docker exec "${CONTAINER}" grep -qE \
+  '^(SUPERVISOR_TOKEN|JWT_SECRET|HA_INGRESS_PROXY_SECRET)=' /data/child-env; then
+  echo "A stdio MCP server inherited the Supervisor token or a hub secret" >&2
+  exit 1
+fi
 
 # Exercise the LAN MCP gateway through a real Docker host-port mapping.
 # It must serve only MCP routes; MCPHub's web interface stays Ingress-only.

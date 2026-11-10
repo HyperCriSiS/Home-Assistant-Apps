@@ -1,5 +1,17 @@
 [
   {
+    "revision": 250,
+    "version": "v2026.11.10-dev.250",
+    "source_sha": "01c31f9df78302dc49c09486fda3324d4450ac68",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "01c31f9df78302dc49c09486fda3324d4450ac68",
+        "subject": "fix(mcphub): keep Supervisor token and hub secrets out of child processes (#218)"
+      }
+    ]
+  },
+  {
     "revision": 248,
     "version": "v2026.11.07-1-dev.248",
     "source_sha": "da580f0c71d291c7789cd2397e4b1f605f51fd4d",

@@ -75,6 +75,16 @@ class UnofficialHaMcpTests(unittest.TestCase):
         self.assertIn('"ha-mcp==${HA_MCP_VERSION}" ha-mcp-web', text)
         self.assertNotIn("ha-mcp@latest", text)
 
+    def test_mcphub_and_its_stdio_servers_get_no_supervisor_or_hub_secrets(self):
+        run = (ROOT / "run.sh").read_text(encoding="utf-8")
+        start = run.split("unset SUPERVISOR_TOKEN\n    cd /app", 1)
+        self.assertEqual(len(start), 2)
+        self.assertTrue(start[1].lstrip().startswith("/usr/local/bin/entrypoint.sh node"))
+        patch = (ROOT / "patch_home_assistant_auth.py").read_text(encoding="utf-8")
+        self.assertIn("delete process.env.JWT_SECRET;", patch)
+        self.assertIn("delete process.env.HA_INGRESS_PROXY_SECRET;", patch)
+        self.assertEqual(patch.count("process.env.HA_INGRESS_PROXY_SECRET"), 2)
+
 
 if __name__ == "__main__":
     unittest.main()
