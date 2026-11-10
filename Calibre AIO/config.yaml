@@ -1,6 +1,6 @@
 name: "Calibre AIO"
 description: "CWA v4.0.8 and Shelfmark v1.6.1 - Book discovery and Calibre library management in one interface"
-version: "v2026.11.09"
+version: "v2026.11.10"
 slug: "calibre-aio"
 url: "https://github.com/HyperCriSiS/Home-Assistant-Apps/tree/main/Calibre%20AIO"
 image: "ghcr.io/hypercrisis/{arch}-calibre-aio"
@@ -16,14 +16,25 @@ boot: auto
 watchdog: "http://[HOST]:[PORT:8084]/health"
 # Stop the app during backups so its SQLite databases are captured consistently.
 # The library and the ingest folder live under /share and are governed by the
-# "Share" folder of an HA backup, not by this App's backup. Shelfmark's
-# download staging and logs are transient, and CWA's processed_books holds
-# zipped copies of books that already sit in the library; both are skipped.
+# "Share" folder of an HA backup, not by this App's backup; so does
+# processed_dir, where CWA keeps its safety copies of processed books. Caches,
+# logs, temporary files and runtime markers are not needed after a restore.
 backup: cold
 backup_exclude:
   - "shelfmark-staging/*"
   - "shelfmark-logs/*"
-  - "config/processed_books/*"
+  - "shelfmark/covers/*"
+  - "shelfmark/.gunicorn/*"
+  - "config/thumbnails/*"
+  - "config/.cache/*"
+  - "config/.config/calibre/caches/*"
+  - "config/.cwa_conversion_tmp/*"
+  - "config/log_archive/*"
+  - "config/*.log"
+  - "config/cwa_ingest_status"
+  - "config/cwa_ingest_batch_dirty.running"
+  # A link into /share that the init script recreates; restores never follow it.
+  - "config/processed_books"
 ingress: true
 ingress_stream: true
 ingress_port: 8084
@@ -35,6 +46,7 @@ options:
   start_page: "library"
   library_dir: "calibre-aio/library"
   ingest_dir: "calibre-aio/ingest"
+  processed_dir: "calibre-aio/processed"
   network_share_mode: false
   shelfmark:
     external_bypass_url: ""
@@ -48,6 +60,7 @@ schema:
   start_page: "list(library|shelfmark)"
   library_dir: "str"
   ingest_dir: "str"
+  processed_dir: "str"
   network_share_mode: "bool"
   shelfmark:
     external_bypass_url: "str?"
