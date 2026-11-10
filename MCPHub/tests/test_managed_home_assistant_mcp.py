@@ -49,6 +49,7 @@ class ManagedHomeAssistantMCPTests(unittest.TestCase):
     def test_default_name_and_migration(self):
         MODULE.main()
         self.assertIn(MODULE.HOME_ASSISTANT_MCP_DEFAULT_NAME, self.servers())
+        self.assertEqual(self.servers()[MODULE.HOME_ASSISTANT_MCP_DEFAULT_NAME]["keepAliveInterval"], 60000)
         self.options(
             home_assistant_mcp_enabled=True,
             home_assistant_mcp_server_name="ha-livingroom",

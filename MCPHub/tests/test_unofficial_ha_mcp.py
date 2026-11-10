@@ -16,6 +16,8 @@ class UnofficialHaMcpTests(unittest.TestCase):
         MODULE.apply_ha_mcp_server(servers, {"ha_mcp_enabled": True})
         entry = servers[MODULE.HA_MCP_SERVER_NAME]
         self.assertEqual(entry["url"], "http://127.0.0.1:8096/mcp")
+        # One keepalive per minute; five seconds flooded the ha-mcp access log.
+        self.assertEqual(entry["keepAliveInterval"], 60000)
         self.assertIn("Unofficial", entry["description"])
 
     def test_disabled_removes_only_managed_entry(self):
