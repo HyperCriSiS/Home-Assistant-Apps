@@ -33,9 +33,10 @@ must have been installed from the Dev store. `INBOX_ZERO_AUTO_PROMOTE` stays uns
 until that release has proven the chain. Only amd64 was booted locally; aarch64
 is covered by the native runner in `validate-inbox-zero.yml`.
 
-Open pull requests: [#215](https://github.com/HyperCriSiS/Home-Assistant-Apps/pull/215)
-adds the App to `dev-inbox-zero`;
+[#215](https://github.com/HyperCriSiS/Home-Assistant-Apps/pull/215) added the App
+to `dev-inbox-zero` on 2026-11-10. Open:
 [#216](https://github.com/HyperCriSiS/Home-Assistant-Apps/pull/216) brings the
-automation to `main` and must merge after #215 and after the packages are public.
+automation to `main` and must merge only after the packages are public and the
+Dev store sync on `dev-inbox-zero` is green.
 
 Compare the proposed change with the latest `main` and relevant upstream changes. Review actual tests and unfinished PRs; record verified findings and next steps here with evidence links. Avoid claiming all work is complete from a green documentation check, or adding a repo-wide roadmap merely to populate a template. Leave task-specific history in its existing documents.
