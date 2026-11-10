@@ -56,8 +56,8 @@ jobs:
           sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/dev-calibre" --jq '.object.sha')"
           conclusion="$(gh run list --repo "${GITHUB_REPOSITORY}" \
             --workflow validate-calibre-aio.yml --branch dev-calibre --commit "${sha}" \
-            --event push --status completed --limit 1 --json conclusion \
-            --jq '.[0].conclusion // empty')"
+            --status completed --limit 20 --json conclusion,event \
+            --jq '[.[] | select(.event == "push" or .event == "workflow_dispatch")][0].conclusion // empty')"
           [[ "${conclusion}" == "success" ]] || {
             echo "Calibre validation is not successful for ${sha}" >&2
             exit 1
@@ -100,8 +100,8 @@ jobs:
           sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/dev-inbox-zero" --jq '.object.sha')"
           conclusion="$(gh run list --repo "${GITHUB_REPOSITORY}" \
             --workflow validate-inbox-zero.yml --branch dev-inbox-zero --commit "${sha}" \
-            --event push --status completed --limit 1 --json conclusion \
-            --jq '.[0].conclusion // empty')"
+            --status completed --limit 20 --json conclusion,event \
+            --jq '[.[] | select(.event == "push" or .event == "workflow_dispatch")][0].conclusion // empty')"
           [[ "${conclusion}" == "success" ]] || {
             echo "Inbox Zero validation is not successful for ${sha}" >&2
             exit 1
@@ -165,12 +165,10 @@ jobs:
               --repo "${GITHUB_REPOSITORY}" \
               --workflow validate.yml \
               --branch dev-trilium \
-              --commit "${sha}" \
-              --event push \
-              --status completed \
-              --limit 1 \
-              --json conclusion \
-              --jq '.[0].conclusion // empty'
+              --commit "${sha}" \              --status completed \
+              --limit 20 \
+              --json conclusion,event \
+              --jq '[.[] | select(.event == "push" or .event == "workflow_dispatch")][0].conclusion // empty'
           )"
 
           [[ "${conclusion}" == "success" ]] || {
@@ -259,12 +257,10 @@ jobs:
               --repo "${GITHUB_REPOSITORY}" \
               --workflow validate-mcphub.yml \
               --branch dev-mcphub \
-              --commit "${sha}" \
-              --event push \
-              --status completed \
-              --limit 1 \
-              --json conclusion \
-              --jq '.[0].conclusion // empty'
+              --commit "${sha}" \              --status completed \
+              --limit 20 \
+              --json conclusion,event \
+              --jq '[.[] | select(.event == "push" or .event == "workflow_dispatch")][0].conclusion // empty'
           )"
 
           [[ "${conclusion}" == "success" ]] || {

@@ -157,6 +157,34 @@ class CiTests(unittest.TestCase):
              patch.object(mod, "api", return_value={"workflow_runs": [waiting, push]}):
             self.assertEqual(mod.ci_state(REPO, "w", mod.validated("s", "dev-mcphub")), "success")
 
+    def test_validated_accepts_the_dispatched_run_after_a_base_sync(self):
+        base = {"head_sha": "s", "head_branch": "dev-mcphub",
+                "head_repository": {"full_name": REPO}, "status": "completed"}
+        dispatched = {**base, "event": "workflow_dispatch", "conclusion": "success",
+                      "created_at": "2026-01-01T00:00:00Z"}
+        waiting = {**base, "event": "pull_request", "conclusion": "action_required",
+                   "created_at": "2026-01-01T01:00:00Z"}
+        with patch.dict(os.environ, {"GITHUB_REPOSITORY": REPO}), \
+             patch.object(mod, "api", return_value={"workflow_runs": [waiting, dispatched]}):
+            self.assertEqual(mod.ci_state(REPO, "w", mod.validated("s", "dev-mcphub")), "success")
+
+    def test_base_sync_validates_every_merged_development_head(self):
+        import yaml
+        workflow = yaml.safe_load((Path(__file__).resolve().parents[2] / ".github/workflows/sync-dev-bases.yml").read_text())
+        script = next(step["run"] for step in workflow["jobs"]["sync"]["steps"]
+                      if step["name"] == "Sync app development branches")
+        for branch, name in (("dev-trilium", "validate.yml"), ("dev-mcphub", "validate-mcphub.yml"),
+                             ("dev-calibre", "validate-calibre-aio.yml"),
+                             ("dev-inbox-zero", "validate-inbox-zero.yml")):
+            self.assertIn(f"{branch}) workflow={name}", script)
+            self.assertIn(branch, script.split("for branch in", 1)[1].split("\n", 1)[0])
+        self.assertIn('gh workflow run "${workflow}" --ref "${branch}"', script)
+
+    def test_release_gates_count_push_and_dispatch_runs_only(self):
+        text = (Path(__file__).resolve().parents[2] / ".github/workflows/promote.yml").read_text()
+        self.assertNotIn("--event push", text)
+        self.assertEqual(text.count('select(.event == "push" or .event == "workflow_dispatch")'), 4)
+
     def test_latest_run_decides(self):
         runs = [
             {"head_sha": "s", "status": "completed", "conclusion": "failure", "created_at": "1"},
