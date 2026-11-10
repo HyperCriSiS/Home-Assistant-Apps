@@ -10,7 +10,9 @@ configuration:
     description: Open Library (library) or Shelfmark (shelfmark) first.
   library_dir:
     name: Library folder
-    description: Path relative to /share.
+    description: >-
+      Path relative to /share. The library is not part of this App's backup;
+      tick the Share folder in a Home Assistant backup to include it.
   ingest_dir:
     name: Import folder
     description: Path relative to /share for completed book downloads.

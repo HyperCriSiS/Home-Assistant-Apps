@@ -1,6 +1,6 @@
 name: "Calibre AIO (Dev)"
 description: "CWA v4.0.8 and Shelfmark v1.6.1 - Book discovery and Calibre library management in one interface"
-version: "v2026.11.09-dev.195"
+version: "v2026.11.10-dev.196"
 slug: "calibre-aio"
 url: "https://github.com/HyperCriSiS/Home-Assistant-Apps/tree/dev-calibre/Calibre%20AIO"
 image: "ghcr.io/hypercrisis/{arch}-calibre-aio"
@@ -17,14 +17,24 @@ boot: auto
 watchdog: "http://[HOST]:[PORT:8084]/health"
 # Stop the app during backups so its SQLite databases are captured consistently.
 # The library and the ingest folder live under /share and are governed by the
-# "Share" folder of an HA backup, not by this App's backup. Shelfmark's
-# download staging and logs are transient, and CWA's processed_books holds
-# zipped copies of books that already sit in the library; both are skipped.
+# "Share" folder of an HA backup, not by this App's backup. Caches, logs,
+# temporary files, runtime markers and CWA's copies of imported books (which
+# already sit in the library) are rebuilt or not needed after a restore.
 backup: cold
 backup_exclude:
   - "shelfmark-staging/*"
   - "shelfmark-logs/*"
-  - "config/processed_books/*"
+  - "shelfmark/covers/*"
+  - "shelfmark/.gunicorn/*"
+  - "config/thumbnails/*"
+  - "config/.cache/*"
+  - "config/.config/calibre/caches/*"
+  - "config/.cwa_conversion_tmp/*"
+  - "config/log_archive/*"
+  - "config/*.log"
+  - "config/processed_books/imported/*"
+  - "config/cwa_ingest_status"
+  - "config/cwa_ingest_batch_dirty.running"
 ingress: true
 ingress_stream: true
 ingress_port: 8084
