@@ -16,6 +16,11 @@ configuration:
   ingest_dir:
     name: Importordner
     description: Pfad relativ zu /share für abgeschlossene Buchdownloads.
+  processed_dir:
+    name: Ordner für verarbeitete Bücher
+    description: >-
+      Pfad relativ zu /share für CWAs Sicherheitskopien importierter, konvertierter
+      und reparierter Bücher. Wie die Bibliothek wird er über den Ordner Share gesichert.
   network_share_mode:
     name: Netzwerkfreigabe
     description: Für SMB/NFS regelmäßige Prüfung statt Dateisystemereignissen verwenden.

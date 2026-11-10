@@ -96,16 +96,16 @@ instead uses an external service and locks those settings to that service.
 
 ## Documentation
 
-- [Configuration](DOCS.md) · [Deutsche Anleitung](DOCS.de.md)
-- [Integration design](INTEGRATION.md)
-- [Verification](TESTING.md)
-- [Upstream maintenance](UPDATING.md)
-- [Third-party notices](NOTICE.md)
+- [Configuration](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/DOCS.md) · [Deutsche Anleitung](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/DOCS.de.md)
+- [Integration design](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/INTEGRATION.md)
+- [Verification](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/TESTING.md)
+- [Upstream maintenance](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/UPDATING.md)
+- [Third-party notices](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/NOTICE.md)
 
 ## Troubleshooting
 
 Library imports that fail with a read-only database, SSO sign-in issues and
-backup scope are covered in [DOCS.md](DOCS.md#troubleshooting). The App log
+backup scope are covered in [DOCS.md](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/DOCS.md#troubleshooting). The App log
 (Settings, Apps, Calibre AIO, Log) shows both applications and the ingress proxy.
 
 ## Versioning
@@ -113,7 +113,7 @@ backup scope are covered in [DOCS.md](DOCS.md#troubleshooting). The App log
 The App version follows the repository's CalVer scheme `vYYYY.MM.DD`, with
 `-N` for a further release on the same day. The packaged Calibre-Web Automated
 and Shelfmark versions are separate: the badges above and the App description
-in the store name them, and [CHANGELOG.md](CHANGELOG.md) lists every change.
+in the store name them, and [CHANGELOG.md](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/CHANGELOG.md) lists every change.
 Development builds carry a `-dev.<n>` suffix.
 
 ## Support
@@ -125,6 +125,6 @@ with the App version, the App log and the steps that led to the problem.
 ## License
 
 The wrapper code in this directory is licensed under the MIT License, see
-[LICENSE](LICENSE). Calibre-Web Automated (GPL-3.0-or-later), Shelfmark (MIT),
+[LICENSE](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/LICENSE). Calibre-Web Automated (GPL-3.0-or-later), Shelfmark (MIT),
 Calibre, kepubify and the original add-on packaging keep their own licenses;
-see [NOTICE.md](NOTICE.md) for the packaged versions and license files.
+see [NOTICE.md](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/NOTICE.md) for the packaged versions and license files.
