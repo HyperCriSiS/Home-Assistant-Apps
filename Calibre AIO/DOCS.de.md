@@ -1,6 +1,6 @@
 # Calibre AIO Dokumentation
 
-Deutsch | [English](DOCS.md)
+Deutsch | [English](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/DOCS.md)
 
 ## Erste Schritte
 
@@ -72,7 +72,7 @@ Die Bibliothek ist nie Teil der Sicherung dieser App, und keine Option der App
 kann das ändern: Home Assistant sichert `/share` nur über den Ordner **Share**
 einer Sicherung, und der gilt für den gemeinsamen Ordner aller Apps zusammen.
 Wähle **Share** an, um die Bibliothek einzuschließen, oder sichere sie
-anderweitig. Siehe [Persistenz und Sicherungen](#persistenz-und-sicherungen).
+anderweitig. Siehe [Persistenz und Sicherungen](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/DOCS.de.md#persistenz-und-sicherungen).
 
 ### `ingest_dir`
 
@@ -256,7 +256,7 @@ zugehörige Warnung im Protokoll ist harmlos. Diese App aktualisiert CWA nur
 über ihre eigenen Releases.
 
 Die Upstream-Versionen stehen in `upstream.json`. Alle Aktualisierungen sollen
-über den in [UPDATING.md](UPDATING.md) beschriebenen Manifest- und
+über den in [UPDATING.md](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/UPDATING.md) beschriebenen Manifest- und
 Update-Ablauf laufen, mit einer Sicherung, bevor eine echte Installation
 aktualisiert wird.
 

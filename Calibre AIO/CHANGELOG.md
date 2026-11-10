@@ -11,7 +11,7 @@
 
 ### Fixed
 
-- Documentation links on the App page in Home Assistant open the GitHub documents instead of reloading the same page.
+- Documentation links on the App page and in the Documentation tab of Home Assistant, including the language switch, open the GitHub documents instead of reloading the same page.
 - A CWA post-import follow-up interrupted by a stop (cold backup, restart) no longer leaves the duplicates page reporting an import in progress; the App requeues it at start.
 
 ## v2026.11.09

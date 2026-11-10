@@ -1,6 +1,6 @@
 # Calibre AIO documentation
 
-[Deutsch](DOCS.de.md) | English
+[Deutsch](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/DOCS.de.md) | English
 
 ## Getting started
 
@@ -69,7 +69,7 @@ The library is never part of this App's backup, and no App option can change
 that: Home Assistant backs up `/share` only through the **Share** folder of a
 backup, which covers the shared folder of all Apps together. Tick **Share** to
 include the library, or back it up by other means. See
-[Persistence and backups](#persistence-and-backups).
+[Persistence and backups](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/DOCS.md#persistence-and-backups).
 
 ### `ingest_dir`
 
@@ -229,7 +229,7 @@ start continues without internet access; a related warning in the log is
 harmless. This App updates CWA only through its own releases.
 
 Upstream versions are listed in `upstream.json`. All upgrades should use the
-manifest/update workflow described in [UPDATING.md](UPDATING.md), with a backup
+manifest/update workflow described in [UPDATING.md](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/UPDATING.md), with a backup
 before a real installation is upgraded.
 
 ## Languages and development builds
