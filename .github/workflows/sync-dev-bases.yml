@@ -33,6 +33,16 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+          # The resolver comes from main; a development branch may not have it yet.
+          cp .github/scripts/resolve_release_changelog.py "${RUNNER_TEMP}/"
+          merge_main() {
+            git merge --no-ff --no-edit origin/main || {
+              python3 "${RUNNER_TEMP}/resolve_release_changelog.py" &&
+                git commit --no-edit --cleanup=strip
+            }
+          }
+
+          failed=""
           for branch in dev-trilium dev-mcphub dev-calibre dev-inbox-zero; do
             if ! git ls-remote --exit-code --heads origin "${branch}" >/dev/null 2>&1; then
               echo "${branch} does not exist yet; skipping"
@@ -47,11 +57,20 @@ jobs:
               continue
             fi
 
-            git merge --no-ff --no-edit origin/main
-            git push origin "HEAD:${branch}"
+            # A branch that cannot be merged or pushed must not block the others.
+            if ! merge_main || ! git push origin "HEAD:${branch}"; then
+              git merge --abort 2>/dev/null || true
+              failed+=" ${branch}"
+            fi
           done
 
+          if [[ -n "${failed}" ]]; then
+            echo "::error::Could not sync main into:${failed}"
+            exit 1
+          fi
+
       - name: Refresh combined development store
+        if: ${{ !cancelled() }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run sync-dev-store.yml --ref main
