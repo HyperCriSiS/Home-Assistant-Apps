@@ -12,6 +12,9 @@ path = ROOT / ".github" / "scripts" / "merge_due_updates.py"
 spec = importlib.util.spec_from_file_location("merge_due_updates", path)
 mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
+fixture = importlib.util.spec_from_file_location("inbox_zero_fixture", Path(__file__).with_name("test_update_inbox_zero.py"))
+inbox_zero_fixture = importlib.util.module_from_spec(fixture)
+fixture.loader.exec_module(inbox_zero_fixture)
 
 REPO = "x/y"
 HOUR = 3600
@@ -36,6 +39,8 @@ class ClassifyTests(unittest.TestCase):
             ("automation/trilium-v0.106.1", "dev-trilium"): ("trilium", "v0.106.1"),
             ("automation/calibre-aio-cwa-v4.0.8-shelfmark-v1.5.1", "dev-calibre"):
                 ("calibre", "v4.0.8 v1.5.1"),
+            (f"automation/inbox-zero-v2.30.0-{'b' * 40}", "dev-inbox-zero"):
+                ("inbox-zero", f"v2.30.0 {'b' * 40}"),
         }
         for (branch, base), expected in cases.items():
             with self.subTest(branch=branch):
@@ -51,6 +56,9 @@ class ClassifyTests(unittest.TestCase):
             pr("automation/calibre-aio-cwa-v4.0.8-shelfmark-v1.5.1", "main"),
             pr("automation/calibre-aio-cwa-v4.0.8-shelfmark-v1.5.1-rc1", "dev-calibre"),
             pr("automation/trilium-v0.106.1", "dev-trilium", user={"login": "someone"}),
+            pr(f"automation/inbox-zero-v2.30.0-{'b' * 40}", "main"),
+            pr("automation/inbox-zero-v2.30.0-bbbbbbb", "dev-inbox-zero"),
+            pr(f"automation/inbox-zero-{'b' * 40}", "dev-inbox-zero"),
             pr("automation/trilium-v0.106.1", "dev-trilium",
                head={"ref": "automation/trilium-v0.106.1", "sha": "a" * 40,
                      "repo": {"full_name": "fork/y"}}),
@@ -77,6 +85,14 @@ class ClassifyTests(unittest.TestCase):
         with self.assertRaises(mod.Hold):
             mod.check_identity({**good, "title": "chore(calibre-aio): update pinned upstream sources"},
                                kind, version)
+    def test_inbox_zero_identity_names_commit_and_base(self):
+        branch = f"automation/inbox-zero-v2.30.0-{'b' * 40}"
+        kind, version = mod.classify(pr(branch, "dev-inbox-zero"), REPO)
+        good = pr(branch, "dev-inbox-zero", title="chore(inbox-zero): update to bbbbbbb (v2.30.0)")
+        mod.check_identity(good, kind, version)
+        with self.assertRaises(mod.Hold):
+            mod.check_identity({**good, "title": "chore(inbox-zero): update to ccccccc (v2.30.0)"}, kind, version)
+
 
 class DecisionTests(unittest.TestCase):
     def test_twelve_hour_delay(self):
@@ -111,6 +127,10 @@ class GenerateTests(unittest.TestCase):
             target = Path(name)
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text((ROOT / name).read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
+        # main carries the Inbox Zero automation before the App folder exists.
+        for name, text in inbox_zero_fixture.FILES.items():
+            Path(name).parent.mkdir(parents=True, exist_ok=True)
+            Path(name).write_text(text, encoding="utf-8", newline="\n")
         self.git("add", "-A")
         self.git("commit", "-q", "-m", "base")
         self.base = self.git("rev-parse", "HEAD")
@@ -145,6 +165,18 @@ class GenerateTests(unittest.TestCase):
         changed = set(self.git("diff", "--name-only", self.base, commit).splitlines())
         self.assertEqual(changed, set(kind.files))
         self.assertEqual(self.git("status", "--porcelain"), "")
+
+    def test_inbox_zero_update_is_deterministic(self):
+        version = f"v2.31.0 {inbox_zero_fixture.NEW}"
+        kind, first = self.generate("inbox-zero", version)
+        _, second = self.generate("inbox-zero", version)
+        self.assertEqual(self.git("rev-parse", f"{first}^{{tree}}"), self.git("rev-parse", f"{second}^{{tree}}"))
+        changed = set(self.git("diff", "--name-only", self.base, first).splitlines())
+        self.assertEqual(changed, set(kind.files))
+        self.assertEqual(self.git("log", "-1", "--format=%s", first),
+                         "chore(inbox-zero): update to bbbbbbb (v2.31.0)")
+        with self.assertRaises(mod.Hold):
+            self.generate("inbox-zero", f"v2.30.0 {inbox_zero_fixture.OLD}")
 
     def test_update_already_on_base_is_held(self):
         current = mod.trilium.pinned_upstream(Path(mod.trilium.UPDATE_FILES[0]).read_text(encoding="utf-8"))

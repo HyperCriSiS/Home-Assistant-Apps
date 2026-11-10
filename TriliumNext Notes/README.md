@@ -64,6 +64,20 @@ Ingress is enabled by default. Direct access on port `8080` is disabled by defau
 > [!TIP]
 > Direct access on port `8080` bypasses Home Assistant authentication and is protected only by Trilium's own login. Until the first login, the setup wizard is open to anyone who can reach the port. Enable the host port under **Settings → Apps → Trilium Notes → Configuration → Network** only if you need the Trilium desktop or mobile sync or a reverse proxy, and never forward it to the internet without TLS.
 
+## AI and MCP server
+
+Trilium includes an AI assistant and a built-in MCP server. Both are configured inside Trilium under **Options → AI / LLM**. The App needs no extra settings; the configuration is stored in the Trilium database and is part of Home Assistant backups.
+
+The MCP server lets AI clients search, read, create, change and delete notes. It is disabled by default. To use it:
+
+1. Enable the MCP server under **Options → AI / LLM**.
+2. Create a token under **Options → ETAPI**. Every MCP request must send it as `Authorization: Bearer <token>`; a Trilium login session is not accepted.
+3. Connect the client to `http://<hostname>:8080/mcp` using the Streamable HTTP transport.
+
+MCP clients cannot use Home Assistant Ingress, because Ingress requires a Home Assistant login. The recommended setup is the [MCPHub App](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/MCPHub/DOCS.md#trilium-notes): it reaches Trilium over the internal Home Assistant network, so port `8080` stays closed and only MCPHub stores the token. MCPHub then offers the Trilium tools to your clients together with your other MCP servers. Connecting clients directly requires the host port `8080` (see [Network access](#network-access)) and stores the token in every client.
+
+Other Apps reach Trilium by its hostname. For the stable repository it is `83d84113-trilium`; installations added through the former `Home-Assistant-Addons` URL use `75051d58-trilium`. In other cases, take the App slug from the address of the App page in Home Assistant, for example `83d84113_trilium`, and replace the underscore with a hyphen.
+
 ## Troubleshooting
 
 - Review the App logs under **Settings → Apps → Trilium Notes → Logs**.
