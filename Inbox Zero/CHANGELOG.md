@@ -1,5 +1,11 @@
 # Changelog
 
+## v2026.11.10
+
+### Changed
+
+- Updated Inbox Zero from a08ec63 to 05fe7d3 (v2.30.0).
+
 ## v2026.11.09
 
 ### Added

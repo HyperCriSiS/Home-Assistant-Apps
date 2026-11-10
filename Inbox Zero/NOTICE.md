@@ -5,7 +5,7 @@ This Home Assistant wrapper includes third-party software.
 ## Inbox Zero
 
 - Project: https://github.com/HyperCriSiS/inbox-zero (fork of https://github.com/elie222/inbox-zero)
-- Version currently packaged: v2.30.0 at fork commit a08ec63f0c09739e49385134d6a17a176be43683
+- Version currently packaged: v2.30.0 at fork commit 05fe7d3b59b0cf23511417b00184fa1c3f821d3c
 - License: GNU Affero General Public License v3.0 with additional terms, see `LICENSE-INBOX-ZERO`
 
 ## Serverless Redis HTTP

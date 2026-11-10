@@ -1,7 +1,7 @@
 FROM docker.io/hiett/serverless-redis-http:0.0.10@sha256:65128347949bca511e448fd7238780d624573d74c22b79155a7563db19e9b678 AS redis_http
 
 # Inbox Zero built from the pinned fork commit by build-inbox-zero-base.yml.
-FROM ghcr.io/hypercrisis/inbox-zero-base:a08ec63f0c09739e49385134d6a17a176be43683
+FROM ghcr.io/hypercrisis/inbox-zero-base:05fe7d3b59b0cf23511417b00184fa1c3f821d3c
 
 ARG BUILD_VERSION
 ARG BUILD_ARCH
