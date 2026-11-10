@@ -51,6 +51,7 @@ class DevelopmentStoreTest(unittest.TestCase):
                     self.assertTrue(calibre['version'].endswith('-dev.100'))
                     self.assertEqual(calibre['options']['library_dir'], 'calibre-aio-dev/library')
                     self.assertEqual(calibre['options']['ingest_dir'], 'calibre-aio-dev/ingest')
+                    self.assertEqual(calibre['options']['processed_dir'], 'calibre-aio-dev/processed')
                     self.assertEqual(calibre['ports'], {})
                     self.assertNotIn('homeassistant_api', calibre)
                     exec(code, {})
