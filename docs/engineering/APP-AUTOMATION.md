@@ -24,10 +24,12 @@ only on a development branch never runs on its schedule.
 
 A release reaches `main` as one squashed commit, so `sync-dev-bases.yml` can
 meet a conflict in the App changelog that the release pull request reworded.
-`resolve_release_changelog.py` settles exactly that case: `main` keeps the
-released text and the development branch keeps the sections it added above the
-released version. Any other conflict fails the run for that branch only; the
-remaining branches and the development store are still synced.
+`resolve_release_changelog.py` settles exactly that case: when only App
+changelogs conflict and the App is otherwise identical on both sides, the
+branch has nothing unreleased and takes the released text from `main`. Any
+other conflict, including a development branch that already moved on, fails
+the run for that branch only and needs a manual merge; the remaining branches
+and the development store are still synced.
 
 ## Shared timings and settings
 
