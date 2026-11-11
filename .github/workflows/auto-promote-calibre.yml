@@ -60,10 +60,18 @@ jobs:
         if: steps.gate.outputs.action == 'validate'
         run: gh workflow run validate-calibre-aio.yml --repo "$GITHUB_REPOSITORY" --ref dev-calibre
 
+      # The release itself is prepared and merged by the release agent
+      # (repair-app-updates.yml). APP_REPAIR=false falls back to the merge below.
+      - name: Hand the release to the release agent
+        if: steps.gate.outputs.action == 'promote' && vars.APP_REPAIR != 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run repair-app-updates.yml --repo "$GITHUB_REPOSITORY" --ref main -f app=calibre
+
   images:
     name: Publish tested release images from dev-calibre
     needs: gate
-    if: needs.gate.outputs.action == 'promote'
+    if: needs.gate.outputs.action == 'promote' && vars.APP_REPAIR == 'false'
     uses: ./.github/workflows/publish-calibre-images.yml
     with:
       source_ref: dev-calibre
@@ -74,7 +82,7 @@ jobs:
   promote:
     name: Merge the exact gated Calibre AIO commit
     needs: [gate, images]
-    if: needs.gate.outputs.action == 'promote'
+    if: needs.gate.outputs.action == 'promote' && vars.APP_REPAIR == 'false'
     runs-on: ubuntu-24.04
     timeout-minutes: 100
     env:
