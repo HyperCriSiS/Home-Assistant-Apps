@@ -30,11 +30,11 @@ https://github.com/HyperCriSiS/Home-Assistant-Apps
 
 ## 🧩 Available Apps
 
-| | App | Purpose | Status | Documentation |
-| :---: | --- | --- | --- | --- |
-| <img src="MCPHub/icon.png" alt="" width="32"> | **MCPHub** | Central management for local and remote Model Context Protocol servers | ✅ Stable | [README](MCPHub/README.md) · [Documentation](MCPHub/DOCS.md) |
-| <img src="TriliumNext%20Notes/icon.png" alt="" width="32"> | **Trilium Notes** | Self-hosted hierarchical notes and personal knowledge base | ✅ Stable | [README](TriliumNext%20Notes/README.md) |
-| <img src="Calibre%20AIO/icon.png" alt="" width="32"> | **Calibre AIO** | Shelfmark book discovery/downloads and Calibre-Web Automated library in one interface | ✅ Stable | [README](Calibre%20AIO/README.md) · [Documentation](Calibre%20AIO/DOCS.md) |
+| | App | Purpose | Architectures | Status | Documentation |
+| :---: | --- | --- | --- | --- | --- |
+| <img src="MCPHub/icon.png" alt="" width="48"> | **MCPHub** | Central management for local and remote Model Context Protocol servers | amd64, aarch64 | ✅ Stable | [README](MCPHub/README.md) · [Documentation](MCPHub/DOCS.md) |
+| <img src="TriliumNext%20Notes/icon.png" alt="" width="48"> | **Trilium Notes** | Self-hosted hierarchical notes and personal knowledge base | amd64, aarch64 | ✅ Stable | [README](TriliumNext%20Notes/README.md) |
+| <img src="Calibre%20AIO/icon.png" alt="" width="48"> | **Calibre AIO** | Shelfmark book discovery/downloads and Calibre-Web Automated library in one interface | amd64, aarch64 | ✅ Stable | [README](Calibre%20AIO/README.md) · [Documentation](Calibre%20AIO/DOCS.md) |
 
 &nbsp;
 
@@ -78,9 +78,26 @@ See [TriliumNext Notes/README.md](TriliumNext%20Notes/README.md) for installatio
 
 &nbsp;
 
+### <img src="Calibre%20AIO/icon.png" alt="Calibre AIO" width="28" align="absmiddle"> Calibre AIO
+
+**Calibre AIO** combines [Shelfmark](https://github.com/calibrain/shelfmark) and [Calibre-Web Automated](https://github.com/crocodilestick/Calibre-Web-Automated) in one Home Assistant App.
+
+✨ **Highlights:**
+
+- Shared navigation between the Library and Discover (downloads)
+- Automatic Home Assistant Ingress sign-in
+- Per-user identities, reader accounts and Shelfmark requests
+- Real-Debrid, AllDebrid, TorBox and other upstream download clients
+- Completed downloads delivered to the library import automatically
+- Pinned upstream sources with checksums and automated update proposals
+
+See [Calibre AIO/README.md](Calibre%20AIO/README.md) for installation and [Calibre AIO/DOCS.md](Calibre%20AIO/DOCS.md) for options, persistence, and troubleshooting.
+
+&nbsp;
+
 ## 🧪 Development builds
 
-A shared development repository is available for testing upcoming releases of both Apps:
+A shared development repository is available for testing upcoming releases of all Apps:
 
 [![Add development repository to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FHyperCriSiS%2FHome-Assistant-Apps%23dev-store)
 
@@ -99,7 +116,7 @@ Home Assistant displays it as **HyperCriSiS Apps (Dev)**.
 
 For Home Assistant App integration issues, configuration problems, or packaging bugs, open an issue in this repository.
 
-For application-specific bugs in Trilium or MCPHub itself, use the corresponding upstream project where appropriate.
+For application-specific bugs in Trilium, MCPHub, Shelfmark or Calibre-Web Automated itself, use the corresponding upstream project where appropriate.
 
 &nbsp;
 
