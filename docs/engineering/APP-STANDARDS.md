@@ -52,7 +52,9 @@ Localized documentation (`DOCS.de.md`) is optional; when it exists, the English
 
 ## README skeleton
 
-1. `# <App name>` and a one-line bold tagline.
+1. The App icon, centered, 128 px wide, as an absolute
+   `raw.githubusercontent.com` URL, then `# <App name>` and a one-line bold
+   tagline.
 2. Badge row: validate workflow, one upstream version badge per packaged
    upstream (linked to the upstream release), `amd64`, `aarch64`, Home
    Assistant, `license-MIT`.
@@ -67,6 +69,13 @@ Localized documentation (`DOCS.de.md`) is optional; when it exists, the English
    license plus a pointer to `NOTICE.md` for third-party components).
    MCPHub adds `## Versioning` and `## Updating`; add them when the App's
    scheme or update path needs explanation.
+7. Every `##` heading in the README and in `DOCS*.md` starts with an emoji.
+   Fixed ones: ✨ Features, 📦 Installation, 🚀 First start / Getting started,
+   ⚙️ Configuration / App options, 💾 Data and backups / Persistence,
+   🩺 Troubleshooting, 💬 Support, 📄 License, 🏷️ Versioning, 🔄 Updating.
+   Other sections get a fitting emoji of their own, never one twice per file.
+   Anchors then start with `-` (`#-troubleshooting`); avoid emojis with a
+   variation selector (⚙️, 🛠️) on headings that are linked by anchor.
 
 Links in the README and in DOCS files are absolute GitHub URLs, in-page anchors included
 (`https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/<folder>/<file>`).
