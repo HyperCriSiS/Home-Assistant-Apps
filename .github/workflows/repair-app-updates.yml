@@ -28,6 +28,12 @@ on:
   schedule:
     - cron: "33 * * * *"
   workflow_dispatch:
+    inputs:
+      app:
+        description: "Release this App to main (started by auto-promote-<app>.yml)"
+        type: choice
+        default: ""
+        options: ["", mcphub, trilium, calibre]
 
 permissions:
   actions: write
@@ -65,9 +71,20 @@ jobs:
           FAILED_RUN: ${{ github.event.workflow_run.html_url }}
           FAILED_NAME: ${{ github.event.workflow_run.name }}
           FAILED_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          RELEASE_APP: ${{ inputs.app }}
         run: |
           set -euo pipefail
           report=""
+          # The hourly gate may ask again while a release is under way; a branch
+          # whose files already equal main has nothing left to release.
+          if [[ -n "${RELEASE_APP}" ]] && [[ "$(gh api \
+            "repos/${GITHUB_REPOSITORY}/compare/main...dev-${RELEASE_APP}" --jq '.files | length')" == 0 ]]; then
+            RELEASE_APP=""
+          fi
+          if [[ -n "${RELEASE_APP}" ]]; then
+            report+="Release due: ${RELEASE_APP}. Its gates passed (only validated bot updates,"
+            report+=" 3 hours on dev-${RELEASE_APP}). Prepare the release and merge it to main."$'\n'
+          fi
           if [[ -n "${FAILED_RUN}" ]]; then
             report+="Failed run: ${FAILED_NAME} on ${FAILED_BRANCH}: ${FAILED_RUN}"$'\n'
           fi
@@ -134,37 +151,46 @@ jobs:
             The automated update chain needs attention:
             ${{ needs.find.outputs.report }}
 
-            Goal: every validated upstream update of Trilium, MCPHub and Calibre AIO
-            (CWA and Shelfmark) reaches its dev-<app> branch, and is released to main
-            3 hours after it reached dev-<app> once its upstream release is at least
-            24 hours old. Updates that should already have moved but failed are
-            handled now.
+            Goal: an upstream update of Trilium, MCPHub or Calibre AIO (CWA and
+            Shelfmark) reaches dev-<app> as soon as it is validated, and main 3 hours
+            later. Releases to main are always done by you, so the changelog and the
+            App files are clean. Updates that should already have moved but failed
+            are handled now.
 
-            Do this:
-            1. Read the failed run logs (gh run view --log-failed) and the stuck PRs.
-               Find the root cause. A flaky infrastructure failure only needs a rerun
-               (gh run rerun --failed).
-            2. Fix real problems with the smallest change on the affected branch: the
-               bot PR branch (automation/*) or a short-lived fix branch with a PR
-               against dev-<app>. Pushes with this token start no workflows, so
-               dispatch the App validation yourself (gh workflow run
-               validate*.yml --ref <branch>) and wait for it.
-            3. Merge a bot PR or fix PR into dev-<app> with
-               gh pr merge --squash --delete-branch only when validation for its exact
-               head commit is green. Remove a hold label set by github-actions[bot]
-               after fixing its cause; never touch a hold set by a person.
-            4. Release to main when dev-<app> has been green for 3 hours since the
-               update reached it, every new upstream release is at least 24 hours old
-               and no upstream major version changed: if auto-promote-<app>.yml skips
-               because a fix commit is on the branch, run gh workflow run promote.yml
-               -f app=<app> (it publishes the images first), review the release PR it
-               opens and merge it with --squash. Pushes and merges with this token
-               start no workflows, so afterwards dispatch on main the App validation,
-               sync-dev-bases.yml and sync-dev-store.yml, as auto-promote-<app>.yml does.
-            Retry a flaky failure at most once; if it fails again, open the issue below.
-            5. Changelog: the first heading of <App>/CHANGELOG.md equals the version in
-               config.yaml, entries sit under ### Changed or ### Fixed, one line per
-               change, no duplicates, no empty sections. Fixes get a ### Fixed line.
+            For a "Release due" line:
+            1. Compare dev-<app> with main (git diff origin/main...origin/dev-<app>).
+            2. Tidy <App>/CHANGELOG.md on a short-lived branch with a PR against
+               dev-<app>: one section for the new version, its heading equal to the
+               version in config.yaml, the bot lines since the last release merged
+               into one readable list under ### Changed or ### Fixed, no duplicates,
+               no empty sections. Check that README badges, NOTICE.md and the
+               config.yaml description name the new upstream versions. MCPHub has
+               .github/scripts/generate-mcphub-changelog.py stable for this. Skip the
+               PR when nothing needs to change.
+            3. Pushes with this token start no workflows: dispatch the App validation
+               (gh workflow run <validate workflow> --ref <branch>), wait until it is
+               green, then gh pr merge --squash --delete-branch.
+            4. Run gh workflow run promote.yml -f app=<app>. It publishes the images
+               and opens the release PR from dev-<app>. Wait for it, check the PR
+               diff, and merge it with gh pr merge --squash.
+            5. Afterwards dispatch on main the App validation, sync-dev-bases.yml and
+               sync-dev-store.yml, and check that the main validation is green. If it
+               fails, open a revert PR and the issue below.
+
+            For a failed run or a stuck PR:
+            1. Read the failed run logs (gh run view --log-failed) and the stuck PRs
+               and find the root cause. Retry a flaky infrastructure failure at most
+               once (gh run rerun --failed); if it fails again, open the issue below.
+            2. Fix real problems with the smallest change on the bot PR branch
+               (automation/*) or on a short-lived fix branch with a PR against
+               dev-<app>, dispatch the validation and wait for it.
+            3. Merge into dev-<app> with gh pr merge --squash --delete-branch only when
+               validation for its exact head commit is green. Remove a hold label set
+               by github-actions[bot] after fixing its cause; never touch a hold set
+               by a person.
+            4. If the fix put a non-bot commit on dev-<app>, auto-promote-<app>.yml
+               will skip; then release it yourself as above once it has been on
+               dev-<app> for 3 hours, or leave it for the next run.
 
             Rules:
             - American English in everything you write to the repository or GitHub.

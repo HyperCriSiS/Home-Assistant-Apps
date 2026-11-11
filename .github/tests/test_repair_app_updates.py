@@ -31,6 +31,16 @@ class RepairWorkflowTests(unittest.TestCase):
         names = {yaml.safe_load(path.read_text())["name"] for path in WORKFLOWS.glob("*.yml")}
         self.assertLessEqual(set(self.workflow[True]["workflow_run"]["workflows"]), names)
 
+    def test_due_releases_go_to_the_release_agent(self):
+        for app in ("mcphub", "trilium", "calibre"):
+            text = (WORKFLOWS / f"auto-promote-{app}.yml").read_text()
+            self.assertIn(f"repair-app-updates.yml --repo \"$GITHUB_REPOSITORY\" --ref main -f app={app}", text)
+            # The built-in merge only runs while the agent is switched off.
+            gated = [line for line in text.splitlines() if "== 'promote'" in line]
+            self.assertTrue(gated)
+            self.assertTrue(all("vars.APP_REPAIR" in line for line in gated))
+        self.assertIn('report+="Release due: ${RELEASE_APP}', self.text)
+
     def test_each_app_has_its_own_promotion_queue(self):
         groups = [yaml.safe_load(path.read_text())["concurrency"]["group"]
                   for path in WORKFLOWS.glob("auto-promote-*.yml")]
