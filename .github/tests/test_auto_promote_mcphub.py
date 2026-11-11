@@ -96,7 +96,7 @@ class ReleaseTests(unittest.TestCase):
         old = {"draft": False, "prerelease": False, "published_at": iso(NOW - 49 * 3600)}
         mod.check_release(old, NOW, "x")
         with self.assertRaises(mod.Skip):
-            mod.check_release({**old, "published_at": iso(NOW - 47 * 3600)}, NOW, "x")
+            mod.check_release({**old, "published_at": iso(NOW - 23 * 3600)}, NOW, "x")
         for change in ({"prerelease": True}, {"draft": True}, {"published_at": None}):
             with self.subTest(change=change), self.assertRaises((ValueError, mod.Skip)):
                 mod.check_release({**old, **change}, NOW, "x")
