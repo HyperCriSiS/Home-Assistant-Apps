@@ -1,13 +1,6 @@
 # Changelog
 
-## v2026.11.10-2
-
-### Fixed
-
-- The managed Home Assistant MCP servers are pinged once a minute instead of every five seconds, which flooded the `ha-mcp` access log with a `POST /mcp` line every five seconds.
-- README and DOCS links open the GitHub documents instead of reloading the App page in Home Assistant.
-
-## v2026.11.10
+## v2026.11.10-2-dev.261
 
 ### Commits in this Dev build
 
