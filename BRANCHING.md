@@ -81,7 +81,7 @@ A Trilium release PR is always `dev-trilium -> main`. An MCPHub release PR is al
 
 - `dev-mcphub` contains nothing but GitHub-signed squash merges of bot PRs titled `chore(mcphub): update upstream to …` or `chore(mcphub): update OpenAI tunnel client`, plus clean, unedited merges of `main`.
 - The diff to `main` is only those version bumps and their generated changelog lines. Major version updates stay manual.
-- The new MCPHub and tunnel-client releases are stable and at least 24 hours old. The newest update has been on `dev-mcphub` for at least 3 hours. The previous stable MCPHub release is at least 24 hours old.
+- The new MCPHub and tunnel-client releases are stable. The newest update has been on `dev-mcphub` for at least 3 hours.
 - `validate-mcphub.yml` and the Home Assistant OS test (`haos-qemu-mcphub.yml`) both passed for that exact commit. That test boots a disposable official Home Assistant OS VM on a GitHub-hosted runner, installs, builds, starts and restarts MCPHub, and probes Ingress and the LAN MCP port.
 - The release candidate is validated again and merged only if `main`, `dev-mcphub` and the candidate commit are unchanged. If stable validation fails after the merge, a revert PR and an issue are opened; the revert is never merged automatically.
 
@@ -126,8 +126,7 @@ review only when every gate in `.github/scripts/auto_promote_calibre.py` passes:
 `chore(calibre-aio): update CWA to … and Shelfmark to …` plus clean merges of
 `main`; the diff changes only the CWA/Shelfmark pins, the generated build
 arguments, the App patch version and generated changelog lines; major upstream
-versions stay manual; each new upstream release is stable and at least 24 hours
-old; the newest update has been on `dev-calibre` for 3 hours; and
+versions stay manual; each new upstream release is stable; the newest update has been on `dev-calibre` for 3 hours; and
 `validate-calibre-aio.yml` passed for that exact commit. A failing stable
 validation after the merge opens a revert PR and an issue.
 
