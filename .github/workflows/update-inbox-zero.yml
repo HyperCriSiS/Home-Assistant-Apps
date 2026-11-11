@@ -3,7 +3,7 @@ name: Update Inbox Zero
 
 on:
   schedule:
-    - cron: "47 4 * * *"
+    - cron: "47 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -129,7 +129,7 @@ jobs:
 
           body="$(printf '%s\n\n%s\n%s\n\nCommit: %s\n' \
             "Automated Inbox Zero update to ${LATEST:0:7}, based on upstream ${BASE}." \
-            "Merged into dev-inbox-zero automatically 12 hours after opening, once full CI" \
+            "Merged into dev-inbox-zero automatically once full CI" \
             "passed for the exact commit. The label hold stops it." \
             "https://github.com/${FORK}/commit/${LATEST}")"
           gh pr create \

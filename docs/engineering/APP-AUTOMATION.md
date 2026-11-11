@@ -9,12 +9,15 @@ its first day. Branch semantics are described in [BRANCHING.md](../../BRANCHING.
 
 ```text
 upstream release
-  -> update-<app>.yml           opens a bot PR against dev-<app>      (daily)
+  -> update-<app>.yml           opens a bot PR against dev-<app>      (hourly)
   -> validate-<app>.yml         full validation of the PR commit      (dispatched)
-  -> merge-due-updates.yml      merges the bot PR after 12 hours      (hourly)
+  -> merge-due-updates.yml      merges the bot PR once validated      (hourly)
   -> sync-dev-store.yml         publishes dev-store for HA testing    (on push)
-  -> auto-promote-<app>.yml     releases dev-<app> to main            (every 3 hours)
+  -> auto-promote-<app>.yml     releases dev-<app> to main            (hourly)
   -> sync-dev-bases.yml         merges main back into every dev-*     (on push to main)
+
+repair-app-updates.yml          fixes a failed update, validation or promotion
+                                run or a held bot PR with a coding agent (on failure)
 ```
 
 Every step is fail closed: a step that cannot prove its precondition skips or
@@ -35,13 +38,14 @@ and the development store are still synced.
 
 | Setting | Value | Where it lives |
 | --- | --- | --- |
-| Update check | daily, `17 4 * * *` (Trilium, MCPHub), `23 7 * * *` (Calibre), `47 4 * * *` (Inbox Zero) | `update-*.yml` |
-| Bot PR merge delay into `dev-<app>` | 12 hours after the PR was opened | `merge_due_updates.py` `DELAY` |
+| Update check | hourly: `7 * * * *` (MCPHub), `17 * * * *` (Trilium), `27 * * * *` (Calibre), `37 * * * *` (MCPHub tunnel clients), `47 * * * *` (Inbox Zero) | `update-*.yml` |
+| Bot PR merge delay into `dev-<app>` | none, merged once validation passed for the exact HEAD (`DELAY = 0`) | `merge_due_updates.py` `DELAY` |
 | Due-update merge check | hourly, `23 * * * *` | `merge-due-updates.yml` |
-| Minimum upstream release age | 48 hours | `auto_promote_*.py` `RELEASE_AGE` (`COMMIT_AGE` for Inbox Zero, which follows fork commits) |
-| Soak time on `dev-<app>` before release | 36 hours after the newest update reached the branch | `auto_promote_*.py` `SOAK` |
+| Minimum upstream release age | 24 hours | `auto_promote_*.py` `RELEASE_AGE` (`COMMIT_AGE` for Inbox Zero, which follows fork commits) |
+| Soak time on `dev-<app>` before release | 3 hours after the newest update reached the branch | `auto_promote_*.py` `SOAK` |
 | Distance to the previous stable release | 24 hours (MCPHub only) | `auto_promote_mcphub.py` `COOLDOWN` |
-| Promotion check | every 3 hours, offset per App (`13`, `37`, `43`) | `auto-promote-*.yml` |
+| Promotion check | hourly, offset per App: `43 * * * *` (MCPHub), `48 * * * *` (Calibre), `53 * * * *` (Trilium), `57 * * * *` (Inbox Zero) | `auto-promote-*.yml` |
+| Automatic repair | `repair-app-updates.yml` runs Claude Code when an update, validation or promotion run fails or a bot PR is put on hold; needs the repository secret `CLAUDE_CODE_OAUTH_TOKEN` | `repair-app-updates.yml`, repository secrets |
 | Promotion switch | repository variable `<APP>_AUTO_PROMOTE=true` | repository settings, variables |
 | Pause one PR | label `hold` on the update or release PR | GitHub labels |
 | Bot identity | `github-actions[bot]`, `github.token` | every workflow |
@@ -50,7 +54,7 @@ and the development store are still synced.
 The release gates accept only commits produced by the trusted updater of that
 App (version pins, generated build arguments, changelog lines). Any other commit
 on `dev-<app>` keeps the manual release flow in `promote.yml`; the automation
-then skips silently every three hours until a manual release has been made.
+then skips silently every hour until a manual release has been made.
 
 ## Per-App status
 
@@ -99,7 +103,7 @@ and shape the folder after [APP-STANDARDS.md](APP-STANDARDS.md).
 3. Add `validate-<app>.yml` with `pull_request`, `push` to `main` and
    `dev-<app>`, and `workflow_dispatch`. The dispatched run is what the merge
    and release gates look for.
-4. Add `update-<app>.yml`: daily schedule, checkout of `dev-<app>`, the trusted
+4. Add `update-<app>.yml`: hourly schedule, checkout of `dev-<app>`, the trusted
    updater taken from `main`, branch name `automation/<app>-<version>`, title
    `chore: update <App> to <version>`, dispatch of the validation, close
    superseded PRs.
@@ -107,10 +111,10 @@ and shape the folder after [APP-STANDARDS.md](APP-STANDARDS.md).
    exact file list the updater may touch, and a test in
    `.github/tests/test_merge_due_updates.py`.
 6. Add `.github/scripts/auto_promote_<app>.py` reusing the shared helpers from
-   `auto_promote_mcphub.py` with `RELEASE_AGE = 48 * HOUR` and
-   `SOAK = 36 * HOUR`, plus `auto-promote-<app>.yml` with
+   `auto_promote_mcphub.py` with `RELEASE_AGE = 24 * HOUR` and
+   `SOAK = 3 * HOUR`, plus `auto-promote-<app>.yml` with
    `if: vars.<APP>_AUTO_PROMOTE == 'true' && github.ref == 'refs/heads/main'`,
-   the concurrency group `promote-app-development-main` and a cron offset that
+   the concurrency group `promote-<app>-main` and a cron offset that
    does not collide with the other Apps.
 7. Add the App to `promote.yml` (`workflow_dispatch` choice and `workflow_run`
    list) for manual releases.

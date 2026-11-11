@@ -27,7 +27,7 @@ manual release after testing.
 ## `dev-inbox-zero`
 
 Long-lived release-candidate branch for **Inbox Zero only**. App changes and
-the daily fork commit proposals target this branch. Bot-only commit bumps are
+the hourly fork commit proposals target this branch. Bot-only commit bumps are
 promoted to `main` automatically (see below); everything else is a separate
 manual release after testing.
 
@@ -81,7 +81,7 @@ A Trilium release PR is always `dev-trilium -> main`. An MCPHub release PR is al
 
 - `dev-mcphub` contains nothing but GitHub-signed squash merges of bot PRs titled `chore(mcphub): update upstream to …` or `chore(mcphub): update OpenAI tunnel client`, plus clean, unedited merges of `main`.
 - The diff to `main` is only those version bumps and their generated changelog lines. Major version updates stay manual.
-- The new MCPHub and tunnel-client releases are stable and at least 48 hours old. The newest update has been on `dev-mcphub` for at least 36 hours (about 48 hours after the update PR was opened). The previous stable MCPHub release is at least 24 hours old.
+- The new MCPHub and tunnel-client releases are stable and at least 24 hours old. The newest update has been on `dev-mcphub` for at least 3 hours. The previous stable MCPHub release is at least 24 hours old.
 - `validate-mcphub.yml` and the Home Assistant OS test (`haos-qemu-mcphub.yml`) both passed for that exact commit. That test boots a disposable official Home Assistant OS VM on a GitHub-hosted runner, installs, builds, starts and restarts MCPHub, and probes Ingress and the LAN MCP port.
 - The release candidate is validated again and merged only if `main`, `dev-mcphub` and the candidate commit are unchanged. If stable validation fails after the merge, a revert PR and an issue are opened; the revert is never merged automatically.
 
@@ -114,9 +114,9 @@ folders under `/share/calibre-aio-dev`. Never run stable and development apps
 against the same writable library/import paths. Existing configured paths are
 not migrated. The regular Calibre app on `main` changes only on a separate release.
 
-The daily Calibre updater opens ready-for-review PRs against `dev-calibre`,
-never directly against `main`. `merge-due-updates.yml` merges them after 12
-hours with passing validation, exactly like MCPHub and Trilium updates.
+The hourly Calibre updater opens ready-for-review PRs against `dev-calibre`,
+never directly against `main`. `merge-due-updates.yml` merges them as soon as
+validation passed, exactly like MCPHub and Trilium updates.
 
 ### Automatic Calibre AIO update releases
 
@@ -126,8 +126,8 @@ review only when every gate in `.github/scripts/auto_promote_calibre.py` passes:
 `chore(calibre-aio): update CWA to … and Shelfmark to …` plus clean merges of
 `main`; the diff changes only the CWA/Shelfmark pins, the generated build
 arguments, the App patch version and generated changelog lines; major upstream
-versions stay manual; each new upstream release is stable and at least 48 hours
-old; the newest update has been on `dev-calibre` for 36 hours; and
+versions stay manual; each new upstream release is stable and at least 24 hours
+old; the newest update has been on `dev-calibre` for 3 hours; and
 `validate-calibre-aio.yml` passed for that exact commit. A failing stable
 validation after the merge opens a revert PR and an issue.
 
@@ -151,7 +151,7 @@ fork's `main` branch:
 - `Inbox Zero/Dockerfile` starts `FROM` that image and adds PostgreSQL, Redis,
   the Redis HTTP adapter and the scheduler. `publish-inbox-zero-images.yml`
   publishes it as `ghcr.io/hypercrisis/{arch}-inbox-zero:<version>`.
-- `update-inbox-zero.yml` proposes the newest fork commit daily against
+- `update-inbox-zero.yml` proposes the newest fork commit hourly against
   `dev-inbox-zero` and names the newest upstream release that commit contains.
 
 All three GHCR packages must be public.
@@ -165,8 +165,8 @@ PRs titled `chore(inbox-zero): update to <commit> (<base version>)` plus clean
 merges of `main`; the diff changes only the commit pin, the base version, the
 App version and generated changelog lines; a new upstream major version stays
 manual; the new commit continues the history of the released one, is on the
-fork's `main` branch and is at least 48 hours old; the newest update has been
-on `dev-inbox-zero` for 36 hours; and `validate-inbox-zero.yml` passed for that
+fork's `main` branch and is at least 24 hours old; the newest update has been
+on `dev-inbox-zero` for 3 hours; and `validate-inbox-zero.yml` passed for that
 exact commit. A failing stable validation after the merge opens a revert PR and
 an issue.
 

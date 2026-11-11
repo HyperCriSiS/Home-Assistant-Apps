@@ -3,7 +3,7 @@ name: Check MCPHub OpenAI tunnel client
 
 on:
   schedule:
-    - cron: "37 5 * * *"
+    - cron: "37 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -105,8 +105,8 @@ jobs:
             echo "date=$DATE"
           } >> "$GITHUB_OUTPUT"
 
-      # Merge into dev-mcphub happens in merge-due-updates.yml once the PR has
-      # been open for 12 hours and this exact commit passed validation.
+      # Merge into dev-mcphub happens in merge-due-updates.yml as soon as
+      # this exact commit passed validation.
       - name: Dispatch full, read-only candidate validation
         if: steps.prepare.outputs.changed == 'true'
         env:
