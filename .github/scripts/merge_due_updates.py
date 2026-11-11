@@ -10,7 +10,8 @@ dev-calibre / dev-inbox-zero only when all of the following hold:
 * its HEAD tree is exactly what the trusted updater on main produces from the
   current development branch (no other file or byte may differ);
 * the full App validation passed for that exact HEAD commit;
-* the PR has been open for at least DELAY.
+* the PR has been open for at least DELAY (none: upstream age and the soak
+  before the release to main are checked by the auto-promote gates).
 
 A PR that fell behind its base is regenerated from the current base with the
 original PR date and validated again. Merging stays fail-closed: anything
@@ -36,7 +37,7 @@ from typing import NamedTuple
 from urllib.parse import quote
 
 HOUR = 3600
-DELAY = 12 * HOUR  # minimum time an update PR stays open before it reaches dev
+DELAY = 0  # a validated update PR reaches dev at once
 BOT = "github-actions[bot]"
 HOLD = "hold"
 SCRIPTS = Path(__file__).resolve().parent

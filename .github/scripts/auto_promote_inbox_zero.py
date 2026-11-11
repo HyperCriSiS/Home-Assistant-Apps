@@ -2,7 +2,7 @@
 """Fail-closed gates for promoting bot-only Inbox Zero updates from dev-inbox-zero to main.
 
 Only commit bumps produced by the trusted Update Inbox Zero workflow may be
-promoted automatically, 36 hours after the newest one reached dev-inbox-zero.
+promoted automatically, 3 hours after the newest one reached dev-inbox-zero.
 Anything else on dev-inbox-zero keeps the manual release pull request flow.
 
 Invoked only by the trusted main-branch workflow. Never execute this helper
@@ -30,8 +30,8 @@ Skip, api, ci_state, gh, git, show, wait_for = (
 DEV, MAIN, APP = "dev-inbox-zero", "main", "Inbox Zero"
 FORK = "HyperCriSiS/inbox-zero"
 HOUR = 3600
-COMMIT_AGE = 48 * HOUR  # minimum age of a newly packaged fork commit
-SOAK = 36 * HOUR  # newest update must have been on dev-inbox-zero this long
+COMMIT_AGE = 24 * HOUR  # minimum age of a newly packaged fork commit
+SOAK = 3 * HOUR  # newest update must have been on dev-inbox-zero this long
 WORKFLOW = "validate-inbox-zero.yml"
 TITLE = "release(inbox-zero): automated update release"
 ALLOWED_FILES = frozenset({
@@ -172,7 +172,7 @@ def merge(repository: str, main_sha: str, dev_sha: str, commit: str) -> str:
     if pr is None:
         url = gh("pr", "create", "--repo", repository, "--base", MAIN, "--head", DEV,
                  "--title", TITLE, "--body",
-                 f"Bot-only Inbox Zero update to {commit[:7]}, merged automatically 36 hours after it "
+                 f"Bot-only Inbox Zero update to {commit[:7]}, merged automatically 3 hours after it "
                  "reached dev-inbox-zero once all gates pass. Label: hold stops it.")
         pr = api(f"repos/{repository}/pulls/{url.rstrip('/').rsplit('/', 1)[-1]}")
         if pr.get("head", {}).get("sha") != dev_sha:
