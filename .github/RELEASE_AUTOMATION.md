@@ -8,7 +8,7 @@ Trilium uses a dedicated release-candidate branch, `dev-trilium`. MCPHub uses `d
 | --- | --- | --- |
 | Detect new upstream release | hourly at minute 17 (`Update Trilium`) | hourly at minute 7 (upstream) and minute 37 (OpenAI tunnel-client) |
 | Bot PR → `dev-*` | As soon as full CI passed for the exact commit, no waiting period (`Merge due App updates`, hourly at minute 23) | same |
-| `dev-*` → `main` | **3 hours** after the newest update reached `dev-trilium` and once the upstream release is at least 24 hours old (`Auto-promote Trilium updates`, hourly at minute 53) | **3 hours** after the newest update reached `dev-mcphub` and once the upstream release is at least 24 hours old (`Auto-promote MCPHub updates`, hourly at minute 43), plus a Home Assistant OS QEMU test and at least 24 hours since the previous stable release |
+| `dev-*` → `main` | **3 hours** after the newest update reached `dev-trilium` (`Auto-promote Trilium updates`, hourly at minute 53), released by the release agent | **3 hours** after the newest update reached `dev-mcphub` (`Auto-promote MCPHub updates`, hourly at minute 43), plus a Home Assistant OS QEMU test, released by the release agent |
 
 ## Bot update pull requests → development branch
 
@@ -22,7 +22,7 @@ Trilium uses a dedicated release-candidate branch, `dev-trilium`. MCPHub uses `d
 
 ## Development branch → `main`
 
-Both Apps are promoted automatically only when the development branch contains nothing but bot version bumps (plus clean merges of `main`) since the last release, the newest update has been on the development branch for 3 hours, the upstream release is at least 24 hours old and the exact development commit passed validation. Major upstream versions, any manual change and the optional HAOS gate keep the manual release PR flow.
+Both Apps are handed to the release agent only when the development branch contains nothing but bot version bumps (plus clean merges of `main`) since the last release, the newest update has been on the development branch for 3 hours, and the exact development commit passed validation. Major upstream versions and any manual change keep the manual release PR flow. The agent also finishes a release it left half done, as long as only bot commits are unreleased.
 
 - Releases are **squash-merged** into `main` (the only method the `main` ruleset allows). A clean sync merge of `main` back into the development branch marks everything before it as released.
 - After a merge the workflows start `main` validation, `Sync development branch bases` and the development store. If `main` validation fails, a revert PR and an issue are opened; nothing is reverted automatically.
@@ -30,9 +30,9 @@ Both Apps are promoted automatically only when the development branch contains n
 
 Manual releases stay available through `Promote app development branches to main`.
 
-## Automatic repair
+## Release agent
 
-`Repair App updates` (`.github/workflows/repair-app-updates.yml`) runs Claude Code in GitHub Actions when an update, validation or promotion run fails or a bot PR is put on `hold`. It fixes the problem, keeps the changelog clean and merges. It needs the repository secret `CLAUDE_CODE_OAUTH_TOKEN`.
+`Repair App updates` (`.github/workflows/repair-app-updates.yml`) runs a coding agent in GitHub Actions. When an auto-promote gate passes, it tidies the changelog, runs `promote.yml` and merges the release to `main`. It also fixes a failed update, validation or promotion run and bot PRs that are stuck or were put on `hold` by the automation. It needs the repository secret `CLAUDE_CODE_OAUTH_TOKEN`; `APP_REPAIR=false` switches it off and restores the built-in merge.
 
 ## Validation
 

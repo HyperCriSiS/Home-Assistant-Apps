@@ -30,7 +30,7 @@ Skip, api, ci_state, gh, git, show, wait_for = (
 
 DEV, MAIN, APP = "dev-trilium", "main", "TriliumNext Notes"
 HOUR = 3600
-RELEASE_AGE = 24 * HOUR  # minimum age of a new Trilium release
+RELEASE_AGE = 0  # minimum age of a new Trilium release
 SOAK = 3 * HOUR  # newest update must have been on dev-trilium this long
 WORKFLOW = "validate.yml"
 TITLE = "release(trilium): automated update release"
