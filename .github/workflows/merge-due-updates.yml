@@ -3,9 +3,9 @@ name: Merge due App updates
 
 # Merges automated App update pull requests into their development branch
 # (dev-mcphub, dev-trilium, dev-calibre, dev-inbox-zero) once they have been
-# open for 12 hours, their content matches the
-# trusted updater on main byte for byte and the full App validation passed for
-# the exact HEAD commit. See .github/scripts/merge_due_updates.py.
+# validated, their content matches the trusted updater on main byte for byte
+# and the full App validation passed for the exact HEAD commit.
+# See .github/scripts/merge_due_updates.py.
 # Label a pull request "hold" to stop it.
 
 on:
@@ -25,7 +25,7 @@ concurrency:
 
 jobs:
   merge:
-    name: Merge CI-green update PRs open for 12 hours
+    name: Merge CI-green update PRs
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 20

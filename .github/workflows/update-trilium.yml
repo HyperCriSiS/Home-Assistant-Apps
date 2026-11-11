@@ -3,7 +3,7 @@ name: Update Trilium
 
 on:
   schedule:
-    - cron: "17 4 * * *"
+    - cron: "17 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -113,7 +113,7 @@ jobs:
 
           body="$(printf '%s\n\n%s\n%s\n\nUpstream: %s\n' \
             "Automated Trilium update to ${LATEST}." \
-            "Merged into dev-trilium automatically 12 hours after opening, once full CI" \
+            "Merged into dev-trilium automatically once full CI" \
             "passed for the exact commit. The label hold stops it." \
             "https://github.com/TriliumNext/Trilium/releases/tag/${LATEST}")"
           gh pr create \

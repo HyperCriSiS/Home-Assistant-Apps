@@ -1,4 +1,4 @@
-"""Regression checks for the 12-hour development merge of bot update PRs."""
+"""Regression checks for the immediate development merge of bot update PRs."""
 import importlib.util
 import os
 import subprocess
@@ -95,9 +95,8 @@ class ClassifyTests(unittest.TestCase):
 
 
 class DecisionTests(unittest.TestCase):
-    def test_twelve_hour_delay(self):
-        self.assertEqual(mod.decide(behind=False, tree_matches=True, ci="success", age=11.9 * HOUR), "wait")
-        self.assertEqual(mod.decide(behind=False, tree_matches=True, ci="success", age=12 * HOUR), "merge")
+    def test_validated_update_merges_at_once(self):
+        self.assertEqual(mod.decide(behind=False, tree_matches=True, ci="success", age=0), "merge")
 
     def test_fail_closed(self):
         self.assertEqual(mod.decide(behind=False, tree_matches=False, ci="success", age=99 * HOUR), "hold")
