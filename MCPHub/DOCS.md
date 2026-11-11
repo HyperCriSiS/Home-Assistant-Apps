@@ -1,6 +1,6 @@
 # MCPHub documentation
 
-## About
+## ℹ️ About
 
 This add-on runs MCPHub as a central control plane for MCP servers inside Home Assistant.
 
@@ -21,7 +21,7 @@ MCP clients reach MCPHub in these ways:
 
 All remote access is optional; the methods can be combined.
 
-## Installation
+## 📦 Installation
 
 Add this repository to the Home Assistant App store:
 
@@ -37,7 +37,7 @@ CLI and its Python MCP environment are installed in CI before publication.
 Additional `npx` / `uvx` MCP servers can still install packages locally on first use;
 their caches persist across restarts.
 
-## First start
+## 🚀 First start
 
 1. Start **MCPHub**.
 2. Open **Web UI** from the Home Assistant App page.
@@ -60,7 +60,7 @@ Home Assistant administrators are intended to enter this Ingress panel, trusted 
 identities are mapped to MCPHub administrators. The CI metadata checks enforce that
 `panel_admin` remains enabled while this mapping is in use.
 
-## Limit which tools a client receives
+## 🎛️ Limit which tools a client receives
 
 MCPHub groups are the preferred way to avoid exposing every MCP server and tool to every
 client.
@@ -80,7 +80,7 @@ Smart Routing is also supported by MCPHub through `/mcp/$smart`, but it requires
 additional PostgreSQL/pgvector and embedding-service setup. This Home Assistant wrapper
 does not automatically enable that extra infrastructure.
 
-## Unofficial Home Assistant MCP (ha-mcp)
+## 🧰 Unofficial Home Assistant MCP (ha-mcp)
 
 Enable `ha_mcp_enabled` to run the community server
 [ha-mcp](https://homeassistant-ai.github.io/ha-mcp/) inside this App. MCPHub
@@ -114,7 +114,7 @@ App intentionally does not. To use it:
 Everyone with access to this server can manage your Apps, so limit it with MCPHub
 groups and keys. The URL contains a secret; treat it like a password.
 
-## Home Assistant MCP Server
+## 🏡 Home Assistant MCP Server
 
 The wrapper registers its managed MCPHub server under
 `home_assistant_mcp_server_name` (default: `HomeAssistant MCP (official)`; the old default `ha-home-assistant` is renamed to it automatically). When enabled,
@@ -197,7 +197,7 @@ and injects the `SUPERVISOR_TOKEN` supplied by Home Assistant.
   `mcp_settings.json`.
 - The local bridge listens only on `127.0.0.1:8097`.
 
-## OpenAI Secure MCP Tunnel
+## 🚇 OpenAI Secure MCP Tunnel
 
 ### `tunnel_enabled`
 
@@ -273,7 +273,7 @@ listener is `127.0.0.1:8080`. Neither address is exposed through the Home
 Assistant host or the MCP gateway. The control page and JSON API
 contain no API keys, Tunnel IDs, or user tokens.
 
-## Remote access through the Cloudflared and Tailscale Apps
+## 🌐 Remote access through the Cloudflared and Tailscale Apps
 
 > **Breaking change in v2026.10.19:** MCPHub no longer bundles `cloudflared` or
 > its own Tailscale gateway. The options `cloudflare_tunnel_enabled`,
@@ -366,7 +366,7 @@ inside a Home Assistant Ingress session; the MCP gateway never serves the
 MCPHub interface. Home Assistant's App configuration page cannot show buttons or
 session-specific Ingress links, so its sections point to the **Remote access** button.
 
-## Dashboard and local proxy architecture
+## 🏗️ Dashboard and local proxy architecture
 
 MCPHub is patched to bind to `127.0.0.1:3000` inside the App container.
 
@@ -386,7 +386,7 @@ The MCP gateway explicitly removes all Home Assistant identity and trust headers
 before proxying to MCPHub. A remote client or misconfigured tunnel can therefore
 never impersonate a Home Assistant user or reach the MCPHub dashboard or API.
 
-## Authentication model
+## 🔑 Authentication model
 
 Home Assistant dashboard access and remote MCP transport use separate authentication
 paths:
@@ -402,7 +402,7 @@ Home Assistant Ingress does not reuse any of these credentials. When upgrading f
 an older version, the App removes the system keys of the former built-in Cloudflare
 and Tailscale origins so they no longer grant access.
 
-## Persistence
+## 💾 Persistence
 
 MCPHub configuration is stored below:
 
@@ -417,7 +417,7 @@ Package caches are persisted for dynamically launched MCP servers:
 - npm / npx: `/data/cache/npm`
 - uv / uvx: `/data/cache/uv`
 
-## Adding MCP servers
+## ➕ Adding MCP servers
 
 The standard MCPHub image includes Node.js, Python, npm/pnpm, uv/uvx, Git, and build
 tools. Many stdio MCP servers can therefore be installed and launched directly by MCPHub.
@@ -435,7 +435,7 @@ credential in MCPHub.
 
 ### Trilium Notes
 
-The [Trilium Notes App](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/TriliumNext%20Notes/README.md#ai-and-mcp-server) (Trilium v0.107.0 or later) has a built-in MCP server. MCPHub reaches it over the internal Home Assistant network, so Trilium's host port stays closed and only MCPHub stores the Trilium token.
+The [Trilium Notes App](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/TriliumNext%20Notes/README.md#-ai-and-mcp-server) (Trilium v0.107.0 or later) has a built-in MCP server. MCPHub reaches it over the internal Home Assistant network, so Trilium's host port stays closed and only MCPHub stores the Trilium token.
 
 1. In Trilium, enable the MCP server under **Options → AI / LLM** and create a token under **Options → ETAPI**.
 2. Open MCPHub as a Home Assistant administrator and add a server:
@@ -448,7 +448,7 @@ MCPHub refuses server URLs that resolve to private addresses unless an administr
 
 The Trilium tools can change and delete notes. Put the server in its own group or limit the keys of clients that should not have it.
 
-## Optional GitHub CLI MCP
+## 🐙 Optional GitHub CLI MCP
 
 The App can manage an additional universal GitHub CLI MCP server without requiring a
 custom Docker image. It is disabled by default.
@@ -484,7 +484,7 @@ is limited to operations that work without authentication.
 Disabling the option removes only the App-managed `ha-github-cli` entry. GitHub MCP
 servers created manually under other names are not modified.
 
-## Docker-based MCP servers
+## 🐳 Docker-based MCP servers
 
 This App intentionally does not expose the Home Assistant Docker socket and does not run
 in privileged mode.
@@ -492,7 +492,7 @@ in privileged mode.
 MCP servers that strictly require launching their own Docker containers are therefore
 not supported through host Docker access in this version.
 
-## Backups
+## 🗄️ Backups
 
 The App uses Home Assistant hot backups, so MCPHub and its tunnels keep running while
 a backup is created. The persistent `/data` directory contains the MCPHub configuration
@@ -502,7 +502,7 @@ package caches below `/data/cache` and `/data/home/.npm` are excluded from backu
 Treat backups as sensitive because they may contain MCP server credentials and tunnel
 configuration.
 
-## Troubleshooting
+## 🩺 Troubleshooting
 
 ### MCPHub exits during startup
 
@@ -557,7 +557,7 @@ Verify that:
 - the selected `tunnel_mcp_path` exists
 - MCPHub itself is healthy
 
-## Development changelog and stable promotion
+## 🧪 Development changelog and stable promotion
 
 The development store builds MCPHub from `dev-mcphub` and assigns an
 independently increasing `-dev.N` version. Its generated changelog starts with

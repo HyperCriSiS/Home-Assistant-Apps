@@ -2,7 +2,7 @@
 
 English | [Deutsch](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/DOCS.de.md)
 
-## Getting started
+## 🚀 Getting started
 
 Open Calibre AIO inside Home Assistant. On first use with no configured app
 administrator, your signed-in HA administrator is adopted automatically and
@@ -26,7 +26,7 @@ or download. A shared Calibre library is visible according to CWA's content
 restrictions; this is not a private library per user. CWA administrators share
 the selected CWA admin account. Shelfmark keeps separate HA identities.
 
-## App options
+## ⚙️ App options
 
 All options with their defaults:
 
@@ -69,7 +69,7 @@ The library is never part of this App's backup, and no App option can change
 that: Home Assistant backs up `/share` only through the **Share** folder of a
 backup, which covers the shared folder of all Apps together. Tick **Share** to
 include the library, or back it up by other means. See
-[Persistence and backups](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/DOCS.md#persistence-and-backups).
+[Persistence and backups](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/DOCS.md#-persistence-and-backups).
 
 ### `ingest_dir`
 
@@ -141,7 +141,7 @@ still prevents new authenticated ingress sessions. A CWA/Shelfmark cookie,
 API key, display name or supplied group header cannot replace the HA identity.
 Readers do not see the administrator-only Shelfmark setup wizard.
 
-## Downloads and library handoff
+## 📥 Downloads and library handoff
 
 Use the **+** menu in the library to upload files or choose **Add folder …**.
 Folder selection includes supported ebook files in subfolders; unrelated file
@@ -166,7 +166,7 @@ them to an e-reader; Shelfmark imports do not populate this overview.
 Audiobooks go to separate `/data/shelfmark-audiobooks` storage; CWA is not an
 audiobook library server. No Audiobookshelf integration is bundled.
 
-## Persistence and backups
+## 💾 Persistence and backups
 
 | Data | Container path |
 | --- | --- |
@@ -201,7 +201,7 @@ No backend ports are published. CWA binds `127.0.0.1:8083`, Shelfmark
 CWA OAuth, Magic Links, Kobo and KOReader auth endpoints remain blocked under
 SSO. Standalone external reader sync is outside the initial AIO scope.
 
-## Troubleshooting
+## 🩺 Troubleshooting
 
 If Shelfmark reports a completed download but the book is missing from the
 library, check the subsequent CWA ingest log. `apsw.ReadOnlyError: attempt to
@@ -234,7 +234,7 @@ Upstream versions are listed in `upstream.json`. All upgrades should use the
 manifest/update workflow described in [UPDATING.md](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/UPDATING.md), with a backup
 before a real installation is upgraded.
 
-## Languages and development builds
+## 🧪 Languages and development builds
 
 HA displays option labels in your profile language (German or English). AIO
 navigation and setup use HA's language, with the browser language as fallback.
@@ -248,7 +248,7 @@ step after testing. Its default library and import folders are separate from
 the stable app. Do not point simultaneously running installations at the same
 library or import folder.
 
-## Installation images
+## 💿 Installation images
 
 Home Assistant pulls the versioned GHCR image for its architecture. GitHub Actions
 builds and tests both images before a Dev update is advertised. Initial downloads

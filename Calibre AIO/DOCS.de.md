@@ -2,7 +2,7 @@
 
 [English](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/DOCS.md) | Deutsch
 
-## Erste Schritte
+## 🚀 Erste Schritte
 
 Öffne Calibre AIO innerhalb von Home Assistant. Beim ersten Aufruf ohne
 konfigurierten App-Administrator wird Dein angemeldetes HA-Administratorkonto
@@ -28,7 +28,7 @@ CWA-Inhaltsfreigaben sichtbar; es gibt keine private Bibliothek je Benutzer.
 CWA-Administratoren teilen sich das gewählte CWA-Administratorkonto. Shelfmark
 führt getrennte HA-Identitäten.
 
-## Optionen
+## ⚙️ Optionen
 
 Alle Optionen mit ihren Standardwerten:
 
@@ -72,7 +72,7 @@ Die Bibliothek ist nie Teil der Sicherung dieser App, und keine Option der App
 kann das ändern: Home Assistant sichert `/share` nur über den Ordner **Share**
 einer Sicherung, und der gilt für den gemeinsamen Ordner aller Apps zusammen.
 Wähle **Share** an, um die Bibliothek einzuschließen, oder sichere sie
-anderweitig. Siehe [Persistenz und Sicherungen](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/DOCS.de.md#persistenz-und-sicherungen).
+anderweitig. Siehe [Persistenz und Sicherungen](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/DOCS.de.md#-persistenz-und-sicherungen).
 
 ### `ingest_dir`
 
@@ -155,7 +155,7 @@ Anzeigename oder ein mitgelieferter Gruppen-Header kann die HA-Identität nicht
 ersetzen. Leser sehen den Shelfmark-Einrichtungsassistenten für
 Administratoren nicht.
 
-## Downloads und Bibliotheksübergabe
+## 📥 Downloads und Bibliotheksübergabe
 
 Über das **+**-Menü der Bibliothek lassen sich Dateien hochladen oder mit
 **Ordner hinzufügen …** ein Ordner wählen. Die Ordnerauswahl nimmt unterstützte
@@ -184,7 +184,7 @@ einen E-Reader senden; Shelfmark-Importe erscheinen dort nicht. Hörbücher
 landen im separaten Speicher `/data/shelfmark-audiobooks`; CWA ist kein
 Hörbuchserver. Audiobookshelf ist nicht enthalten.
 
-## Persistenz und Sicherungen
+## 💾 Persistenz und Sicherungen
 
 | Daten | Containerpfad |
 | --- | --- |
@@ -222,7 +222,7 @@ Supervisor unter `172.30.32.2`. CWA-OAuth, Magic Links sowie die Kobo- und
 KOReader-Authentifizierung bleiben unter SSO gesperrt. Eine externe
 Reader-Synchronisation gehört nicht zum Umfang dieser AIO-Version.
 
-## Fehlersuche
+## 🩺 Fehlersuche
 
 Wenn Shelfmark einen abgeschlossenen Download meldet, das Buch aber in der
 Bibliothek fehlt, prüfe das anschließende CWA-Importprotokoll.
@@ -262,7 +262,7 @@ Die Upstream-Versionen stehen in `upstream.json`. Alle Aktualisierungen sollen
 Update-Ablauf laufen, mit einer Sicherung, bevor eine echte Installation
 aktualisiert wird.
 
-## Sprachen und Entwicklungsversionen
+## 🧪 Sprachen und Entwicklungsversionen
 
 HA zeigt die Optionsbeschriftungen in Deiner Profilsprache (Deutsch oder
 Englisch). Die AIO-Navigation und die Einrichtung verwenden die HA-Sprache,
@@ -277,7 +277,7 @@ Import sind von der stabilen App getrennt. Zwei gleichzeitig laufende
 Installationen dürfen nicht dieselbe Bibliothek oder denselben Importordner
 verwenden.
 
-## Installationsimages
+## 💿 Installationsimages
 
 Home Assistant lädt das versionierte GHCR-Image für seine Architektur. GitHub
 Actions baut und testet beide Images, bevor ein Dev-Update angeboten wird. Der
