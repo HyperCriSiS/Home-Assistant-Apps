@@ -1,3 +1,5 @@
+<p align="center"><img src="https://raw.githubusercontent.com/HyperCriSiS/Home-Assistant-Apps/main/Calibre%20AIO/icon.png" alt="Calibre AIO icon" width="128"></p>
+
 # Calibre AIO
 
 **Book discovery and your Calibre library in one Home Assistant App.**
@@ -24,7 +26,7 @@ App options to start with Discover instead.
 > You are responsible for only downloading books you are legally entitled
 > to access. This App does not ship or configure any download source.
 
-## Installation
+## 📦 Installation
 
 ### Stable
 
@@ -56,7 +58,7 @@ The development App is shown as **Calibre AIO (Dev)** under
 > Development builds may contain incomplete or breaking changes. Use the stable repository
 > for normal production use.
 
-## First start
+## 🚀 First start
 
 Start the app and open its interface inside HA.
 On an unconfigured installation your signed-in HA administrator is adopted
@@ -73,7 +75,7 @@ Existing settings, accounts and library data are retained on upgrades.
 HA option labels and the AIO shell follow your German or English language.
 CWA has its own user language; Shelfmark uses English.
 
-## Features
+## ✨ Features
 
 - Automatic Home Assistant ingress sign-in, without copying user IDs
 - One configured HA login name manages both applications; other HA users have their own
@@ -86,7 +88,7 @@ CWA has its own user language; Shelfmark uses English.
 Its private state is independent of other CWA apps. Installation does not
 migrate or delete existing data.
 
-## Browser-challenge sources
+## 🧭 Browser-challenge sources
 
 The App includes Shelfmark's full browser stack with the same Chromium version
 as the official Shelfmark image, so browser-challenge sources work without an
@@ -94,7 +96,7 @@ extra service. Shelfmark's bypass settings are configured directly in its
 interface. Setting the optional `shelfmark.external_bypass_url` App option
 instead uses an external service and locks those settings to that service.
 
-## Documentation
+## 📚 Documentation
 
 - [Configuration](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/DOCS.md) · [Deutsche Anleitung](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/DOCS.de.md)
 - [Integration design](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/INTEGRATION.md)
@@ -102,13 +104,13 @@ instead uses an external service and locks those settings to that service.
 - [Upstream maintenance](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/UPDATING.md)
 - [Third-party notices](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/NOTICE.md)
 
-## Troubleshooting
+## 🩺 Troubleshooting
 
 Library imports that fail with a read-only database, SSO sign-in issues and
-backup scope are covered in [DOCS.md](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/DOCS.md#troubleshooting). The App log
+backup scope are covered in [DOCS.md](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/DOCS.md#-troubleshooting). The App log
 (Settings, Apps, Calibre AIO, Log) shows both applications and the ingress proxy.
 
-## Versioning
+## 🏷️ Versioning
 
 The App version follows the repository's CalVer scheme `vYYYY.MM.DD`, with
 `-N` for a further release on the same day. The packaged Calibre-Web Automated
@@ -116,13 +118,13 @@ and Shelfmark versions are separate: the badges above and the App description
 in the store name them, and [CHANGELOG.md](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/CHANGELOG.md) lists every change.
 Development builds carry a `-dev.<n>` suffix.
 
-## Support
+## 💬 Support
 
 Open an issue in the
 [repository issue tracker](https://github.com/HyperCriSiS/Home-Assistant-Apps/issues)
 with the App version, the App log and the steps that led to the problem.
 
-## License
+## 📄 License
 
 The wrapper code in this directory is licensed under the MIT License, see
 [LICENSE](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/Calibre%20AIO/LICENSE). Calibre-Web Automated (GPL-3.0-or-later), Shelfmark (MIT),
