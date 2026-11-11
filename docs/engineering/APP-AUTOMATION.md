@@ -13,11 +13,13 @@ upstream release
   -> validate-<app>.yml         full validation of the PR commit      (dispatched)
   -> merge-due-updates.yml      merges the bot PR once validated      (hourly)
   -> sync-dev-store.yml         publishes dev-store for HA testing    (on push)
-  -> auto-promote-<app>.yml     releases dev-<app> to main            (hourly)
+  -> auto-promote-<app>.yml     gates the release of dev-<app>        (hourly)
+  -> repair-app-updates.yml     release agent tidies the changelog,   (when due)
+                                runs promote.yml and merges to main
   -> sync-dev-bases.yml         merges main back into every dev-*     (on push to main)
 
-repair-app-updates.yml          fixes a failed update, validation or promotion
-                                run or a held bot PR with a coding agent (on failure)
+repair-app-updates.yml          also fixes a failed update, validation or promotion
+                                run or a held bot PR (on failure)
 ```
 
 Every step is fail closed: a step that cannot prove its precondition skips or
@@ -41,11 +43,10 @@ and the development store are still synced.
 | Update check | hourly: `7 * * * *` (MCPHub), `17 * * * *` (Trilium), `27 * * * *` (Calibre), `37 * * * *` (MCPHub tunnel clients), `47 * * * *` (Inbox Zero) | `update-*.yml` |
 | Bot PR merge delay into `dev-<app>` | none, merged once validation passed for the exact HEAD (`DELAY = 0`) | `merge_due_updates.py` `DELAY` |
 | Due-update merge check | hourly, `23 * * * *` | `merge-due-updates.yml` |
-| Minimum upstream release age | 24 hours | `auto_promote_*.py` `RELEASE_AGE` (`COMMIT_AGE` for Inbox Zero, which follows fork commits) |
+| Minimum upstream release age | none for stable releases (`COMMIT_AGE` 24 hours for Inbox Zero, which follows fork commits) | `auto_promote_*.py` `RELEASE_AGE` |
 | Soak time on `dev-<app>` before release | 3 hours after the newest update reached the branch | `auto_promote_*.py` `SOAK` |
-| Distance to the previous stable release | 24 hours (MCPHub only) | `auto_promote_mcphub.py` `COOLDOWN` |
 | Promotion check | hourly, offset per App: `43 * * * *` (MCPHub), `48 * * * *` (Calibre), `53 * * * *` (Trilium), `57 * * * *` (Inbox Zero) | `auto-promote-*.yml` |
-| Automatic repair | `repair-app-updates.yml` runs Claude Code when an update, validation or promotion run fails or a bot PR is put on hold; needs the repository secret `CLAUDE_CODE_OAUTH_TOKEN` | `repair-app-updates.yml`, repository secrets |
+| Release agent | `repair-app-updates.yml` runs a coding agent for every due release and when an update, validation or promotion run fails or a bot PR is stuck; needs the repository secret `CLAUDE_CODE_OAUTH_TOKEN`; `APP_REPAIR=false` switches it off and restores the built-in merge | `repair-app-updates.yml`, repository secrets and variables |
 | Promotion switch | repository variable `<APP>_AUTO_PROMOTE=true` | repository settings, variables |
 | Pause one PR | label `hold` on the update or release PR | GitHub labels |
 | Bot identity | `github-actions[bot]`, `github.token` | every workflow |
@@ -111,7 +112,7 @@ and shape the folder after [APP-STANDARDS.md](APP-STANDARDS.md).
    exact file list the updater may touch, and a test in
    `.github/tests/test_merge_due_updates.py`.
 6. Add `.github/scripts/auto_promote_<app>.py` reusing the shared helpers from
-   `auto_promote_mcphub.py` with `RELEASE_AGE = 24 * HOUR` and
+   `auto_promote_mcphub.py` with `RELEASE_AGE = 0` and
    `SOAK = 3 * HOUR`, plus `auto-promote-<app>.yml` with
    `if: vars.<APP>_AUTO_PROMOTE == 'true' && github.ref == 'refs/heads/main'`,
    the concurrency group `promote-<app>-main` and a cron offset that
