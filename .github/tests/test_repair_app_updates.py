@@ -23,9 +23,21 @@ class RepairWorkflowTests(unittest.TestCase):
     def test_a_hold_set_by_a_person_is_left_alone(self):
         self.assertIn('[[ "${setter}" == "github-actions[bot]" ]] || continue', self.text)
 
-    def test_shares_the_merge_queue_with_merge_due_updates(self):
+    def test_own_queue_so_merge_due_updates_is_never_dropped(self):
         merge_due = yaml.safe_load((WORKFLOWS / "merge-due-updates.yml").read_text())
-        self.assertEqual(self.workflow["concurrency"]["group"], merge_due["concurrency"]["group"])
+        self.assertNotEqual(self.workflow["concurrency"]["group"], merge_due["concurrency"]["group"])
+
+    def test_release_requests_compare_trees_not_the_merge_base(self):
+        self.assertIn(".commit.tree.sha", self.text)
+        self.assertNotIn("--jq '.files | length'", self.text)
+
+    def test_half_done_releases_cover_only_bot_commits(self):
+        self.assertIn('all(\$own[]; .author.login == \\"github-actions[bot]\\")', self.text)
+
+    def test_release_merge_requires_images_validation_and_haos(self):
+        for needed in ("docker manifest inspect", "haos-qemu-mcphub.yml", "--match-head-commit",
+                       "validate-mcphub.yml"):
+            self.assertIn(needed, self.text)
 
     def test_listed_workflows_exist(self):
         names = {yaml.safe_load(path.read_text())["name"] for path in WORKFLOWS.glob("*.yml")}

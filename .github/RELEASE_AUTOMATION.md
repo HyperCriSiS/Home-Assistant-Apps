@@ -22,7 +22,7 @@ Trilium uses a dedicated release-candidate branch, `dev-trilium`. MCPHub uses `d
 
 ## Development branch → `main`
 
-Both Apps are promoted automatically only when the development branch contains nothing but bot version bumps (plus clean merges of `main`) since the last release, the newest update has been on the development branch for 3 hours, and the exact development commit passed validation. Major upstream versions, any manual change and the optional HAOS gate keep the manual release PR flow.
+Both Apps are handed to the release agent only when the development branch contains nothing but bot version bumps (plus clean merges of `main`) since the last release, the newest update has been on the development branch for 3 hours, and the exact development commit passed validation. Major upstream versions and any manual change keep the manual release PR flow. The agent also finishes a release it left half done, as long as only bot commits are unreleased.
 
 - Releases are **squash-merged** into `main` (the only method the `main` ruleset allows). A clean sync merge of `main` back into the development branch marks everything before it as released.
 - After a merge the workflows start `main` validation, `Sync development branch bases` and the development store. If `main` validation fails, a revert PR and an issue are opened; nothing is reverted automatically.

@@ -1,11 +1,11 @@
 ---
 name: Repair App updates
 
-# Runs a coding agent when the update chain gets stuck: a failed updater,
-# validation, merge or promotion run, or a bot update PR that is on hold or
-# still open although it should have reached its development branch. It fixes
-# the cause, keeps the changelog clean, merges into dev-<app> and releases to
-# main once the 3 hour soak has passed. Uses the CLAUDE_CODE_OAUTH_TOKEN secret
+# Runs a coding agent for every App release to main (requested by the
+# auto-promote gates once an update has been on dev-<app> for 3 hours, or found
+# here when a release was left half done) and when the update chain gets stuck:
+# a failed updater, validation, merge or promotion run, or a bot update PR that
+# should already have reached its development branch. Uses the CLAUDE_CODE_OAUTH_TOKEN secret
 # (a subscription token, renewed yearly). Pause it with the repository variable
 # APP_REPAIR=false.
 
@@ -41,9 +41,11 @@ permissions:
   issues: write
   pull-requests: write
 
-# Shares the group with merge-due-updates.yml so both never merge the same PR.
+# A request dropped from the single pending slot is sent again by the next
+# hourly gate or scan; merges use --match-head-commit, so a race with
+# merge-due-updates.yml cannot merge an untested head.
 concurrency:
-  group: merge-due-app-updates
+  group: repair-app-updates
   cancel-in-progress: false
 
 jobs:
@@ -75,15 +77,31 @@ jobs:
         run: |
           set -euo pipefail
           report=""
-          # The hourly gate may ask again while a release is under way; a branch
-          # whose files already equal main has nothing left to release.
-          if [[ -n "${RELEASE_APP}" ]] && [[ "$(gh api \
-            "repos/${GITHUB_REPOSITORY}/compare/main...dev-${RELEASE_APP}" --jq '.files | length')" == 0 ]]; then
-            RELEASE_APP=""
-          fi
-          if [[ -n "${RELEASE_APP}" ]]; then
+          tree() { gh api "repos/${GITHUB_REPOSITORY}/commits/$1" --jq '.commit.tree.sha'; }
+          main_tree="$(tree main)"
+          # A release requested by a gate, unless dev already equals main (the
+          # gate may ask again while a release is under way).
+          if [[ -n "${RELEASE_APP}" && "$(tree "dev-${RELEASE_APP}")" != "${main_tree}" ]]; then
             report+="Release due: ${RELEASE_APP}. Its gates passed (only validated bot updates,"
             report+=" 3 hours on dev-${RELEASE_APP}). Prepare the release and merge it to main."$'\n'
+          elif [[ -z "${RELEASE_APP}" ]]; then
+            # A release left half done: dev differs from main, every unreleased
+            # commit is a bot commit (updates and the release preparation) and
+            # the newest one is older than 4 hours. Manual work is never released.
+            cutoff4="$(date -u -d '4 hours ago' +%Y-%m-%dT%H:%M:%SZ)"
+            for app in mcphub trilium calibre; do
+              [[ "$(tree "dev-${app}")" != "${main_tree}" ]] || continue
+              pending="$(gh api "repos/${GITHUB_REPOSITORY}/compare/main...dev-${app}" --jq "
+                [.commits[] | select(.parents | length == 1)] as \$own
+                | if (\$own | length) > 0
+                     and all(\$own[]; .author.login == \"github-actions[bot]\")
+                     and (\$own[-1].commit.committer.date < \"${cutoff4}\")
+                  then \"yes\" else \"no\" end")"
+              if [[ "${pending}" == yes ]]; then
+                report+="Release due: ${app}. Only bot commits are unreleased on dev-${app} and the"
+                report+=" newest is older than 4 hours. Finish the release to main."$'\n'
+              fi
+            done
           fi
           if [[ -n "${FAILED_RUN}" ]]; then
             report+="Failed run: ${FAILED_NAME} on ${FAILED_BRANCH}: ${FAILED_RUN}"$'\n'
@@ -158,21 +176,37 @@ jobs:
             are handled now.
 
             For a "Release due" line:
-            1. Compare dev-<app> with main (git diff origin/main...origin/dev-<app>).
-            2. Tidy <App>/CHANGELOG.md on a short-lived branch with a PR against
-               dev-<app>: one section for the new version, its heading equal to the
-               version in config.yaml, the bot lines since the last release merged
-               into one readable list under ### Changed or ### Fixed, no duplicates,
-               no empty sections. Check that README badges, NOTICE.md and the
-               config.yaml description name the new upstream versions. MCPHub has
-               .github/scripts/generate-mcphub-changelog.py stable for this. Skip the
-               PR when nothing needs to change.
-            3. Pushes with this token start no workflows: dispatch the App validation
-               (gh workflow run <validate workflow> --ref <branch>), wait until it is
-               green, then gh pr merge --squash --delete-branch.
-            4. Run gh workflow run promote.yml -f app=<app>. It publishes the images
-               and opens the release PR from dev-<app>. Wait for it, check the PR
-               diff, and merge it with gh pr merge --squash.
+            1. Compare dev-<app> with main (git diff origin/main origin/dev-<app>) and
+               confirm every unreleased commit is a bot update or a release
+               preparation; otherwise open the issue below and stop.
+            2. Calibre AIO and Trilium: tidy <App>/CHANGELOG.md on a short-lived
+               branch with a PR against dev-<app>: one section for the new version,
+               its heading equal to the version in config.yaml, the bot lines since
+               the last release merged into one readable list under ### Changed or
+               ### Fixed, no duplicates, no empty sections. Check that README
+               badges, NOTICE.md and the config.yaml description name the new
+               upstream versions. Skip the PR when nothing needs to change. Pushes
+               with this token start no workflows: dispatch the App validation on
+               the branch, wait for green, then gh pr merge --squash --delete-branch.
+               MCPHub: leave the changelog to promote.yml, which consolidates it on
+               the release candidate; review its result in step 4.
+            3. Run gh workflow run promote.yml -f app=<app> and wait for it. It
+               opens the release PR from dev-<app> (MCPHub: from
+               release/mcphub-candidate).
+            4. Before merging the release PR, all of these must hold for its exact
+               head commit, otherwise do not merge:
+               - The App validation passed on the PR head branch. Dispatch it
+                 yourself (validate.yml, validate-mcphub.yml or
+                 validate-calibre-aio.yml with --ref <head branch>), since the PR got
+                 no checks. For MCPHub this run also publishes the release image.
+               - MCPHub only: haos-qemu-mcphub.yml passed for the head commit
+                 (gh workflow run haos-qemu-mcphub.yml --ref main -f sha=<head sha>).
+               - The install images of the new version in <App>/config.yaml exist
+                 publicly (docker manifest inspect): ghcr.io/hypercrisis/mcphub:<v>,
+                 ghcr.io/hypercrisis/{amd64,aarch64}-calibre-aio:<v> or
+                 ghcr.io/hypercrisis/{amd64,aarch64}-trilium:<v>.
+               - The changelog follows the rules in step 2.
+               Then gh pr merge --squash --match-head-commit <sha>.
             5. Afterwards dispatch on main the App validation, sync-dev-bases.yml and
                sync-dev-store.yml, and check that the main validation is green. If it
                fails, open a revert PR and the issue below.
@@ -188,9 +222,8 @@ jobs:
                validation for its exact head commit is green. Remove a hold label set
                by github-actions[bot] after fixing its cause; never touch a hold set
                by a person.
-            4. If the fix put a non-bot commit on dev-<app>, auto-promote-<app>.yml
-               will skip; then release it yourself as above once it has been on
-               dev-<app> for 3 hours, or leave it for the next run.
+            4. A fix merged into dev-<app> is released by a later "Release due" run
+               once it has been on dev-<app> for 4 hours.
 
             Rules:
             - American English in everything you write to the repository or GitHub.
