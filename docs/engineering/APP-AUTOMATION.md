@@ -17,7 +17,7 @@ upstream release
   -> sync-dev-bases.yml         merges main back into every dev-*     (on push to main)
 
 repair-app-updates.yml          fixes a failed update, validation or promotion
-                                run or a held bot PR with Claude Code (on failure)
+                                run or a held bot PR with a coding agent (on failure)
 ```
 
 Every step is fail closed: a step that cannot prove its precondition skips or

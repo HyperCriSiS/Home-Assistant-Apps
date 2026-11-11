@@ -1,7 +1,7 @@
 ---
 name: Repair App updates
 
-# Runs Claude Code when the update chain gets stuck: a failed updater,
+# Runs a coding agent when the update chain gets stuck: a failed updater,
 # validation, merge or promotion run, or a bot update PR that is on hold or
 # still open although it should have reached its development branch. It fixes
 # the cause, keeps the changelog clean, merges into dev-<app> and releases to
@@ -146,7 +146,7 @@ jobs:
             Rules:
             - American English in everything you write to the repository or GitHub.
               Never use the em dash character.
-            - Never mention Claude, AI or an assistant in commits, PRs, issues,
+            - Never mention yourself, AI tooling or an assistant in commits, PRs, issues,
               comments or files. No co-author or attribution lines.
             - Never push to main directly and never force-push dev-* or main.
             - Never change secrets, repository settings, rulesets or anything under
