@@ -1,6 +1,6 @@
 ---
 name: "MCPHub (Dev)"
-version: "v2026.11.10-2-dev.261"
+version: "v2026.11.10-2-dev.265"
 image: "ghcr.io/hypercrisis/mcphub"
 slug: mcphub
 description: >-

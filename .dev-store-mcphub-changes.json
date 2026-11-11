@@ -1,5 +1,25 @@
 [
   {
+    "revision": 265,
+    "version": "v2026.11.10-2-dev.265",
+    "source_sha": "fc2c5a56b1fceaccb216d4fe70b6a2c84c027944",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "e9127e4982456fec9054385b45e110e6a6936bcd",
+        "subject": "Merge remote-tracking branch 'origin/main' into dev-mcphub"
+      },
+      {
+        "sha": "dfc1b24ad0a239b6cb47386c69559a7bdbe58e03",
+        "subject": "chore: drop committed Python bytecode and ignore it (#234)"
+      },
+      {
+        "sha": "53f2f73d13a2733422da6c9890b00eb054cd9f38",
+        "subject": "release(mcphub): validated candidate (#230)"
+      }
+    ]
+  },
+  {
     "revision": 261,
     "version": "v2026.11.10-2-dev.261",
     "source_sha": "7082ea687422020a8b75cb392b7817f79584644e",
