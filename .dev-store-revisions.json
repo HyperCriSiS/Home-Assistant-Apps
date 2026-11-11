@@ -1,23 +1,23 @@
 {
   "calibre": {
-    "revision": 198,
-    "tree": "73b42590305b72fd46a3eaa083d616efbe6e8972"
+    "revision": 199,
+    "tree": "035310722c7d61e35945f3de740dbc61c971ff35"
   },
   "inbox-zero": {
     "revision": 266,
     "tree": "3e3aab3b505ddf78b7f613da3e81b96022975514"
   },
   "mcphub": {
-    "fingerprint": "4827c7c460f38f0624c0316ebfb942a62edfae6c5b3c7ae67a318f5e9be8cff7",
-    "revision": 268,
-    "tree": "05815aedefb8a4d4eba0371be80fc881f7c3d822"
+    "fingerprint": "8146ae91f2b075105b2d316da745c653c82f7c0bc75cdf0c2b1e7dd8e26e82e6",
+    "revision": 269,
+    "tree": "0f6e8ee8942c2cc5d4dae19e78718f0a79b608c8"
   },
   "plextraktsync": {
     "revision": 160,
     "tree": "3e6df9efbafcaa7df86453dd25eea6dbc70932b9"
   },
   "trilium": {
-    "revision": 248,
-    "tree": "59d0b260db05d94e1c6392a9761c315b8105201c"
+    "revision": 269,
+    "tree": "0ddb8230cebb1bfdaab4941b8a34e30dfe97d748"
   }
 }

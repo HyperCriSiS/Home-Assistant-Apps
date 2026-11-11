@@ -1,5 +1,21 @@
 [
   {
+    "revision": 269,
+    "version": "v2026.11.11-dev.269",
+    "source_sha": "a2ec43da5e54701c6f5f278150dd465a1a652e03",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "a2ec43da5e54701c6f5f278150dd465a1a652e03",
+        "subject": "Merge remote-tracking branch 'origin/main' into dev-mcphub"
+      },
+      {
+        "sha": "695d1d3e9e9623e4a9b3b8c39530d48985572b6f",
+        "subject": "Add app icons and section emojis to READMEs and docs (#237)"
+      }
+    ]
+  },
+  {
     "revision": 268,
     "version": "v2026.11.11-dev.268",
     "source_sha": "43e123999d2d4d34b360453f02c29ecc158f857a",

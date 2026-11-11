@@ -1,6 +1,6 @@
 ---
 name: "Trilium Notes (Dev)"
-version: "v2026.11.09-dev.248"
+version: "v2026.11.09-dev.269"
 slug: trilium
 # Prebuilt on GitHub Actions; the Supervisor pulls instead of building locally.
 image: "ghcr.io/hypercrisis/{arch}-trilium"
