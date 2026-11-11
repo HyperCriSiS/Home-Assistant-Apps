@@ -32,8 +32,8 @@ on:
       app:
         description: "Release this App to main (started by auto-promote-<app>.yml)"
         type: choice
-        default: ""
-        options: ["", mcphub, trilium, calibre]
+        default: none
+        options: [none, mcphub, trilium, calibre]
 
 permissions:
   actions: write
@@ -71,7 +71,7 @@ jobs:
           FAILED_RUN: ${{ github.event.workflow_run.html_url }}
           FAILED_NAME: ${{ github.event.workflow_run.name }}
           FAILED_BRANCH: ${{ github.event.workflow_run.head_branch }}
-          RELEASE_APP: ${{ inputs.app }}
+          RELEASE_APP: ${{ inputs.app != 'none' && inputs.app || '' }}
         run: |
           set -euo pipefail
           report=""
