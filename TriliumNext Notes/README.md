@@ -1,3 +1,5 @@
+<p align="center"><img src="https://raw.githubusercontent.com/HyperCriSiS/Home-Assistant-Apps/main/TriliumNext%20Notes/icon.png" alt="Trilium Notes icon" width="128"></p>
+
 # Trilium Notes
 
 **Self-hosted hierarchical notes and personal knowledge base inside Home Assistant.**
@@ -14,7 +16,7 @@ This Home Assistant App runs [Trilium Notes](https://github.com/TriliumNext/Tril
 > [!IMPORTANT]
 > Home Assistant Apps require **Home Assistant OS** or a **Supervised** installation. Older Home Assistant versions may still use the term **Add-ons** instead of **Apps**.
 
-## Installation
+## 📦 Installation
 
 ### Stable
 
@@ -45,26 +47,26 @@ The development App is shown as **Trilium Notes (Dev)** under
 > Development builds may contain breaking changes. Create a Home Assistant backup before
 > testing a development update.
 
-## Configuration
+## ⚙️ Configuration
 
 The App needs no configuration. The container follows the Home Assistant system timezone, and Trilium keeps its log files for 90 days.
 
 The legacy `timezone`, `log_retention_days`, `log_level` and `https_only` options are retained only for upgrade compatibility and are no longer used. TLS is terminated by Home Assistant Ingress or an external reverse proxy.
 
-## Data and backups
+## 💾 Data and backups
 
 Persistent data is stored in `/home/node/trilium-data` and mapped to the Home Assistant App data volume. Home Assistant backups include this directory. The App uses **cold backups**: Home Assistant stops Trilium briefly while the backup is created, so the SQLite database is always captured in a consistent state. Trilium can also create its own backups under **Options → Backup**; these are stored in the same data volume and are therefore included in Home Assistant backups as well.
 
 Before upgrading, create a current Home Assistant backup. Database migrations are performed by Trilium during startup and downgrading across database schema versions may not be supported.
 
-## Network access
+## 🌐 Network access
 
 Ingress is enabled by default. Direct access on port `8080` is disabled by default on new installations; existing installations keep their network settings. Trilium trusts only the Home Assistant Ingress reverse proxy at `172.30.32.2` for forwarded client information instead of globally trusting arbitrary `X-Forwarded-For` headers.
 
 > [!TIP]
 > Direct access on port `8080` bypasses Home Assistant authentication and is protected only by Trilium's own login. Until the first login, the setup wizard is open to anyone who can reach the port. Enable the host port under **Settings → Apps → Trilium Notes → Configuration → Network** only if you need the Trilium desktop or mobile sync or a reverse proxy, and never forward it to the internet without TLS.
 
-## AI and MCP server
+## 🤖 AI and MCP server
 
 Trilium includes an AI assistant and a built-in MCP server. Both are configured inside Trilium under **Options → AI / LLM**. The App needs no extra settings; the configuration is stored in the Trilium database and is part of Home Assistant backups.
 
@@ -74,20 +76,20 @@ The MCP server lets AI clients search, read, create, change and delete notes. It
 2. Create a token under **Options → ETAPI**. Every MCP request must send it as `Authorization: Bearer <token>`; a Trilium login session is not accepted.
 3. Connect the client to `http://<hostname>:8080/mcp` using the Streamable HTTP transport.
 
-MCP clients cannot use Home Assistant Ingress, because Ingress requires a Home Assistant login. The recommended setup is the [MCPHub App](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/MCPHub/DOCS.md#trilium-notes): it reaches Trilium over the internal Home Assistant network, so port `8080` stays closed and only MCPHub stores the token. MCPHub then offers the Trilium tools to your clients together with your other MCP servers. Connecting clients directly requires the host port `8080` (see [Network access](#network-access)) and stores the token in every client.
+MCP clients cannot use Home Assistant Ingress, because Ingress requires a Home Assistant login. The recommended setup is the [MCPHub App](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/MCPHub/DOCS.md#trilium-notes): it reaches Trilium over the internal Home Assistant network, so port `8080` stays closed and only MCPHub stores the token. MCPHub then offers the Trilium tools to your clients together with your other MCP servers. Connecting clients directly requires the host port `8080` (see [Network access](#-network-access)) and stores the token in every client.
 
 Other Apps reach Trilium by its hostname. For the stable repository it is `83d84113-trilium`; installations added through the former `Home-Assistant-Addons` URL use `75051d58-trilium`. In other cases, take the App slug from the address of the App page in Home Assistant, for example `83d84113_trilium`, and replace the underscore with a hyphen.
 
-## Troubleshooting
+## 🩺 Troubleshooting
 
 - Review the App logs under **Settings → Apps → Trilium Notes → Logs**.
 - If the interface does not load after an update, restart the App and clear the browser cache.
 - If startup fails after an upgrade, restore the pre-upgrade backup and attach the complete log when opening an issue.
 
-## Support
+## 💬 Support
 
 For App-specific issues, use the [issue tracker](https://github.com/HyperCriSiS/Home-Assistant-Apps/issues). For Trilium application issues, use the [upstream project](https://github.com/TriliumNext/Trilium/issues).
 
-## License
+## 📄 License
 
 This App packaging is licensed under the MIT License. Trilium Notes is licensed under the GNU Affero General Public License v3.0.
