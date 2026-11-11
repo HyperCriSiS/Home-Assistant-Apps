@@ -1,13 +1,14 @@
 name: Propose Calibre AIO upstream updates
 
 # Opens one pull request per CWA/Shelfmark combination against dev-calibre.
-# merge-due-updates.yml merges it after 12 hours once it matches the trusted
-# updater byte for byte and the full validation passed; auto-promote-calibre.yml
-# releases it to main after another 36 hours. Label a PR "hold" to stop it.
+# merge-due-updates.yml merges it as soon as it matches the trusted updater
+# byte for byte and the full validation passed; auto-promote-calibre.yml
+# releases it to main once the upstream releases are 24 hours old and the
+# update has been on dev-calibre for 3 hours. Label a PR "hold" to stop it.
 
 on:
   schedule:
-    - cron: '23 7 * * *'
+    - cron: '27 * * * *'
   workflow_dispatch:
 permissions:
   contents: write
@@ -50,8 +51,8 @@ jobs:
             app revision and changelog. Integration adapters remain separate.
 
             The Calibre AIO validation (both architectures, container boot and
-            restart) is dispatched for this branch. Once it passed and the PR has
-            been open for 12 hours, it is merged into dev-calibre automatically.
+            restart) is dispatched for this branch. Once it passed, the PR is
+            merged into dev-calibre automatically.
             A major upstream version is never released to main automatically.
             Label this PR `hold` to stop the automation.
           add-paths: |

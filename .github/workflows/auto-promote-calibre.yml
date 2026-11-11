@@ -2,7 +2,7 @@ name: Auto-promote Calibre AIO updates
 
 # Promotes dev-calibre to main only when it contains nothing but automated
 # CWA/Shelfmark pin updates that passed every gate in
-# .github/scripts/auto_promote_calibre.py, 36 hours after the newest one
+# .github/scripts/auto_promote_calibre.py, 3 hours after the newest one
 # reached dev-calibre. Everything else stays manual.
 # main installs prebuilt images, so both release tags are built, tested and
 # published from the gated commit before the merge; a missing tag stops it.
@@ -11,7 +11,7 @@ name: Auto-promote Calibre AIO updates
 
 on:
   schedule:
-    - cron: "43 */3 * * *"
+    - cron: "48 * * * *"
   workflow_dispatch:
 
 permissions:
