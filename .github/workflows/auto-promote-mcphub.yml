@@ -59,9 +59,17 @@ jobs:
           DEV_SHA: ${{ steps.gate.outputs.dev_sha }}
         run: gh workflow run haos-qemu-mcphub.yml --repo "$GITHUB_REPOSITORY" --ref main -f sha="$DEV_SHA"
 
+      # The release itself is prepared and merged by the release agent
+      # (repair-app-updates.yml). APP_REPAIR=false falls back to the merge below.
+      - name: Hand the release to the release agent
+        if: steps.gate.outputs.action == 'promote' && vars.APP_REPAIR != 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run repair-app-updates.yml --repo "$GITHUB_REPOSITORY" --ref main -f app=mcphub
+
       - name: Prepare release candidate
         id: candidate
-        if: steps.gate.outputs.action == 'promote'
+        if: steps.gate.outputs.action == 'promote' && vars.APP_REPAIR == 'false'
         env:
           DEV_SHA: ${{ steps.gate.outputs.dev_sha }}
         run: |

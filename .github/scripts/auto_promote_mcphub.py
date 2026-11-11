@@ -23,9 +23,9 @@ from urllib.parse import quote
 DEV, MAIN, RELEASE = "dev-mcphub", "main", "release/mcphub-candidate"
 BOT = "github-actions[bot]"
 HOUR = 3600
-RELEASE_AGE = 24 * HOUR  # minimum age of a new upstream or tunnel-client release
+RELEASE_AGE = 0  # a stable upstream or tunnel-client release qualifies at once
 SOAK = 3 * HOUR  # newest update must have been on the development store this long
-COOLDOWN = 24 * HOUR  # minimum distance to the previous stable MCPHub release
+COOLDOWN = 0  # no minimum distance to the previous stable MCPHub release
 ALLOWED_FILES = frozenset({
     "MCPHub/CHANGELOG.md",
     "MCPHub/Dockerfile",
