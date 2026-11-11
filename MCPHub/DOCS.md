@@ -284,7 +284,7 @@ contain no API keys, Tunnel IDs, or user tokens.
 
 Cloudflare and Tailscale run in their own Home Assistant Apps, which already
 manage connectors, updates and logs. They forward to MCPHub's MCP-only gateway
-on port `3001` (see [LAN access](LAN_ACCESS.md)). The gateway accepts only
+on port `3001` (see [LAN access](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/MCPHub/LAN_ACCESS.md)). The gateway accepts only
 `/mcp` routes, MCPHub checks the bearer key, and the web interface, login and
 management API are never reachable through it.
 

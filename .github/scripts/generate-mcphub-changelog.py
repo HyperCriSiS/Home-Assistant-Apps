@@ -17,12 +17,12 @@ APP = "MCPHub"
 CHANGELOG = Path(APP) / "CHANGELOG.md"
 HISTORY = Path(".dev-store-mcphub-changes.json")
 STATE = Path(".dev-store-revisions.json")
+# Shared workflows such as promote.yml and sync-dev-store.yml are left out:
+# their commits usually belong to other Apps.
 RELATED = (
     "MCPHub",
     ".github/workflows/validate-mcphub.yml",
     ".github/workflows/haos-mcphub.yml",
-    ".github/workflows/sync-dev-store.yml",
-    ".github/workflows/promote.yml",
     ".github/scripts/haos-e2e-mcphub.sh",
     ".github/scripts/haos-qemu-mcphub.sh",
     ".github/workflows/haos-qemu-mcphub.yml",
