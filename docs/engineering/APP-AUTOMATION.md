@@ -114,7 +114,7 @@ and shape the folder after [APP-STANDARDS.md](APP-STANDARDS.md).
    `auto_promote_mcphub.py` with `RELEASE_AGE = 24 * HOUR` and
    `SOAK = 3 * HOUR`, plus `auto-promote-<app>.yml` with
    `if: vars.<APP>_AUTO_PROMOTE == 'true' && github.ref == 'refs/heads/main'`,
-   the concurrency group `promote-app-development-main` and a cron offset that
+   the concurrency group `promote-<app>-main` and a cron offset that
    does not collide with the other Apps.
 7. Add the App to `promote.yml` (`workflow_dispatch` choice and `workflow_run`
    list) for manual releases.

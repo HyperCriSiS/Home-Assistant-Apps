@@ -35,8 +35,9 @@ permissions:
   issues: write
   pull-requests: write
 
+# Shares the group with merge-due-updates.yml so both never merge the same PR.
 concurrency:
-  group: repair-app-updates
+  group: merge-due-app-updates
   cancel-in-progress: false
 
 jobs:
@@ -45,6 +46,9 @@ jobs:
     if: >-
       vars.APP_REPAIR != 'false' && github.ref == 'refs/heads/main' &&
       (github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.event != 'pull_request' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.run_attempt == 1 &&
       (github.event.workflow_run.head_branch == 'main' ||
        contains(fromJSON('["dev-trilium", "dev-mcphub", "dev-calibre"]'), github.event.workflow_run.head_branch) ||
        startsWith(github.event.workflow_run.head_branch, 'automation/'))))
@@ -67,15 +71,28 @@ jobs:
           if [[ -n "${FAILED_RUN}" ]]; then
             report+="Failed run: ${FAILED_NAME} on ${FAILED_BRANCH}: ${FAILED_RUN}"$'\n'
           fi
-          # Bot update PRs to a development branch that are on hold or older
-          # than two hours (validation and the hourly merge should be done).
-          cutoff="$(date -u -d '2 hours ago' +%Y-%m-%dT%H:%M:%SZ)"
-          stuck="$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --author 'app/github-actions' \
-            --json number,title,baseRefName,createdAt,labels,url \
-            --jq "[.[] | select(.baseRefName | IN(\"dev-trilium\", \"dev-mcphub\", \"dev-calibre\"))
-                   | select(([.labels[].name] | index(\"hold\")) or .createdAt < \"${cutoff}\")]
-                   | .[] | \"Stuck PR: \(.title) -> \(.baseRefName): \(.url)\"")"
-          [[ -n "${stuck}" ]] && report+="${stuck}"$'\n'
+          # Update PRs from this repository to a development branch that sat
+          # unchanged for three hours (validation and the hourly merge should be
+          # done) or were put on hold by the automation. A hold set by a person
+          # is a stop switch and is left alone.
+          cutoff="$(date -u -d '3 hours ago' +%Y-%m-%dT%H:%M:%SZ)"
+          while IFS=$'\t' read -r number held url base; do
+            [[ -n "${number}" ]] || continue
+            if [[ "${held}" == true ]]; then
+              setter="$(gh api "repos/${GITHUB_REPOSITORY}/issues/${number}/events" --paginate \
+                --jq '[.[] | select(.event == "labeled" and .label.name == "hold")][-1].actor.login')"
+              [[ "${setter}" == "github-actions[bot]" ]] || continue
+            fi
+            report+="Stuck update PR to ${base}: ${url}"$'\n'
+          done < <(gh pr list --repo "$GITHUB_REPOSITORY" --state open --limit 100 \
+            --json number,headRefName,headRepositoryOwner,baseRefName,updatedAt,labels,url \
+            --jq "[.[] | select(.headRefName | startswith(\"automation/\"))
+                   | select(.headRepositoryOwner.login == \"${GITHUB_REPOSITORY_OWNER}\")
+                   | select(.baseRefName | IN(\"dev-trilium\", \"dev-mcphub\", \"dev-calibre\"))
+                   | {number, url, updatedAt, base: .baseRefName,
+                      held: ([.labels[].name] | index(\"hold\") != null)}
+                   | select(.held or .updatedAt < \"${cutoff}\")]
+                   | .[] | [.number, .held, .url, .base] | @tsv")
           {
             echo 'report<<EOF_REPORT'
             printf '%s' "${report}"
@@ -107,7 +124,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ github.token }}
           claude_args: >-
-            --max-turns 120
+            --model claude-opus-5-5 --effort low --max-turns 120
             --allowedTools Bash,Read,Edit,Write,Glob,Grep
           prompt: |
             You maintain the Home Assistant Apps repository ${{ github.repository }}.
@@ -133,12 +150,17 @@ jobs:
                validate*.yml --ref <branch>) and wait for it.
             3. Merge a bot PR or fix PR into dev-<app> with
                gh pr merge --squash --delete-branch only when validation for its exact
-               head commit is green. Remove the hold label after fixing its cause.
+               head commit is green. Remove a hold label set by github-actions[bot]
+               after fixing its cause; never touch a hold set by a person.
             4. Release to main when dev-<app> has been green for 3 hours since the
-               update reached it: if auto-promote-<app>.yml skips because a fix commit
-               is on the branch, run gh workflow run promote.yml -f app=<app>, review
-               the release PR it opens and merge it with --squash once its checks are
-               green.
+               update reached it, every new upstream release is at least 24 hours old
+               and no upstream major version changed: if auto-promote-<app>.yml skips
+               because a fix commit is on the branch, run gh workflow run promote.yml
+               -f app=<app> (it publishes the images first), review the release PR it
+               opens and merge it with --squash. Pushes and merges with this token
+               start no workflows, so afterwards dispatch on main the App validation,
+               sync-dev-bases.yml and sync-dev-store.yml, as auto-promote-<app>.yml does.
+            Retry a flaky failure at most once; if it fails again, open the issue below.
             5. Changelog: the first heading of <App>/CHANGELOG.md equals the version in
                config.yaml, entries sit under ### Changed or ### Fixed, one line per
                change, no duplicates, no empty sections. Fixes get a ### Fixed line.

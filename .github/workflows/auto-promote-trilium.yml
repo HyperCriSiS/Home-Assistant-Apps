@@ -23,7 +23,9 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: promote-app-development-main
+  # One group per App: a long release of one App never cancels the hourly
+  # gate of another (GitHub keeps only one pending run per group).
+  group: promote-trilium-main
   cancel-in-progress: false
 
 jobs:
