@@ -143,11 +143,11 @@ def request(url, github=False):
     return urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=60)
 
 
-def latest(name):
-    return release(name, None)
+def latest(name, known=None):
+    return release(name, None, known)
 
 
-def release(name, tag):
+def release(name, tag, known=None):
     """Resolve the latest (or the given) stable release to a commit and archive checksum."""
     repository = REPOSITORIES[name]
     endpoint = 'latest' if tag is None else 'tags/' + tag
@@ -163,6 +163,10 @@ def release(name, tag):
         commit = json.load(response)['sha']
     if not re.fullmatch(r'[0-9a-f]{40}', commit):
         raise ValueError('Invalid upstream commit')
+    # The pinned release still points at the pinned commit: its archive was
+    # verified when it was pinned, so an hourly check needs no download.
+    if known and known.get('version') == version and known.get('commit') == commit:
+        return dict(known)
     digest = hashlib.sha256()
     with request(f'https://github.com/{repository}/archive/{commit}.tar.gz') as response:
         for chunk in iter(lambda: response.read(1024 * 1024), b''):
@@ -203,7 +207,7 @@ def main():
         for name in REPOSITORIES:
             if args.component in ('all', name):
                 tag = getattr(args, name + '_version')
-                candidate = release(name, tag) if tag else latest(name)
+                candidate = release(name, tag, data[name]) if tag else latest(name, data[name])
                 # Never silently replace the contents of an already-pinned release.
                 if candidate['version'] == data[name]['version']:
                     if candidate != data[name]:

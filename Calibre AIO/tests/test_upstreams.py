@@ -30,7 +30,7 @@ class UpstreamUpdateTest(unittest.TestCase):
 
     def test_update_regenerates_both_pins_build_and_revision(self):
         data = upstreams.load_manifest()
-        def latest(name):
+        def latest(name, known=None):
             return dict(data[name], version='v9.0.0', commit='f' * 40, sha256='e' * 64)
         with (patch.object(upstreams, 'latest', latest), patch.object(upstreams, 'check_chromium'),
               patch.object(sys, 'argv', ['upstreams', 'update'])):
@@ -61,14 +61,14 @@ class UpstreamUpdateTest(unittest.TestCase):
 
     def test_pinned_versions_reproduce_a_proposal(self):
         data = upstreams.load_manifest()
-        def release(name, tag):
+        def release(name, tag, known=None):
             return dict(data[name], version=tag, commit='f' * 40, sha256='e' * 64)
         argv = ['upstreams', 'update', '--cwa-version', 'v9.0.0',
                 '--shelfmark-version', data['shelfmark']['version']]
         with (patch.object(upstreams, 'release', release), patch.object(sys, 'argv', argv),
               self.assertRaisesRegex(ValueError, 'provenance')):
             upstreams.main()
-        with (patch.object(upstreams, 'release', lambda name, tag: dict(data[name], version=tag)
+        with (patch.object(upstreams, 'release', lambda name, tag, known=None: dict(data[name], version=tag)
                            if tag != data[name]['version'] else data[name]),
               patch.object(sys, 'argv', argv)):
             upstreams.main()
@@ -82,14 +82,22 @@ class UpstreamUpdateTest(unittest.TestCase):
 
     def test_unchanged_release_provenance_must_match_without_file_changes(self):
         data = upstreams.load_manifest()
-        with (patch.object(upstreams, 'latest', lambda name: dict(data[name], sha256='e' * 64)),
+        with (patch.object(upstreams, 'latest', lambda name, known=None: dict(data[name], sha256='e' * 64)),
               patch.object(sys, 'argv', ['upstreams', 'update']), self.assertRaises(ValueError)):
             upstreams.main()
         self.assertEqual({p.name: p.read_bytes() for p in self.root.iterdir()}, self.before)
 
+    def test_unchanged_pin_skips_the_archive_download(self):
+        known = upstreams.load_manifest()['cwa']
+        answers = [io.BytesIO(json.dumps({'tag_name': known['version']}).encode()),
+                   io.BytesIO(json.dumps({'sha': known['commit']}).encode())]
+        with patch.object(upstreams, 'request', side_effect=answers) as request:
+            self.assertEqual(upstreams.latest('cwa', known), known)
+        self.assertEqual(request.call_count, 2)
+
     def test_downgrade_is_rejected_without_file_changes(self):
         data = upstreams.load_manifest()
-        with (patch.object(upstreams, 'latest', lambda name: dict(data[name], version='v0.0.1')),
+        with (patch.object(upstreams, 'latest', lambda name, known=None: dict(data[name], version='v0.0.1')),
               patch.object(sys, 'argv', ['upstreams', 'update']), self.assertRaises(ValueError)):
             upstreams.main()
         self.assertEqual({p.name: p.read_bytes() for p in self.root.iterdir()}, self.before)

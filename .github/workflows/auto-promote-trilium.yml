@@ -3,7 +3,7 @@ name: Auto-promote Trilium updates
 
 # Promotes dev-trilium to main only when it contains nothing but automated
 # Trilium version bumps that passed every gate in
-# .github/scripts/auto_promote_trilium.py, 36 hours after the newest one
+# .github/scripts/auto_promote_trilium.py, 3 hours after the newest one
 # reached dev-trilium. Everything else stays manual.
 # main installs prebuilt images, so both release tags are built, tested and
 # published from the gated commit before the merge; a missing tag stops it.
@@ -12,7 +12,7 @@ name: Auto-promote Trilium updates
 
 on:
   schedule:
-    - cron: "13 */3 * * *"
+    - cron: "53 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -23,7 +23,9 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: promote-app-development-main
+  # One group per App: a long release of one App never cancels the hourly
+  # gate of another (GitHub keeps only one pending run per group).
+  group: promote-trilium-main
   cancel-in-progress: false
 
 jobs:

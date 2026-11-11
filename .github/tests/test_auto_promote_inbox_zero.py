@@ -94,7 +94,7 @@ class CommitTests(unittest.TestCase):
     def test_rewritten_history_other_branches_and_fresh_commits_stay_manual(self):
         for change, reason in (({"forward": "diverged"}, "history"), ({"forward": "behind"}, "history"),
                                ({"on_main": "behind"}, "main branch"), ({"on_main": "diverged"}, "main branch"),
-                               ({"age": 47}, "48 hours")):
+                               ({"age": 23}, "24 hours")):
             with self.subTest(change=change), self.assertRaisesRegex(mod.Skip, reason):
                 self.check(**change)
 
@@ -122,9 +122,9 @@ class GateTests(unittest.TestCase):
         self.assertEqual(self.run_gate("success"),
                          {"main_sha": "m", "dev_sha": "d", "commit": NEW, "action": "promote"})
 
-    def test_soak_of_36_hours(self):
-        with self.assertRaisesRegex(mod.Skip, "36 hours"):
-            self.run_gate("success", newest=NOW - 35 * 3600)
+    def test_soak_of_3_hours(self):
+        with self.assertRaisesRegex(mod.Skip, "3 hours"):
+            self.run_gate("success", newest=NOW - 2.9 * 3600)
 
     def test_other_changes_keep_the_release_manual(self):
         with patch.object(mod, "git") as git:

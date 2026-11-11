@@ -3,7 +3,7 @@ name: Check MCPHub upstream
 
 on:
   schedule:
-    - cron: "17 4 * * *"
+    - cron: "7 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -124,7 +124,7 @@ jobs:
           RELEASE_URL: ${{ steps.upstream.outputs.release_url }}
         run: |
           cat > /tmp/pr-body.md <<EOF
-          Automated daily MCPHub update check.
+          Automated MCPHub update check.
 
           Upstream release: ${RELEASE_URL}
 
@@ -153,8 +153,8 @@ jobs:
             --repo "${GITHUB_REPOSITORY}" \
             --ref "${BRANCH}"
 
-      # Merge into dev-mcphub happens in merge-due-updates.yml once the PR has
-      # been open for 12 hours. A newer upstream release supersedes older PRs.
+      # Merge into dev-mcphub happens in merge-due-updates.yml as soon as
+      # the PR passed validation. A newer upstream release supersedes older PRs.
       - name: Close superseded upstream update pull requests
         if: steps.upstream.outputs.update == 'true'
         env:
