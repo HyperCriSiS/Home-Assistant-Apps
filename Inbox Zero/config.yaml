@@ -1,9 +1,9 @@
 ---
 name: "Inbox Zero"
 description: >-
-  Inbox Zero v2.30.0 (fork a08ec63) - AI email assistant for IMAP, Gmail and
+  Inbox Zero v2.30.0 (fork 4d08657) - AI email assistant for IMAP, Gmail and
   Outlook with bundled PostgreSQL and Redis
-version: "v2026.11.09"
+version: "v2026.11.11"
 slug: inbox_zero
 url: "https://github.com/HyperCriSiS/Home-Assistant-Apps/tree/main/Inbox%20Zero"
 # Prebuilt on GitHub Actions; the Supervisor pulls instead of building locally.
