@@ -1,3 +1,5 @@
+<p align="center"><img src="https://raw.githubusercontent.com/HyperCriSiS/Home-Assistant-Apps/main/MCPHub/icon.png" alt="MCPHub icon" width="128"></p>
+
 # MCPHub
 
 **Manage multiple MCP servers from one central dashboard inside Home Assistant.**
@@ -15,7 +17,7 @@ It supports MCPHub Market / Registry discovery, local stdio servers, remote MCP 
 > [!IMPORTANT]
 > Home Assistant Apps require **Home Assistant OS** or a **Supervised** installation. Older Home Assistant versions may still use the term **Add-ons** instead of **Apps**.
 
-## Installation
+## 📦 Installation
 
 ### Stable
 
@@ -54,7 +56,7 @@ The development App is shown as **MCPHub (Dev)** under
 > Development builds may contain incomplete or breaking changes. Use the stable repository
 > for normal production use.
 
-## Features
+## ✨ Features
 
 - Central MCP server management through MCPHub
 - MCPHub Market / Registry discovery
@@ -75,7 +77,7 @@ The development App is shown as **MCPHub (Dev)** under
 - Home Assistant hot-backup support (package caches excluded)
 - `amd64` and `aarch64` support
 
-## MCP access from your home network
+## 🏠 MCP access from your home network
 
 MCP clients in your LAN can connect on host port **3001**, enabled by default:
 `http://<HA-IP>:3001/mcp` (or `/mcp/<group>`, `/mcp/$smart`) with the header
@@ -89,7 +91,7 @@ In Home Assistant, go to **MCPHub → Network** to change the **left-hand host p
 
 See [LAN access instructions](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/MCPHub/LAN_ACCESS.md) for details and security notes.
 
-## Home Assistant MCP Server
+## 🏡 Home Assistant MCP Server
 
 The App can optionally add Home Assistant's own MCP Server to MCPHub as the
 managed server **HomeAssistant MCP (official)** by default. The server name is configurable
@@ -129,7 +131,7 @@ App network; mDNS-only names such as `*.local` may not resolve inside every
 container environment. Home Assistant may require an administrator token for
 MCP APIs other than the built-in Assist API.
 
-## Tunnel health and controls
+## 📡 Tunnel health and controls
 
 Open MCPHub from the Home Assistant sidebar and select **Remote access** in its top bar.
 The Ingress-only tunnel dashboard provides **Start**, **Stop**, **Reload** and local
@@ -140,7 +142,7 @@ LAN port settings remain under Home Assistant App **Network**.
 
 Local process health does not guarantee internet-side connectivity.
 
-## Remote access
+## 🌐 Remote access
 
 MCPHub supports two remote-access paths. Both are optional and can be combined.
 
@@ -194,7 +196,7 @@ For the smallest tool surface, create a focused MCPHub group and use only that g
 
 See [DOCS.md](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/MCPHub/DOCS.md) for the Cloudflare and Tailscale setup.
 
-## Security model
+## 🔒 Security model
 
 MCPHub itself binds only to the App container loopback interface.
 
@@ -216,7 +218,7 @@ MCP servers you add as a command (`npx`, `uvx` or your own executable) run as ro
 > [!WARNING]
 > Backups can contain MCP server credentials and generated secrets. Treat Home Assistant backups as sensitive data.
 
-## Configuration
+## ⚙️ Configuration
 
 The Home Assistant App configuration contains Home Assistant MCP and remote-access options:
 
@@ -245,7 +247,7 @@ For detailed configuration, security notes, persistence paths, backups, and trou
 
 **[Full MCPHub App documentation →](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/MCPHub/DOCS.md)**
 
-## Versioning
+## 🏷️ Versioning
 
 MCPHub wrapper releases use calendar versioning:
 
@@ -265,7 +267,7 @@ v2026.10.05-2
 Development-store builds keep the same release base and add a temporary
 `-dev.<build>` suffix.
 
-## Updating
+## 🔄 Updating
 
 Home Assistant detects new App versions from this repository.
 
@@ -275,7 +277,7 @@ Before updating:
 2. Create a Home Assistant backup if the update contains major changes.
 3. Update MCPHub from the App page.
 
-## Support
+## 💬 Support
 
 For issues with this Home Assistant wrapper, open an issue in:
 
@@ -289,7 +291,7 @@ For OpenAI Secure MCP Tunnel issues, use:
 
 [openai/tunnel-client](https://github.com/openai/tunnel-client)
 
-## Licenses
+## 📄 Licenses
 
 The Home Assistant wrapper is released under the [MIT License](https://github.com/HyperCriSiS/Home-Assistant-Apps/blob/main/MCPHub/LICENSE).
 
