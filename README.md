@@ -30,11 +30,13 @@ https://github.com/HyperCriSiS/Home-Assistant-Apps
 
 ## 🧩 Available Apps
 
-| | App | Purpose | Architectures | Status | Documentation |
-| :---: | --- | --- | --- | --- | --- |
-| <img src="MCPHub/icon.png" alt="" width="48"> | **MCPHub** | Central management for local and remote Model Context Protocol servers | amd64, aarch64 | ✅ Stable | [README](MCPHub/README.md) · [Documentation](MCPHub/DOCS.md) |
-| <img src="TriliumNext%20Notes/icon.png" alt="" width="48"> | **Trilium Notes** | Self-hosted hierarchical notes and personal knowledge base | amd64, aarch64 | ✅ Stable | [README](TriliumNext%20Notes/README.md) |
-| <img src="Calibre%20AIO/icon.png" alt="" width="48"> | **Calibre AIO** | Shelfmark book discovery/downloads and Calibre-Web Automated library in one interface | amd64, aarch64 | ✅ Stable | [README](Calibre%20AIO/README.md) · [Documentation](Calibre%20AIO/DOCS.md) |
+All Apps run on amd64 and aarch64.
+
+| | App | Purpose | Status | Documentation |
+| :---: | --- | --- | --- | --- |
+| <img src="MCPHub/icon.png" alt="" width="48"> | **MCPHub** | Central management for local and remote Model Context Protocol servers | ✅ Stable | [README](MCPHub/README.md) · [Documentation](MCPHub/DOCS.md) |
+| <img src="TriliumNext%20Notes/icon.png" alt="" width="48"> | **Trilium Notes** | Self-hosted hierarchical notes and personal knowledge base | ✅ Stable | [README](TriliumNext%20Notes/README.md) |
+| <img src="Calibre%20AIO/icon.png" alt="" width="48"> | **Calibre AIO** | Shelfmark book discovery/downloads and Calibre-Web Automated library in one interface | ✅ Stable | [README](Calibre%20AIO/README.md) · [Documentation](Calibre%20AIO/DOCS.md) |
 
 &nbsp;
 
