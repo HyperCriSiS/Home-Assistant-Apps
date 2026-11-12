@@ -118,6 +118,8 @@ For Home Assistant App integration issues, configuration problems, or packaging 
 
 For application-specific bugs in Trilium, MCPHub, Shelfmark or Calibre-Web Automated itself, use the corresponding upstream project where appropriate.
 
+☕ If these Apps save you time, you can [support the project on Ko-fi](https://ko-fi.com/hypercrisis).
+
 &nbsp;
 
 ## 🛠️ Maintainer documentation
