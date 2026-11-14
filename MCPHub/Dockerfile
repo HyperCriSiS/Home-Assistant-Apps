@@ -1,4 +1,4 @@
-ARG OPENAI_TUNNEL_VERSION=v0.0.20
+ARG OPENAI_TUNNEL_VERSION=v0.0.21
 ARG BUILD_FROM=samanhappy/mcphub:1.2.4
 
 FROM ghcr.io/openai/tunnel-client:${OPENAI_TUNNEL_VERSION} AS openai_tunnel
