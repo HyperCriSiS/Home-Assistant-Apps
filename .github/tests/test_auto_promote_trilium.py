@@ -59,10 +59,9 @@ class ContentTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "App version"):
             mod.check_content(STABLE, same)
 
-    def test_major_update_stays_manual(self):
+    def test_major_update_is_automatic(self):
         files = {name: text.replace("v0.106.2", "v1.0.0") for name, text in bumped().items()}
-        with self.assertRaisesRegex(mod.Skip, "Major"):
-            mod.check_content(STABLE, files)
+        mod.check_content(STABLE, files)
 
     def test_minor_update_is_automatic(self):
         files = {name: text.replace("v0.106.2", "v0.107.0") for name, text in bumped().items()}

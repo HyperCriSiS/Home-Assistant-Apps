@@ -74,10 +74,9 @@ class ContentTests(unittest.TestCase):
             with self.subTest(text=text[:60]), self.assertRaises(ValueError):
                 mod.check_content(STABLE, bumped(**{"MCPHub/CHANGELOG.md": text}))
 
-    def test_major_update_stays_manual(self):
+    def test_major_update_is_automatic(self):
         files = {name: text.replace("1.1.8", "2.0.0") for name, text in bumped().items()}
-        with self.assertRaisesRegex(mod.Skip, "Major upstream"):
-            mod.check_content(STABLE, files)
+        mod.check_content(STABLE, files)
 
     def test_minor_update_is_automatic(self):
         files = {name: text.replace("1.1.8", "1.2.0") for name, text in bumped().items()}
