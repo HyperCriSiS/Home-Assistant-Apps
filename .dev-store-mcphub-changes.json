@@ -1,5 +1,25 @@
 [
   {
+    "revision": 277,
+    "version": "v2026.11.16-dev.277",
+    "source_sha": "9276508bf9b5c86945ba531c54d55b9067657819",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "9276508bf9b5c86945ba531c54d55b9067657819",
+        "subject": "chore(mcphub): update upstream to 1.2.5 (#247)"
+      },
+      {
+        "sha": "76d1ce005d3ae978ffc491f792bd6f566936ae92",
+        "subject": "Merge remote-tracking branch 'origin/main' into dev-mcphub"
+      },
+      {
+        "sha": "d508fd06c20740e7dc6371cd90be35fb8916415b",
+        "subject": "fix(automation): unblock Calibre AIO and MCPHub updates and keep repair decisions private (#246)"
+      }
+    ]
+  },
+  {
     "revision": 275,
     "version": "v2026.11.14-1-dev.275",
     "source_sha": "1f4f5329128a11706b2f57a7d8ed83814ae3b23a",

@@ -14,7 +14,7 @@ Packaged versions are pinned in `upstream.json`.
 ## Shelfmark
 
 - Project: https://github.com/calibrain/shelfmark
-- Version currently packaged: v1.6.1
+- Version currently packaged: v1.7.0
 - License: MIT, see `LICENSE-SHELFMARK`
 
 ## Calibre
