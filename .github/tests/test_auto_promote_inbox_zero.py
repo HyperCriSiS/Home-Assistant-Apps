@@ -70,9 +70,8 @@ class ContentTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "App version"):
             mod.check_content(STABLE, same)
 
-    def test_major_update_stays_manual(self):
-        with self.assertRaisesRegex(mod.Skip, "Major"):
-            mod.check_content(STABLE, bumped("v3.0.0"))
+    def test_major_update_is_automatic(self):
+        mod.check_content(STABLE, bumped("v3.0.0"))
 
 
 class CommitTests(unittest.TestCase):
