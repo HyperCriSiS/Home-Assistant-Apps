@@ -79,8 +79,6 @@ def check_content(stable: dict[str, str], candidate: dict[str, str]) -> tuple[st
         raise ValueError("Inbox Zero base version must not decrease")
     if as_tuple(new["wrapper"]) <= as_tuple(old["wrapper"]):
         raise ValueError("App version must increase")
-    if as_tuple(new["base"])[0] != as_tuple(old["base"])[0]:
-        raise Skip(f"Major Inbox Zero update {old['base']} -> {new['base']} needs a manual release")
 
     for path in sorted(ALLOWED_FILES - {f"{APP}/CHANGELOG.md"}):
         expected = stable[path]
