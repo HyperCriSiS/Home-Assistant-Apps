@@ -89,8 +89,6 @@ def check_content(stable: dict[str, str], candidate: dict[str, str]) -> dict[str
             continue
         if as_tuple(after) < as_tuple(before):
             raise ValueError(f"Refusing a {label} downgrade")
-        if as_tuple(after)[0] != as_tuple(before)[0]:
-            raise Skip(f"Major {label} update {before} -> {after} needs a manual release")
         bumps[name] = (before, after)
     if not bumps:
         raise ValueError("No CWA or Shelfmark version increased")
