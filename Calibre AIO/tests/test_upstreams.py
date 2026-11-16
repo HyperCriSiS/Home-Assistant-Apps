@@ -53,9 +53,10 @@ class UpstreamUpdateTest(unittest.TestCase):
         (self.root / 'Dockerfile').write_text(pins)
         def serve(text):
             return patch.object(upstreams, 'request', return_value=io.BytesIO(text.encode()))
-        with serve(pins):
-            upstreams.check_chromium('f' * 40)
-        for text in (pins.replace('=1', '=3'), ''):
+        for text in (pins, 'FROM debian\n'):
+            with self.subTest(text=text), serve(text):
+                upstreams.check_chromium('f' * 40)
+        for text in (pins.replace('=1', '=3'), 'ARG CHROMIUM_VERSION=1\n'):
             with self.subTest(text=text), serve(text), self.assertRaises(ValueError):
                 upstreams.check_chromium('f' * 40)
 

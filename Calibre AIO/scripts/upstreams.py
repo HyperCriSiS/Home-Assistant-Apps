@@ -179,11 +179,14 @@ def chromium_pins(dockerfile):
 
 
 def check_chromium(commit):
-    """Refuse a Shelfmark update whose Chromium pin differs from the bundled one."""
+    """Refuse a Shelfmark update whose Chromium pin differs from the bundled one.
+
+    An upstream Dockerfile without pins is accepted: the App keeps its own snapshot pin.
+    """
     url = f'https://raw.githubusercontent.com/{REPOSITORIES["shelfmark"]}/{commit}/Dockerfile'
     with request(url) as response:
         wanted = chromium_pins(response.read().decode())
-    if len(wanted) != 2 or wanted != chromium_pins((ROOT / 'Dockerfile').read_text()):
+    if wanted and (len(wanted) != 2 or wanted != chromium_pins((ROOT / 'Dockerfile').read_text())):
         raise ValueError('Shelfmark changed its Chromium pin; update the Dockerfile first')
 
 
