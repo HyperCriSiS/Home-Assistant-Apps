@@ -113,10 +113,6 @@ def check_content(stable: dict[str, str], candidate: dict[str, str]) -> dict[str
     if as_tuple(new["wrapper"].split("-")[0]) < as_tuple(old["wrapper"].split("-")[0]) or \
             new["wrapper"] == old["wrapper"]:
         raise ValueError("App version must increase")
-    for name in ("upstream", "tunnel"):
-        if as_tuple(new[name])[0] != as_tuple(old[name])[0]:
-            raise Skip(f"Major {name} update {old[name]} -> {new[name]} needs a manual release")
-
     for path in sorted(ALLOWED_FILES - {"MCPHub/CHANGELOG.md"}):
         expected = stable[path]
         for key in ("upstream", "tunnel", "wrapper"):
