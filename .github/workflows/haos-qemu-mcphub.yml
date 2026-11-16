@@ -81,7 +81,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          version="$(gh api repos/home-assistant/operating-system/releases/latest --jq '.tag_name')"
+          # The newest stable release that ships the OVA image.
+          # Some releases only ship board images.
+          # shellcheck disable=SC2016  # $t is a jq variable
+          version="$(gh api repos/home-assistant/operating-system/releases?per_page=100 --jq '[.[]
+            | select(.prerelease | not) | .tag_name as $t
+            | select(any(.assets[]; .name == "haos_ova-\($t).qcow2.xz"))][0].tag_name')"
           [[ "$version" =~ ^[0-9]+\.[0-9]+$ ]] || { echo "Unexpected HAOS release $version" >&2; exit 1; }
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
