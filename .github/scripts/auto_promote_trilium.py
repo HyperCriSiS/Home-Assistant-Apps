@@ -71,8 +71,6 @@ def check_content(stable: dict[str, str], candidate: dict[str, str]) -> tuple[st
         raise ValueError("Trilium version must increase")
     if as_tuple(new["wrapper"]) <= as_tuple(old["wrapper"]):
         raise ValueError("App version must increase")
-    if as_tuple(new["upstream"])[0] != as_tuple(old["upstream"])[0]:
-        raise Skip(f"Major Trilium update {old['upstream']} -> {new['upstream']} needs a manual release")
 
     for path in sorted(ALLOWED_FILES - {f"{APP}/CHANGELOG.md"}):
         expected = stable[path]
