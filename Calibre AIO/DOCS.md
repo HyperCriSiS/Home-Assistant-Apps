@@ -36,6 +36,7 @@ start_page: library
 library_dir: calibre-aio/library
 ingest_dir: calibre-aio/ingest
 processed_dir: calibre-aio/processed
+audiobook_dir: calibre-aio/audiobooks
 network_share_mode: false
 shelfmark:
   external_bypass_url: ""
@@ -89,6 +90,14 @@ The App links CWA's `/config/processed_books` to this folder; copies kept in
 the private App folder by earlier versions move there on the next start.
 Disable CWA's automatic import and conversion backups in CWA Settings if you
 do not want these copies.
+
+### `audiobook_dir`
+
+Path relative to `/share` for audiobooks downloaded with Shelfmark, with the
+same rules. It must not be the library, ingest or processed folder, lie inside
+one or contain one; otherwise the App logs a warning and keeps the audiobooks
+in its private folder. Audiobooks kept in the private App folder by earlier
+versions move there on the next start.
 
 ### `network_share_mode`
 
@@ -163,7 +172,7 @@ the library database directly. CWA owns the actual import/conversion process.
 Calibre Web's admin **Downloads** page instead groups recorded downloads by
 user. It fills when users download library books through Calibre Web or send
 them to an e-reader; Shelfmark imports do not populate this overview.
-Audiobooks go to separate `/data/shelfmark-audiobooks` storage; CWA is not an
+Audiobooks go to separate `/share/<audiobook_dir>` storage; CWA is not an
 audiobook library server. No Audiobookshelf integration is bundled.
 
 ## 💾 Persistence and backups
@@ -175,15 +184,15 @@ audiobook library server. No Audiobookshelf integration is bundled.
 | Shelfmark settings, accounts and secrets | `/data/shelfmark` |
 | Shelfmark cover cache of search results (not backed up) | `/data/shelfmark/covers` |
 | Shelfmark staging and logs (not backed up) | `/data/shelfmark-staging`, `/data/shelfmark-logs` |
-| Shelfmark audiobooks | `/data/shelfmark-audiobooks` |
 | Ebook library | `/share/<library_dir>` |
 | Completed-book handoff | `/share/<ingest_dir>` |
 | CWA safety copies of processed books | `/share/<processed_dir>` (via `/config/processed_books`) |
+| Shelfmark audiobooks | `/share/<audiobook_dir>` (via `/data/shelfmark-audiobooks`) |
 
 > [!WARNING]
 > An HA backup of this App contains only the private `/data` folder: CWA state,
-> Shelfmark settings and audiobooks. Every book file lives under `/share`: the
-> library, the ingest folder and CWA's safety copies. They are **never part of
+> Shelfmark settings. Every book file lives under `/share`: the library, the
+> ingest folder, CWA's safety copies and the audiobooks. They are **never part of
 > the App backup** and are covered by the **Share** folder of an HA backup:
 > tick **Share** to include them, untick it when you back them up by other means.
 

@@ -1,6 +1,6 @@
 name: "Calibre AIO"
 description: "CWA v4.0.8 and Shelfmark v1.7.0 - Book discovery and Calibre library management in one interface"
-version: "v2026.11.16"
+version: "v2026.11.18"
 slug: "calibre-aio"
 url: "https://github.com/HyperCriSiS/Home-Assistant-Apps/tree/main/Calibre%20AIO"
 image: "ghcr.io/hypercrisis/{arch}-calibre-aio"
@@ -17,7 +17,8 @@ watchdog: "http://[HOST]:[PORT:8084]/health"
 # Stop the app during backups so its SQLite databases are captured consistently.
 # The library and the ingest folder live under /share and are governed by the
 # "Share" folder of an HA backup, not by this App's backup; so does
-# processed_dir, where CWA keeps its safety copies of processed books. Caches,
+# processed_dir, where CWA keeps its safety copies of processed books, and
+# audiobook_dir, where Shelfmark stores audiobooks. Caches,
 # logs, temporary files and runtime markers are not needed after a restore.
 backup: cold
 backup_exclude:
@@ -35,6 +36,7 @@ backup_exclude:
   - "config/cwa_ingest_batch_dirty.running"
   # A link into /share that the init script recreates; restores never follow it.
   - "config/processed_books"
+  - "shelfmark-audiobooks"
 ingress: true
 ingress_stream: true
 ingress_port: 8084
@@ -47,6 +49,7 @@ options:
   library_dir: "calibre-aio/library"
   ingest_dir: "calibre-aio/ingest"
   processed_dir: "calibre-aio/processed"
+  audiobook_dir: "calibre-aio/audiobooks"
   network_share_mode: false
   shelfmark:
     external_bypass_url: ""
@@ -61,6 +64,7 @@ schema:
   library_dir: "str"
   ingest_dir: "str"
   processed_dir: "str"
+  audiobook_dir: "str"
   network_share_mode: "bool"
   shelfmark:
     external_bypass_url: "str?"
