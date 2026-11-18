@@ -1,5 +1,5 @@
 ARG OPENAI_TUNNEL_VERSION=v0.0.21
-ARG BUILD_FROM=samanhappy/mcphub:1.2.5
+ARG BUILD_FROM=samanhappy/mcphub:1.2.6
 
 FROM ghcr.io/openai/tunnel-client:${OPENAI_TUNNEL_VERSION} AS openai_tunnel
 FROM ${BUILD_FROM}
@@ -64,22 +64,11 @@ RUN set -eux; \
     /opt/gh-cli-mcp/bin/python -c \
         'from gh_cli_mcp_server.server import mcp; import importlib.metadata as md; assert md.version("mcp") == "1.30.0"; assert md.version("gh-cli-mcp-server") == "0.3.0"'
 
-# MCPHub 1.2.5 listens on all interfaces upstream. The pinned release is patched
-# to bind its main server to loopback so only local adapters can reach it.
-RUN python3 - <<'PY'
-from pathlib import Path
-
-path = Path("/app/dist/server.js")
-text = path.read_text(encoding="utf-8")
-old = "this.server = this.app.listen(this.port, () => {"
-new = "this.server = this.app.listen(this.port, \"127.0.0.1\", () => {"
-
-count = text.count(old)
-if count != 1:
-    raise SystemExit(f"Unexpected MCPHub server structure: listen call found {count} times")
-
-path.write_text(text.replace(old, new), encoding="utf-8")
-PY
+# MCPHub 1.2.6 listens on all interfaces by default. Bind its main server to
+# loopback through MCPHUB_HOST so only the local nginx proxies and adapters can reach it.
+ENV MCPHUB_HOST=127.0.0.1
+RUN grep -q "process.env.MCPHUB_HOST" /app/dist/config/index.js \
+    || { echo "MCPHub no longer reads MCPHUB_HOST" >&2; exit 1; }
 
 COPY --from=openai_tunnel /usr/bin/tunnel-client /usr/local/bin/tunnel-client
 
