@@ -1,5 +1,11 @@
 # Changelog
 
+## v2026.11.18
+
+### Changed
+
+- New option `audiobook_dir` (default `calibre-aio/audiobooks`): audiobooks downloaded with Shelfmark live under `/share` next to the library instead of in the private App folder; existing audiobooks move there on the next start and no longer enlarge App backups.
+
 ## v2026.11.16
 
 ### Changed

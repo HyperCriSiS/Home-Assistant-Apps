@@ -12,17 +12,20 @@ set -euo pipefail
 # subdirectories of /share instead, before CWA's own s6 services
 # (cwa-init and friends, copied from the upstream project) start. CWA's
 # safety copies of processed books (/config/processed_books) are book files
-# too and live in a third /share folder next to the library.
+# too and live in a third /share folder next to the library, and Shelfmark's
+# audiobooks in a fourth.
 # ==============================================================================
 
 declare library_dir
 declare ingest_dir
 declare processed_dir
+declare audiobook_dir
 declare network_share_mode
 
 library_dir=$(bashio::config 'library_dir')
 ingest_dir=$(bashio::config 'ingest_dir')
 processed_dir=$(bashio::config 'processed_dir')
+audiobook_dir=$(bashio::config 'audiobook_dir')
 network_share_mode=$(bashio::config 'network_share_mode')
 
 # Both paths must stay inside /share: an empty value would make /share itself
@@ -44,6 +47,7 @@ check_share_dir() {
 check_share_dir library_dir "${library_dir}"
 check_share_dir ingest_dir "${ingest_dir}"
 check_share_dir processed_dir "${processed_dir}"
+check_share_dir audiobook_dir "${audiobook_dir}"
 nested() {
     [[ "${1%/}/" == "${2%/}/"* || "${2%/}/" == "${1%/}/"* ]]
 }
@@ -63,11 +67,21 @@ if nested "${processed_dir}" "${library_dir}" || nested "${processed_dir}" "${in
         "CWA's processed books stay in the private App folder, outside App backups, until it is changed"
     processed_link=false
 fi
+# Audiobooks inside the ingest folder would be picked up by CWA's watcher; an
+# update adds the default, so a collision only warns, like processed_dir.
+audiobook_link=true
+if nested "${audiobook_dir}" "${library_dir}" || nested "${audiobook_dir}" "${ingest_dir}" \
+    || nested "${audiobook_dir}" "${processed_dir}"; then
+    bashio::log.warning "audiobook_dir must be its own folder, not inside or around library_dir, ingest_dir or processed_dir;" \
+        "Shelfmark's audiobooks stay in the private App folder until it is changed"
+    audiobook_link=false
+fi
 
 CONFIG_TARGET="/data/config"
 LIBRARY_TARGET="/share/${library_dir}"
 INGEST_TARGET="/share/${ingest_dir}"
 PROCESSED_TARGET="/share/${processed_dir}"
+AUDIOBOOK_TARGET="/share/${audiobook_dir}"
 
 mkdir -p "${CONFIG_TARGET}" "${LIBRARY_TARGET}" "${INGEST_TARGET}"
 chown abc:abc "${CONFIG_TARGET}"
@@ -75,35 +89,45 @@ if ! bashio::var.true "${network_share_mode}"; then
     chown abc:abc "${LIBRARY_TARGET}" "${INGEST_TARGET}"
 fi
 
-# Point CWA's processed_books at the /share folder. Copies kept in the private
-# App folder by earlier versions move there once, without overwriting files
-# already in the target; a changed option relinks. A copy that fails (full
-# disk, share refusing the write) keeps the copies in place and the App
-# bootable. Ownership is fixed only after a move, not on every start.
-link_processed_books() {
-    local link="$1/processed_books" target="$2" owner="$3"
+# Point a private App folder (CWA's processed_books, Shelfmark's audiobooks) at
+# its /share folder. Files kept in the private App folder by earlier versions
+# move there once, without overwriting files already in the target; a changed
+# option relinks. The private folder is removed only when every file in it has
+# an identical copy in the target, so a failed or interrupted copy (full disk,
+# restart) or a file of the same name already in the target keeps it in place
+# and the App bootable. Ownership is fixed only after a move.
+link_share_dir() {
+    local link="$1" target="$2" owner="$3" what="$4"
     mkdir -p "${target}"
     [ -n "${owner}" ] && chown "${owner}" "${target}"
     if [ -L "${link}" ]; then
         [[ "$(readlink "${link}")" == "${target}" ]] && return 0
         rm "${link}"
     elif [ -d "${link}" ]; then
-        if ! cp -r --update=none --preserve=timestamps "${link}/." "${target}/"; then
-            bashio::log.warning "Could not move CWA's processed books to ${target}; they stay in the private App folder"
+        if ! cp -r --update=none --preserve=timestamps "${link}/." "${target}/" \
+            || [ -n "$(cd "${link}" && find . -type f ! -exec cmp -s {} "${target}/{}" \; -print -quit)" ]; then
+            bashio::log.warning "Could not move ${what} to ${target} completely; they stay in the private App folder"
             return 0
         fi
         [ -n "${owner}" ] && chown -R "${owner}" "${target}"
         rm -rf "${link}"
-        bashio::log.info "Moved CWA's processed books to ${target}"
+        bashio::log.info "Moved ${what} to ${target}"
     fi
     ln -s "${target}" "${link}"
 }
+owner=abc:abc
+bashio::var.true "${network_share_mode}" && owner=""
 if [[ "${processed_link}" == true ]]; then
-    owner=abc:abc
-    bashio::var.true "${network_share_mode}" && owner=""
-    link_processed_books "${CONFIG_TARGET}" "${PROCESSED_TARGET}" "${owner}"
+    link_share_dir "${CONFIG_TARGET}/processed_books" "${PROCESSED_TARGET}" "${owner}" "CWA's processed books"
 fi
-mkdir -p /data/shelfmark /data/shelfmark-staging /data/shelfmark-logs /data/shelfmark-audiobooks
+mkdir -p /data/shelfmark /data/shelfmark-staging /data/shelfmark-logs
+if [[ "${audiobook_link}" == true ]]; then
+    link_share_dir /data/shelfmark-audiobooks "${AUDIOBOOK_TARGET}" "${owner}" "Shelfmark's audiobooks"
+else
+    # A link left by an earlier start would keep Shelfmark writing into /share.
+    [ -L /data/shelfmark-audiobooks ] && rm /data/shelfmark-audiobooks
+    mkdir -p /data/shelfmark-audiobooks
+fi
 
 # CWA marks a running post-import follow-up with cwa_ingest_batch_dirty.running
 # and removes the marker when it finishes. A stop in between (cold backup,
@@ -120,7 +144,8 @@ requeue_interrupted_follow_up() {
     bashio::log.info "Requeued an interrupted CWA post-import follow-up"
 }
 requeue_interrupted_follow_up "${CONFIG_TARGET}"
-chown abc:abc /data/shelfmark /data/shelfmark-staging /data/shelfmark-logs /data/shelfmark-audiobooks
+chown abc:abc /data/shelfmark /data/shelfmark-staging /data/shelfmark-logs
+[[ "${audiobook_link}" == true ]] || chown abc:abc /data/shelfmark-audiobooks
 
 link_dir() {
     local target="$1"
@@ -156,5 +181,6 @@ bashio::log.info "Calibre library: ${LIBRARY_TARGET} (/calibre-library)"
 bashio::log.warning "The library under /share is not part of App backups; include the Share folder in HA backups or back it up separately"
 bashio::log.info "Book ingest folder: ${INGEST_TARGET} (/cwa-book-ingest)"
 bashio::log.info "Processed book copies: ${PROCESSED_TARGET} (/config/processed_books)"
+bashio::log.info "Shelfmark audiobooks: ${AUDIOBOOK_TARGET} (/data/shelfmark-audiobooks)"
 bashio::log.info "App config/state: ${CONFIG_TARGET} (/config)"
 bashio::log.info "Network share mode: ${network_share_mode}"
