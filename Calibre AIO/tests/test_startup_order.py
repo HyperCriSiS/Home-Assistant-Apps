@@ -68,7 +68,9 @@ class StartupOrderTest(unittest.TestCase):
         # processed_books is a link into /share: only the link is skipped, the
         # copies follow the Share folder and the init script recreates the link.
         self.assertEqual([pattern for pattern in excluded if 'processed_books' in pattern], ['config/processed_books'])
-        self.assertEqual([pattern for pattern in excluded if 'audiobooks' in pattern], ['shelfmark-audiobooks'])
+        # Audiobooks left in the private folder (failed move, colliding option)
+        # must stay in the App backup.
+        self.assertEqual([pattern for pattern in excluded if 'audiobooks' in pattern], [])
         for kept in ('app.db', 'cwa.db', '.key', 'ha_admin_bindings.db'):
             self.assertFalse(any(Path('config', kept).match(pattern) for pattern in excluded), kept)
 
@@ -95,6 +97,12 @@ class StartupOrderTest(unittest.TestCase):
             run(config, first)
             self.assertEqual((first / 'fixed_originals/kept.zip').read_text(), 'newer')
             link = config / 'processed_books'
+            # A differing file of the same name (or a truncated copy from an
+            # interrupted move) keeps the private folder, so nothing is lost.
+            self.assertFalse(link.is_symlink())
+            self.assertEqual((link / 'fixed_originals/kept.zip').read_text(), 'old')
+            (link / 'fixed_originals/kept.zip').write_text('newer')
+            run(config, first)
             self.assertTrue(link.is_symlink())
             self.assertEqual(os.readlink(link), str(first))
             self.assertEqual((first / 'fixed_originals/book.zip').read_text(), 'copy')

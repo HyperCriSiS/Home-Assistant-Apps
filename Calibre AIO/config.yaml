@@ -36,7 +36,6 @@ backup_exclude:
   - "config/cwa_ingest_batch_dirty.running"
   # A link into /share that the init script recreates; restores never follow it.
   - "config/processed_books"
-  - "shelfmark-audiobooks"
 ingress: true
 ingress_stream: true
 ingress_port: 8084

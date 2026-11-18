@@ -91,10 +91,11 @@ fi
 
 # Point a private App folder (CWA's processed_books, Shelfmark's audiobooks) at
 # its /share folder. Files kept in the private App folder by earlier versions
-# move there once, without overwriting files
-# already in the target; a changed option relinks. A copy that fails (full
-# disk, share refusing the write) keeps the copies in place and the App
-# bootable. Ownership is fixed only after a move, not on every start.
+# move there once, without overwriting files already in the target; a changed
+# option relinks. The private folder is removed only when every file in it has
+# an identical copy in the target, so a failed or interrupted copy (full disk,
+# restart) or a file of the same name already in the target keeps it in place
+# and the App bootable. Ownership is fixed only after a move.
 link_share_dir() {
     local link="$1" target="$2" owner="$3" what="$4"
     mkdir -p "${target}"
@@ -103,8 +104,9 @@ link_share_dir() {
         [[ "$(readlink "${link}")" == "${target}" ]] && return 0
         rm "${link}"
     elif [ -d "${link}" ]; then
-        if ! cp -r --update=none --preserve=timestamps "${link}/." "${target}/"; then
-            bashio::log.warning "Could not move ${what} to ${target}; they stay in the private App folder"
+        if ! cp -r --update=none --preserve=timestamps "${link}/." "${target}/" \
+            || [ -n "$(cd "${link}" && find . -type f ! -exec cmp -s {} "${target}/{}" \; -print -quit)" ]; then
+            bashio::log.warning "Could not move ${what} to ${target} completely; they stay in the private App folder"
             return 0
         fi
         [ -n "${owner}" ] && chown -R "${owner}" "${target}"
@@ -122,6 +124,8 @@ mkdir -p /data/shelfmark /data/shelfmark-staging /data/shelfmark-logs
 if [[ "${audiobook_link}" == true ]]; then
     link_share_dir /data/shelfmark-audiobooks "${AUDIOBOOK_TARGET}" "${owner}" "Shelfmark's audiobooks"
 else
+    # A link left by an earlier start would keep Shelfmark writing into /share.
+    [ -L /data/shelfmark-audiobooks ] && rm /data/shelfmark-audiobooks
     mkdir -p /data/shelfmark-audiobooks
 fi
 
