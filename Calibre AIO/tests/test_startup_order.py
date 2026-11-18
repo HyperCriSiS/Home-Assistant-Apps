@@ -68,6 +68,9 @@ class StartupOrderTest(unittest.TestCase):
         # processed_books is a link into /share: only the link is skipped, the
         # copies follow the Share folder and the init script recreates the link.
         self.assertEqual([pattern for pattern in excluded if 'processed_books' in pattern], ['config/processed_books'])
+        # Audiobooks left in the private folder (failed move, colliding option)
+        # must stay in the App backup.
+        self.assertEqual([pattern for pattern in excluded if 'audiobooks' in pattern], [])
         for kept in ('app.db', 'cwa.db', '.key', 'ha_admin_bindings.db'):
             self.assertFalse(any(Path('config', kept).match(pattern) for pattern in excluded), kept)
 
@@ -75,12 +78,12 @@ class StartupOrderTest(unittest.TestCase):
     def test_processed_books_move_to_share_once_and_follow_the_option(self):
         import tempfile
         script = (ROOT / 'rootfs/etc/cont-init.d/calibre-web-automated.sh').read_text()
-        start = script.index('link_processed_books() {')
+        start = script.index('link_share_dir() {')
         function = script[start:script.index(chr(10) + '}' + chr(10), start) + 3]
         stub = 'bashio::log.info() { :; }' + chr(10) + 'bashio::log.warning() { :; }' + chr(10)
 
         def run(config, target):
-            subprocess.run([shutil.which('bash'), '-c', stub + function + 'link_processed_books "$1" "$2" ""',
+            subprocess.run([shutil.which('bash'), '-c', stub + function + 'link_share_dir "$1/processed_books" "$2" "" books',
                             'test', str(config), str(target)], check=True, capture_output=True)
 
         with tempfile.TemporaryDirectory() as directory:
@@ -94,6 +97,12 @@ class StartupOrderTest(unittest.TestCase):
             run(config, first)
             self.assertEqual((first / 'fixed_originals/kept.zip').read_text(), 'newer')
             link = config / 'processed_books'
+            # A differing file of the same name (or a truncated copy from an
+            # interrupted move) keeps the private folder, so nothing is lost.
+            self.assertFalse(link.is_symlink())
+            self.assertEqual((link / 'fixed_originals/kept.zip').read_text(), 'old')
+            (link / 'fixed_originals/kept.zip').write_text('newer')
+            run(config, first)
             self.assertTrue(link.is_symlink())
             self.assertEqual(os.readlink(link), str(first))
             self.assertEqual((first / 'fixed_originals/book.zip').read_text(), 'copy')
@@ -109,8 +118,8 @@ class StartupOrderTest(unittest.TestCase):
         checks = script[script.index('check_share_dir() {'):script.index('CONFIG_TARGET=')]
         stub = ('bashio::log.fatal() { echo "$@" >&2; }' + chr(10)
                 + 'bashio::log.warning() { echo "warning $*" >&2; }' + chr(10))
-        def run(library_dir, ingest_dir, processed_dir='calibre-aio/processed'):
-            assignments = f'library_dir={library_dir!r}; ingest_dir={ingest_dir!r}; processed_dir={processed_dir!r}'
+        def run(library_dir, ingest_dir, processed_dir='calibre-aio/processed', audiobook_dir='calibre-aio/audiobooks'):
+            assignments = f'library_dir={library_dir!r}; ingest_dir={ingest_dir!r}; processed_dir={processed_dir!r}; audiobook_dir={audiobook_dir!r}'
             return subprocess.run([shutil.which('bash'), '-c', stub + assignments + chr(10) + checks],
                                   capture_output=True, text=True)
         self.assertEqual(run('calibre-aio/library', 'calibre-aio/ingest').returncode, 0)
@@ -125,6 +134,14 @@ class StartupOrderTest(unittest.TestCase):
                 result = run('calibre-aio/library', 'calibre-aio/ingest', processed_dir)
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertIn('warning processed_dir must be its own folder', result.stderr)
+        for audiobook_dir in ('', '../audio'):
+            with self.subTest(audiobook_dir=audiobook_dir):
+                self.assertEqual(run('calibre-aio/library', 'calibre-aio/ingest', audiobook_dir=audiobook_dir).returncode, 1)
+        for audiobook_dir in ('calibre-aio/ingest/audio', 'calibre-aio/processed', 'calibre-aio'):
+            with self.subTest(audiobook_dir=audiobook_dir):
+                result = run('calibre-aio/library', 'calibre-aio/ingest', audiobook_dir=audiobook_dir)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn('warning audiobook_dir must be its own folder', result.stderr)
         for library_dir, ingest_dir in (('calibre-aio', 'calibre-aio/ingest'), ('calibre-aio/library', 'calibre-aio'),
                                         ('calibre-aio/library', 'calibre-aio/library/'), ('', 'calibre-aio/ingest'),
                                         ('/share/library', 'calibre-aio/ingest'), ('a/../b', 'calibre-aio/ingest')):
