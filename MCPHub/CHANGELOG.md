@@ -4,31 +4,11 @@
 
 ### Changed
 
-- Updated MCPHub from 1.2.5 to 1.2.6.
-
-## v2026.11.16
-
-### Changed
-
-- Updated MCPHub from 1.2.4 to 1.2.5.
-
-## v2026.11.14-1
-
-### Changed
-
-- Updated bundled OpenAI tunnel-client v0.0.20 to v0.0.21.
-
-## v2026.11.14
-
-### Changed
-
-- Updated MCPHub from 1.2.3 to 1.2.4.
-
-## v2026.11.11
-
-### Changed
-
 - Updated MCPHub from 1.2.2 to 1.2.3.
+- Updated MCPHub from 1.2.3 to 1.2.4.
+- Updated bundled OpenAI tunnel-client v0.0.20 to v0.0.21.
+- Updated MCPHub from 1.2.4 to 1.2.5.
+- Updated MCPHub from 1.2.5 to 1.2.6.
 
 ## v2026.11.10-2
 
