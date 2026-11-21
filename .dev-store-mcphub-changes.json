@@ -1,5 +1,17 @@
 [
   {
+    "revision": 282,
+    "version": "v2026.11.21-dev.282",
+    "source_sha": "b6e0bc95988f3211c75a0d70a2bc2feea3898f6f",
+    "baseline": false,
+    "commits": [
+      {
+        "sha": "b6e0bc95988f3211c75a0d70a2bc2feea3898f6f",
+        "subject": "chore(mcphub): update upstream to 1.3.0 (#255)"
+      }
+    ]
+  },
+  {
     "revision": 280,
     "version": "v2026.11.18-dev.280",
     "source_sha": "14809b6bbb621f1831c5e6dfb842025b4e401dcb",
