@@ -3,7 +3,7 @@
 **Self-hosted AI email assistant for IMAP, Gmail and Outlook inside Home Assistant.**
 
 [![Validate Inbox Zero](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate-inbox-zero.yml/badge.svg?branch=main)](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate-inbox-zero.yml)
-[![Inbox Zero version](https://img.shields.io/badge/Inbox%20Zero-v2.30.0%20(4d08657)-6E56CF)](https://github.com/HyperCriSiS/inbox-zero/commit/4d08657606f5ad58b357ce5b6950f305be384a37)
+[![Inbox Zero version](https://img.shields.io/badge/Inbox%20Zero-v2.30.0%20(e3fba8a)-6E56CF)](https://github.com/HyperCriSiS/inbox-zero/commit/e3fba8a21f292274066abfb3c583fbd63d4ac141)
 ![Architecture amd64](https://img.shields.io/badge/amd64-supported-success)
 ![Architecture aarch64](https://img.shields.io/badge/aarch64-supported-success)
 ![Home Assistant](https://img.shields.io/badge/Home%20Assistant-App-41BDF5?logo=homeassistant&logoColor=white)
