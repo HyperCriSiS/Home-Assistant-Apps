@@ -151,7 +151,7 @@ if [[ "${ha_mcp_enabled}" == "true" ]]; then
     fi
 fi
 
-log_info "Starting MCPHub 1.3.0 on internal loopback port 3000."
+log_info "Starting MCPHub 1.3.1 on internal loopback port 3000."
 if [[ -r /etc/mcphub-source-revision ]]; then
     log_info "Build source revision: $(cat /etc/mcphub-source-revision)"
 fi
