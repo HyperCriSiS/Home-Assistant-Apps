@@ -1,5 +1,5 @@
 ARG OPENAI_TUNNEL_VERSION=v0.0.21
-ARG BUILD_FROM=samanhappy/mcphub:1.3.0
+ARG BUILD_FROM=samanhappy/mcphub:1.3.1
 
 FROM ghcr.io/openai/tunnel-client:${OPENAI_TUNNEL_VERSION} AS openai_tunnel
 FROM ${BUILD_FROM}
@@ -64,7 +64,7 @@ RUN set -eux; \
     /opt/gh-cli-mcp/bin/python -c \
         'from gh_cli_mcp_server.server import mcp; import importlib.metadata as md; assert md.version("mcp") == "1.30.0"; assert md.version("gh-cli-mcp-server") == "0.3.0"'
 
-# MCPHub 1.3.0 listens on all interfaces by default. Bind its main server to
+# MCPHub 1.3.1 listens on all interfaces by default. Bind its main server to
 # loopback through MCPHUB_HOST so only the local nginx proxies and adapters can reach it.
 ENV MCPHUB_HOST=127.0.0.1
 RUN grep -q "process.env.MCPHUB_HOST" /app/dist/config/index.js \

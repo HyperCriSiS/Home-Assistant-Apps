@@ -1,5 +1,11 @@
 # Changelog
 
+## v2026.11.25
+
+### Changed
+
+- Updated MCPHub from 1.3.0 to 1.3.1.
+
 ## v2026.11.21
 
 ### Changed
