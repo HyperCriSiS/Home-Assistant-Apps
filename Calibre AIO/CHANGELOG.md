@@ -1,5 +1,11 @@
 # Changelog
 
+## v2026.11.26
+
+### Changed
+
+- Update CWA to v4.0.8 and Shelfmark to v1.7.2.
+
 ## v2026.11.25
 
 ### Changed
