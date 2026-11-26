@@ -6,7 +6,7 @@
 
 [![Validate Calibre AIO](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate-calibre-aio.yml/badge.svg?branch=main)](https://github.com/HyperCriSiS/Home-Assistant-Apps/actions/workflows/validate-calibre-aio.yml)
 [![CWA version](https://img.shields.io/badge/CWA-v4.0.8-B49A64)](https://github.com/crocodilestick/Calibre-Web-Automated/releases/tag/v4.0.8)
-[![Shelfmark version](https://img.shields.io/badge/Shelfmark-v1.7.1-B49A64)](https://github.com/calibrain/shelfmark/releases/tag/v1.7.1)
+[![Shelfmark version](https://img.shields.io/badge/Shelfmark-v1.7.2-B49A64)](https://github.com/calibrain/shelfmark/releases/tag/v1.7.2)
 ![Architecture amd64](https://img.shields.io/badge/amd64-supported-success)
 ![Architecture aarch64](https://img.shields.io/badge/aarch64-supported-success)
 ![Home Assistant](https://img.shields.io/badge/Home%20Assistant-App-41BDF5?logo=homeassistant&logoColor=white)

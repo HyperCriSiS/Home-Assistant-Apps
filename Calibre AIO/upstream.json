@@ -7,9 +7,9 @@
   },
   "shelfmark": {
     "repository": "calibrain/shelfmark",
-    "version": "v1.7.1",
-    "commit": "8b457b2742944f9ec7c661496bcd9da48b388d5a",
-    "sha256": "47e277a6517ea852c4834c534b3f25d48d54ede1a3af2c8c8d6580e67e8b7fc5"
+    "version": "v1.7.2",
+    "commit": "d5f28fdbbc2aa1ed7dbf1f6b8c44028276abd872",
+    "sha256": "c4aac101499964660b19531cc57db10d3495aa5d0bd69a88cf921ab86d5e2ecd"
   },
   "calibre": "9.1.0",
   "kepubify": "v4.0.4",
