@@ -1,7 +1,7 @@
 # Changelog
 
-## v2026.11.25-dev.283
+## v2026.11.27-dev.284
 
 ### Commits in this Dev build
 
-- [`f3e61df`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/f3e61df2e2c78daccb6f54b6f70660a989084358) chore(mcphub): update upstream to 1.3.1 (#258)
+- [`971dc0f`](https://github.com/HyperCriSiS/Home-Assistant-Apps/commit/971dc0fec492d85eb4f31145f15b16a2723a3a8d) chore(mcphub): update upstream to 1.3.2 (#261)

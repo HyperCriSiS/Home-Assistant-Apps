@@ -1,16 +1,16 @@
 {
   "calibre": {
-    "revision": 202,
-    "tree": "31f3ce2989478035d119ffd361677a9071569b16"
+    "revision": 203,
+    "tree": "284fc8aa9a3946bd83fbb4bcea1f6841d28aa723"
   },
   "inbox-zero": {
     "revision": 266,
     "tree": "3e3aab3b505ddf78b7f613da3e81b96022975514"
   },
   "mcphub": {
-    "fingerprint": "20ca777eb2b401bdb545f28b4fabc236b3bb6a41be1ee433e9cf2d9ac01ff12a",
-    "revision": 283,
-    "tree": "d6b4de2554b718387d983aeaf3b137aea7305ae3"
+    "fingerprint": "e9fbb485723f665069c266f2c6f779242127809333c4c0642222d082efd2b3ff",
+    "revision": 284,
+    "tree": "5459df60ca037b303023c2a876f6230000815463"
   },
   "plextraktsync": {
     "revision": 160,
